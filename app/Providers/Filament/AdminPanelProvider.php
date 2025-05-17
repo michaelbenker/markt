@@ -25,6 +25,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
+            ->brandLogo(fn() => view('components.filament.brand-logo'))
             ->path('admin')
             ->login()
             ->colors([

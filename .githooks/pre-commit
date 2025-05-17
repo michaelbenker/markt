@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# .DS_Store Dateien entfernen
+find . -name ".DS_Store" -type f -delete
+
+# Geänderte Dateien zum Commit hinzufügen
+git add -u
