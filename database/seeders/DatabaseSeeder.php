@@ -21,5 +21,18 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('1Pdimnmk!'),
             ]
         );
+        User::updateOrCreate(
+            ['email' => 'michaela.landmann@fuerstenfeld.de'],
+            [
+                'name' => 'Michaela Landmann',
+                'password' => Hash::make('test1234'),
+            ]
+        );
+
+        $this->call([
+            MarktSeeder::class,
+            AusstellerImportSeeder::class,
+            StandortSeeder::class,
+        ]);
     }
 }
