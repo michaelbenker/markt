@@ -2,30 +2,26 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\SubkategorieResource\Pages;
-use App\Filament\Resources\SubkategorieResource\RelationManagers;
-use App\Models\Subkategorie;
+use App\Filament\Resources\KategorieResource\Pages;
+use App\Models\Kategorie;
 use Filament\Forms;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class SubkategorieResource extends Resource
+class KategorieResource extends Resource
 {
-    protected static ?string $model = Subkategorie::class;
-    protected static ?string $label = 'Subkategorie';
-    protected static ?string $pluralLabel = 'Subkategorien';
-    protected static ?string $navigationLabel = 'Subkategorie';
-    protected static ?string $navigationIcon = 'heroicon-o-list-bullet';
+    protected static ?string $model = Kategorie::class;
+    protected static ?string $label = 'Kategorie';
+    protected static ?string $pluralLabel = 'Kategorien';
+    protected static ?string $navigationLabel = 'Hauptkategorie';
+    protected static ?string $navigationIcon = 'heroicon-o-queue-list';
     protected static ?string $navigationGroup = 'Einstellungen';
-    protected static ?int $navigationSort = 11;
+    protected static ?int $navigationSort = 10;
 
     public static function form(Form $form): Form
     {
@@ -33,10 +29,6 @@ class SubkategorieResource extends Resource
             ->schema([
                 Forms\Components\Grid::make()
                     ->schema([
-                        Select::make('kategorie_id')
-                            ->label('Kategorie')
-                            ->relationship('kategorie', 'name')
-                            ->required(),
                         TextInput::make('name')->label('Name')->required(),
                         Textarea::make('bemerkung')->label('Bemerkung'),
                     ])
@@ -49,7 +41,6 @@ class SubkategorieResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')->label('Name'),
-                TextColumn::make('kategorie.name')->label('Hauptkategorie'),
                 TextColumn::make('bemerkung')->label('Bemerkung')->limit(100),
             ])
             ->filters([
@@ -72,9 +63,9 @@ class SubkategorieResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListSubkategories::route('/'),
-            'create' => Pages\CreateSubkategorie::route('/create'),
-            'edit' => Pages\EditSubkategorie::route('/{record}/edit'),
+            'index' => Pages\ListKategories::route('/'),
+            'create' => Pages\CreateKategorie::route('/create'),
+            'edit' => Pages\EditKategorie::route('/{record}/edit'),
         ];
     }
 }

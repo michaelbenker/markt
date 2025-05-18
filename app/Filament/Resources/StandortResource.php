@@ -24,7 +24,9 @@ class StandortResource extends Resource
     protected static ?string $pluralLabel = 'Standorte';
     protected static ?string $navigationLabel = 'Standorte';
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-map-pin';
+    protected static ?string $navigationGroup = 'Einstellungen';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
@@ -59,12 +61,9 @@ class StandortResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getRelations(): array

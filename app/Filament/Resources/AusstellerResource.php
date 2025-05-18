@@ -19,8 +19,11 @@ use Filament\Forms\Components\MultiSelect;
 class AusstellerResource extends Resource
 {
     protected static ?string $model = Aussteller::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $label = 'Aussteller';
+    protected static ?string $pluralLabel = 'Aussteller';
+    protected static ?string $navigationLabel = 'Aussteller';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
@@ -81,9 +84,9 @@ class AusstellerResource extends Resource
                         ->directory('aussteller/files'),
 
 
-                    Select::make('hauptkategorien')
-                        ->relationship('hauptkategorien', 'name')
-                        ->label('Hauptkategorien')
+                    Select::make('kategorien')
+                        ->relationship('kategorien', 'name')
+                        ->label('Kategorien')
                         ->multiple(),
 
                     Select::make('subkategorien')
