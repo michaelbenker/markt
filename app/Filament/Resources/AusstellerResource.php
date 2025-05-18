@@ -5,6 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\AusstellerResource\Pages;
 use App\Filament\Resources\AusstellerResource\RelationManagers;
 use App\Models\Aussteller;
+use App\Models\Kategorie;
+use Illuminate\Support\Facades\Log;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -84,16 +86,25 @@ class AusstellerResource extends Resource
                         ->multiple()
                         ->directory('aussteller/files'),
 
+                    Select::make('filterKategorie')
+                        ->label('Kategorie wählen')
+                        ->options(function () {
+                            return Kategorie::pluck('name', 'id');
+                        })
+                        ->reactive()
+                        ->afterStateUpdated(fn(callable $set) => $set('subkategorien', [])),
 
-                    Select::make('kategorie')
-                        ->relationship('kategorie', 'name')
-                        ->label('Kategorien')
-                        ->multiple(),
-
-                    Select::make('subkategorie')
-                        ->relationship('subkategorie', 'name')
+                    Select::make('subkategorien')
                         ->label('Subkategorien')
-                        ->multiple(),
+                        ->multiple()
+                        ->preload()
+                        ->options(function (callable $get) {
+                            $kategorieId = $get('filterKategorie');
+                            return \App\Models\Subkategorie::query()
+                                ->when($kategorieId, fn($query) => $query->where('kategorie_id', $kategorieId))
+                                ->pluck('name', 'id');
+                        }),
+
                 ]),
             ]);
     }

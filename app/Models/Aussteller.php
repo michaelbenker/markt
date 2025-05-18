@@ -34,6 +34,11 @@ class Aussteller extends Model
         'files' => 'array',
     ];
 
+    public function kategorien()
+    {
+        return $this->belongsToMany(Kategorie::class);
+    }
+
     public function subkategorien()
     {
         return $this->belongsToMany(Subkategorie::class);
