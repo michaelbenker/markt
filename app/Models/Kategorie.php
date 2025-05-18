@@ -10,6 +10,7 @@ class Kategorie extends Model
         'name',
         'bemerkung',
     ];
+    protected $table = 'kategorie';
 
     public function subkategorien()
     {

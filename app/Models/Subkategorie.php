@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Subkategorie extends Model
 {
-
+    protected $table = 'subkategorie';
     protected $fillable = [
         'name',
         'bemerkung',

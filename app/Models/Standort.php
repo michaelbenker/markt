@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Standort extends Model
 {
+    protected $table = 'standort';
     protected $fillable = [
         'name',
         'beschreibung',

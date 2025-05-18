@@ -26,6 +26,7 @@ class SubkategorieResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-list-bullet';
     protected static ?string $navigationGroup = 'Einstellungen';
     protected static ?int $navigationSort = 11;
+    protected static ?string $slug = 'subkategorie';
 
     public static function form(Form $form): Form
     {
@@ -72,7 +73,7 @@ class SubkategorieResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListSubkategories::route('/'),
+            'index' => Pages\ListSubkategorie::route('/'),
             'create' => Pages\CreateSubkategorie::route('/create'),
             'edit' => Pages\EditSubkategorie::route('/{record}/edit'),
         ];

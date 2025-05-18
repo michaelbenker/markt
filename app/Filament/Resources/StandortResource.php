@@ -27,6 +27,7 @@ class StandortResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-map-pin';
     protected static ?string $navigationGroup = 'Einstellungen';
     protected static ?int $navigationSort = 2;
+    protected static ?string $slug = 'standort';
 
     public static function form(Form $form): Form
     {
@@ -76,7 +77,7 @@ class StandortResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStandorts::route('/'),
+            'index' => Pages\ListStandort::route('/'),
             'create' => Pages\CreateStandort::route('/create'),
             'edit' => Pages\EditStandort::route('/{record}/edit'),
         ];

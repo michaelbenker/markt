@@ -11,14 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('stands', function (Blueprint $table) {
+        Schema::create('markt', function (Blueprint $table) {
             $table->id();
-            $table->string('nummer');
-            $table->integer('flaeche');
-            $table->integer('laenge');
+            $table->string('name');
             $table->text('bemerkung')->nullable();
-            $table->decimal('longitude', 10, 7)->nullable();
-            $table->decimal('latitude', 10, 7)->nullable();
+            $table->string('url')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('stands');
+        Schema::dropIfExists('markt');
     }
 };

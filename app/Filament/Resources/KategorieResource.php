@@ -22,6 +22,7 @@ class KategorieResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-queue-list';
     protected static ?string $navigationGroup = 'Einstellungen';
     protected static ?int $navigationSort = 10;
+    protected static ?string $slug = 'kategorie';
 
     public static function form(Form $form): Form
     {
@@ -63,7 +64,7 @@ class KategorieResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListKategories::route('/'),
+            'index' => Pages\Listkategorie::route('/'),
             'create' => Pages\CreateKategorie::route('/create'),
             'edit' => Pages\EditKategorie::route('/{record}/edit'),
         ];

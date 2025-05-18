@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Markt extends Model
 {
+    protected $table = 'markt';
     protected $fillable = [
         'name',
         'bemerkung',

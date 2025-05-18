@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('aussteller_subkategorie', function (Blueprint $table) {
-            $table->foreignId('aussteller_id')->constrained()->onDelete('cascade');
-            $table->foreignId('subkategorie_id')->constrained()->onDelete('cascade');
+            $table->foreignId('aussteller_id')->constrained('aussteller')->onDelete('cascade');
+            $table->foreignId('subkategorie_id')->constrained('subkategorie')->onDelete('cascade');
             $table->primary(['aussteller_id', 'subkategorie_id']);
         });
     }

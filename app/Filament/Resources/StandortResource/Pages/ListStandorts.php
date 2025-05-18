@@ -6,7 +6,7 @@ use App\Filament\Resources\StandortResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
-class ListStandorts extends ListRecords
+class ListStandort extends ListRecords
 {
     protected static string $resource = StandortResource::class;
 

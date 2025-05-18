@@ -24,6 +24,7 @@ class AusstellerResource extends Resource
     protected static ?string $navigationLabel = 'Aussteller';
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?int $navigationSort = 1;
+    protected static ?string $slug = 'aussteller';
 
     public static function form(Form $form): Form
     {
@@ -84,13 +85,13 @@ class AusstellerResource extends Resource
                         ->directory('aussteller/files'),
 
 
-                    Select::make('kategorien')
-                        ->relationship('kategorien', 'name')
+                    Select::make('kategorie')
+                        ->relationship('kategorie', 'name')
                         ->label('Kategorien')
                         ->multiple(),
 
-                    Select::make('subkategorien')
-                        ->relationship('subkategorien', 'name')
+                    Select::make('subkategorie')
+                        ->relationship('subkategorie', 'name')
                         ->label('Subkategorien')
                         ->multiple(),
                 ]),

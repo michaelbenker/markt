@@ -24,6 +24,7 @@ class MarktResource extends Resource
 
     protected static ?string $navigationGroup = 'Einstellungen';
     protected static ?int $navigationSort = 1;
+    protected static ?string $slug = 'markt';
 
 
     public static function form(Form $form): Form
@@ -74,7 +75,7 @@ class MarktResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListMarkts::route('/'),
+            'index' => Pages\ListMarkt::route('/'),
             'create' => Pages\CreateMarkt::route('/create'),
             'edit' => Pages\EditMarkt::route('/{record}/edit'),
         ];

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Aussteller extends Model
 {
+    protected $table = 'aussteller';
     protected $fillable = [
         'firma',
         'anrede',

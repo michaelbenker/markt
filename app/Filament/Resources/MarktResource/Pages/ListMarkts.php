@@ -6,7 +6,7 @@ use App\Filament\Resources\MarktResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
-class ListMarkts extends ListRecords
+class ListMarkt extends ListRecords
 {
     protected static string $resource = MarktResource::class;
 

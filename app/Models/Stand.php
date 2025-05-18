@@ -9,6 +9,7 @@ class Stand extends Model
 {
     use HasFactory;
 
+    protected $table = 'stand';
     protected $fillable = [
         'nummer',
         'flaeche',
