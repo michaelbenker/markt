@@ -33,6 +33,8 @@ class DatabaseSeeder extends Seeder
             MarktSeeder::class,
             AusstellerImportSeeder::class,
             StandortSeeder::class,
+            KategorieSeeder::class,
+            SubkategorieSeeder::class,
         ]);
     }
 }

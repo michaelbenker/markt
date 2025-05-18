@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\{TextInput, Textarea, Select, KeyValue, FileUpload, Grid};
 use Filament\Tables\Columns\{TextColumn, IconColumn};
+use Filament\Forms\Components\MultiSelect;
 
 class AusstellerResource extends Resource
 {
@@ -78,6 +79,17 @@ class AusstellerResource extends Resource
                         ->label('Dateien')
                         ->multiple()
                         ->directory('aussteller/files'),
+
+
+                    Select::make('hauptkategorien')
+                        ->relationship('hauptkategorien', 'name')
+                        ->label('Hauptkategorien')
+                        ->multiple(),
+
+                    Select::make('subkategorien')
+                        ->relationship('subkategorien', 'name')
+                        ->label('Subkategorien')
+                        ->multiple(),
                 ]),
             ]);
     }
