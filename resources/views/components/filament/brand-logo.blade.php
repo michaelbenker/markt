@@ -1,1 +1,1 @@
-<img src="{{ asset('storage/vff_icon_blau.svg') }}" alt="Logo" class="h-8"> Marktverwaltung
+<img src="{{ asset('images/vff_icon.svg') }}" alt="Logo" class="h-8">
