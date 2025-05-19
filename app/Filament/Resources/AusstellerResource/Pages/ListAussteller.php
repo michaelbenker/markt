@@ -6,7 +6,7 @@ use App\Filament\Resources\AusstellerResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
-class ListAusstellers extends ListRecords
+class ListAussteller extends ListRecords
 {
     protected static string $resource = AusstellerResource::class;
 

@@ -22,6 +22,7 @@ use Filament\Tables\Actions\DeleteAction;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail;
 
 class AusstellerResource extends Resource
 {
@@ -197,6 +198,28 @@ class AusstellerResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 DeleteAction::make(),
+                Tables\Actions\Action::make('testEmail')
+                    ->label('E-Mail testen')
+                    ->icon('heroicon-o-envelope')
+                    ->action(function ($record) {
+                        try {
+                            \Mail::raw('Dies ist eine Test-E-Mail von der Markt-App.', function ($message) use ($record) {
+                                $message->to($record->email)
+                                    ->subject('Test-E-Mail Markt-App');
+                            });
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('E-Mail erfolgreich versendet')
+                                ->success()
+                                ->send();
+                        } catch (\Exception $e) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Fehler beim E-Mail-Versand')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
             ]);
     }
 
@@ -210,7 +233,7 @@ class AusstellerResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAusstellers::route('/'),
+            'index' => Pages\ListAussteller::route('/'),
             'create' => Pages\CreateAussteller::route('/create'),
             'edit' => Pages\EditAussteller::route('/{record}/edit'),
         ];
