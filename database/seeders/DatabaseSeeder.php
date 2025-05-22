@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             StandortSeeder::class,
             KategorieSeeder::class,
             SubkategorieSeeder::class,
+            PreisSeeder::class,
         ]);
     }
 }
