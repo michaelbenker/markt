@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('markt', function (Blueprint $table) {
             $table->id();
+            $table->string('slug')->unique();
             $table->string('name');
             $table->text('bemerkung')->nullable();
             $table->string('url')->nullable();

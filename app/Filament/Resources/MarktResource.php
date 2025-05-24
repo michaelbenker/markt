@@ -13,6 +13,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\View;
 
 class MarktResource extends Resource
 {
@@ -30,7 +31,14 @@ class MarktResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
+            ->columns(1)
             ->schema([
+                // View::make('components.markt.subnav')
+                //     ->viewData(fn(\Livewire\Component $livewire): array => [
+                //         'markt' => $livewire->record,
+                //     ]),
+
+
                 Forms\Components\TextInput::make('name')
                     ->label('Name')
                     ->required(),
@@ -68,7 +76,7 @@ class MarktResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            // \App\Filament\Resources\MarktResource\RelationManagers\TermineRelationManager::class,
         ];
     }
 
@@ -79,5 +87,19 @@ class MarktResource extends Resource
             'create' => Pages\CreateMarkt::route('/create'),
             'edit' => Pages\EditMarkt::route('/{record}/edit'),
         ];
+    }
+
+    public static function getRecordRouteKeyName(): ?string
+    {
+        return 'slug';
+    }
+
+    public static function getNavigationUrl(): string
+    {
+        $first = Markt::query()->first();
+
+        return $first
+            ? static::getUrl('edit', ['record' => $first->slug])
+            : static::getUrl('index');
     }
 }
