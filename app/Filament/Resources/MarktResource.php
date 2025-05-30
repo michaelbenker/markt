@@ -76,7 +76,7 @@ class MarktResource extends Resource
     public static function getRelations(): array
     {
         return [
-            // \App\Filament\Resources\MarktResource\RelationManagers\TermineRelationManager::class,
+            \App\Filament\Resources\MarktResource\RelationManagers\TermineRelationManager::class,
         ];
     }
 
@@ -96,10 +96,6 @@ class MarktResource extends Resource
 
     public static function getNavigationUrl(): string
     {
-        $first = Markt::query()->first();
-
-        return $first
-            ? static::getUrl('edit', ['record' => $first->slug])
-            : static::getUrl('index');
+        return static::getUrl('index');
     }
 }
