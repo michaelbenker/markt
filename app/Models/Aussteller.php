@@ -46,4 +46,9 @@ class Aussteller extends Model
     {
         return $this->belongsToMany(Subkategorie::class);
     }
+
+    public function buchungen()
+    {
+        return $this->hasMany(Buchung::class);
+    }
 }

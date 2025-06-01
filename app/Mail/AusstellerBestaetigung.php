@@ -8,6 +8,10 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Mail\Mailables\Attachment;
 
 class AusstellerBestaetigung extends Mailable
 {
@@ -18,6 +22,20 @@ class AusstellerBestaetigung extends Mailable
     public function __construct($aussteller)
     {
         $this->aussteller = $aussteller;
+    }
+
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: 'Ihre Buchungsbestätigung',
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            view: 'emails.aussteller-bestaetigung',
+        );
     }
 
     public function build()
@@ -41,6 +59,19 @@ class AusstellerBestaetigung extends Mailable
      */
     public function attachments(): array
     {
+        $buchung = $this->aussteller->buchungen()->latest()->first();
+
+        if ($buchung) {
+            $pdf = Pdf::loadView('pdf.buchung', ['buchung' => $buchung]);
+
+            return [
+                Attachment::fromData(
+                    fn() => $pdf->output(),
+                    'buchung-' . $buchung->id . '.pdf'
+                )->withMime('application/pdf'),
+            ];
+        }
+
         return [];
     }
 }
