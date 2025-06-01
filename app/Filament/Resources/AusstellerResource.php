@@ -31,7 +31,7 @@ class AusstellerResource extends Resource
     protected static ?string $pluralLabel = 'Aussteller';
     protected static ?string $navigationLabel = 'Aussteller';
     protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
     protected static ?string $slug = 'aussteller';
 
     public static function form(Form $form): Form
@@ -40,6 +40,7 @@ class AusstellerResource extends Resource
             ->schema([
                 Tabs::make('Aussteller')
                     ->columnSpan('full')
+                    ->persistTabInQueryString()
                     ->tabs([
                         Tab::make('Allgemein')
                             ->schema([
@@ -221,13 +222,6 @@ class AusstellerResource extends Resource
                         }
                     }),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
     }
 
     public static function getPages(): array

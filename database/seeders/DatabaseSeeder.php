@@ -35,7 +35,9 @@ class DatabaseSeeder extends Seeder
             StandortSeeder::class,
             KategorieSeeder::class,
             SubkategorieSeeder::class,
-            PreisSeeder::class,
+            LeistungSeeder::class,
+            TerminSeeder::class,
+            BuchungSeeder::class,
         ]);
     }
 }

@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Preis extends Model
+class Leistung extends Model
 {
     use HasFactory;
 
-    protected $table = 'preis';
+    protected $table = 'leistung';
 
     protected $fillable = [
         'name',
@@ -18,4 +18,11 @@ class Preis extends Model
         'einheit',
         'preis',
     ];
+
+    public function buchungen()
+    {
+        return $this->belongsToMany(Buchungleistung::class)
+            ->withPivot('preis', 'menge')
+            ->withTimestamps();
+    }
 }

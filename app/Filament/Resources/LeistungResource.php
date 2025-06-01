@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\PreisResource\Pages;
-use App\Models\Preis;
+use App\Filament\Resources\LeistungResource\Pages;
+use App\Models\Leistung;
 use Filament\Forms;
 use Filament\Tables;
 use Filament\Resources\Resource;
@@ -11,13 +11,13 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
 
-class PreisResource extends Resource
+class LeistungResource extends Resource
 {
-    protected static ?string $model = Preis::class;
+    protected static ?string $model = Leistung::class;
 
-    protected static ?string $label = 'Preis';
-    protected static ?string $pluralLabel = 'Preise';
-    protected static ?string $navigationLabel = 'Preise';
+    protected static ?string $label = 'Leistung';
+    protected static ?string $pluralLabel = 'Leistungen';
+    protected static ?string $navigationLabel = 'Leistungen';
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-euro';
 
@@ -100,9 +100,9 @@ class PreisResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPreis::route('/'),
-            'create' => Pages\CreatePreis::route('/create'),
-            'edit' => Pages\EditPreis::route('/{record}/edit'),
+            'index' => Pages\ListLeistung::route('/'),
+            'create' => Pages\CreateLeistung::route('/create'),
+            'edit' => Pages\EditLeistung::route('/{record}/edit'),
         ];
     }
 }

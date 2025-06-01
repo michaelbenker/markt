@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\PreisResource\Pages;
+namespace App\Filament\Resources\BuchungResource\Pages;
 
-use App\Filament\Resources\PreisResource;
+use App\Filament\Resources\BuchungResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
-class ListPreis extends ListRecords
+class ListBuchungs extends ListRecords
 {
-    protected static string $resource = PreisResource::class;
+    protected static string $resource = BuchungResource::class;
 
     protected function getHeaderActions(): array
     {

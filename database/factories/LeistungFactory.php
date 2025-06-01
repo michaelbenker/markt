@@ -2,12 +2,12 @@
 
 namespace Database\Factories;
 
-use App\Models\Preis;
+use App\Models\Leistung;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class PreisFactory extends Factory
+class LeistungFactory extends Factory
 {
-    protected $model = Preis::class;
+    protected $model = Leistung::class;
 
     public function definition(): array
     {

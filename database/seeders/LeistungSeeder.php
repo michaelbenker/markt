@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Preis;
+use App\Models\Leistung;
 
-class PreisSeeder extends Seeder
+class LeistungSeeder extends Seeder
 {
     public function run(): void
     {
@@ -48,7 +48,7 @@ class PreisSeeder extends Seeder
         ];
 
         foreach ($preise as $eintrag) {
-            Preis::create($eintrag);
+            Leistung::create($eintrag);
         }
     }
 }
