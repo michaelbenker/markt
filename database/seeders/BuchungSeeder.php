@@ -65,10 +65,7 @@ class BuchungSeeder extends Seeder
 
             // Füge die Leistungen hinzu
             foreach ($leistungen as $leistung) {
-                $buchung->preise()->attach($leistung['leistung_id'], [
-                    'menge' => $leistung['menge'],
-                    'preis' => $leistung['preis']
-                ]);
+                $buchung->leistungen()->create($leistung);
             }
         }
     }

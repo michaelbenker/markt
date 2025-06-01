@@ -181,8 +181,9 @@ class BuchungResource extends Resource
                                 ])
                                 ->columns(3)
                                 ->addActionLabel('Leistung hinzufügen')
-                                ->reorderable(false)
-                                ->defaultItems(0),
+                                ->reorderable(true)
+                                ->defaultItems(0)
+                                ->helperText('Bitte nach dem Hinzufügen und Entfernen einer Leistung manuell speichern.'),
                         ]),
                 ])
         ]);

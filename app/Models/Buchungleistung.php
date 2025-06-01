@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use DragonCode\Contracts\Http\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class BuchungLeistung extends Model
 {
     protected $table = 'buchung_leistung';
-    protected $fillable = [
-        'leistung_id',
-        'preis',
-        'menge',
-    ];
+
+    protected $fillable = ['leistung_id', 'preis', 'menge', 'sort'];
+
+    public function buildSortQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return static::query();
+    }
 
     public function buchung()
     {

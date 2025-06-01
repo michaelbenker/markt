@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('leistung_id')->constrained('leistung')->cascadeOnDelete();
             $table->decimal('preis', 8, 2)->nullable(); // optionaler Preis
             $table->integer('menge')->default(1);
+            $table->integer('sort')->nullable();
             $table->timestamps();
         });
     }
