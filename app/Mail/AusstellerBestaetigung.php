@@ -6,6 +6,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Log;
 
 class AusstellerBestaetigung extends Mailable
 {
@@ -20,7 +22,14 @@ class AusstellerBestaetigung extends Mailable
 
     public function build()
     {
-        return $this->markdown('emails.aussteller.bestaetigung')
+        $toEmail = App::environment('production')
+            ? $this->aussteller->email
+            : config('mail.dev_redirect_email');
+
+        // Log::debug('Versand an: ' . $toEmail);
+
+        return $this->to($toEmail)
+            ->markdown('emails.aussteller.bestaetigung')
             ->subject('Deine Anmeldung zum Markt')
             ->with(['aussteller' => $this->aussteller]);
     }

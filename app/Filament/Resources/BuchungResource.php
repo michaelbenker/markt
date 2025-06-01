@@ -22,6 +22,7 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
 use Filament\Forms\Components\ToggleButtons;
+use Illuminate\Support\Facades\Mail;
 
 class BuchungResource extends Resource
 {
@@ -69,21 +70,7 @@ class BuchungResource extends Resource
                             TextInput::make('standplatz')->required(),
                             Select::make('aussteller_id')
                                 ->relationship('aussteller', 'name')
-                                ->getOptionLabelFromRecordUsing(function ($record) {
-                                    $parts = [];
-
-                                    if ($record->firma) {
-                                        $parts[] = $record->firma;
-                                    }
-
-                                    if ($record->vorname && $record->name) {
-                                        $parts[] = "{$record->name}, {$record->vorname}";
-                                    } elseif ($record->name) {
-                                        $parts[] = $record->name;
-                                    }
-
-                                    return implode(' | ', $parts);
-                                })
+                                ->getOptionLabelFromRecordUsing(fn($record) => self::formatAusstellerName($record))
                                 ->searchable()
                                 ->preload()
                                 ->required(),
@@ -183,7 +170,7 @@ class BuchungResource extends Resource
                                 ->addActionLabel('Leistung hinzufügen')
                                 ->reorderable(true)
                                 ->defaultItems(0)
-                                ->helperText('Bitte nach dem Hinzufügen und Entfernen einer Leistung manuell speichern.'),
+                                ->helperText('Nach dem Hinzufügen, Sortieren und Entfernen einer Leistung manuell speichern.'),
                         ]),
                 ])
         ]);
@@ -216,7 +203,8 @@ class BuchungResource extends Resource
                     ->sortable(),
                 TextColumn::make('standort.name'),
                 TextColumn::make('standplatz'),
-                TextColumn::make('aussteller.name'),
+                TextColumn::make('aussteller.name')
+                    ->formatStateUsing(fn($record) => self::formatAusstellerName($record->aussteller)),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -224,6 +212,15 @@ class BuchungResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('E-Mail senden')
+                    ->action(function ($record) {
+                        Mail::send(
+                            new \App\Mail\AusstellerBestaetigung($record->aussteller)
+                        );
+                    })
+                    ->requiresConfirmation()
+                    ->color('success')
+                    ->icon('heroicon-o-envelope'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -247,6 +244,23 @@ class BuchungResource extends Resource
             // Unterschiedliche Jahre
             return $startDate->format('d.m.Y') . ' - ' . $endDate->format('d.m.Y');
         }
+    }
+
+    protected static function formatAusstellerName($aussteller): string
+    {
+        $parts = [];
+
+        if ($aussteller->firma) {
+            $parts[] = $aussteller->firma;
+        }
+
+        if ($aussteller->vorname && $aussteller->name) {
+            $parts[] = "{$aussteller->name}, {$aussteller->vorname}";
+        } elseif ($aussteller->name) {
+            $parts[] = $aussteller->name;
+        }
+
+        return implode(' | ', $parts);
     }
 
     public static function getPages(): array
