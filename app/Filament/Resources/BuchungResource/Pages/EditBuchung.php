@@ -13,6 +13,17 @@ class EditBuchung extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('E-Mail senden')
+                ->label('Bestätigung senden')
+                ->action(function () {
+                    \Illuminate\Support\Facades\Mail::send(
+                        new \App\Mail\AusstellerBestaetigung($this->record->aussteller)
+                    );
+                })
+                ->requiresConfirmation()
+                ->color('success')
+                ->icon('heroicon-o-envelope')
+                ->iconSize('md'),
             Actions\ActionGroup::make([
                 Actions\DeleteAction::make(),
             ]),

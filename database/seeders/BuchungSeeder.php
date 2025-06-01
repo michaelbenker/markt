@@ -50,17 +50,19 @@ class BuchungSeeder extends Seeder
             ],
         ];
 
-        // Erstelle Buchungen für Aussteller 1-4
-        for ($i = 1; $i <= 4; $i++) {
+        $status = ['anfrage', 'bearbeitung', 'bestätigt', 'erledigt', 'abgelehnt'];
+
+        for ($i = 1; $i <= 100; $i++) {
             $buchung = Buchung::create([
-                'status' => 'anfrage',
-                'termin_id' => 1,
+                'status' => $status[array_rand($status)],
+                'termin_id' => rand(1, 2),
                 'standort_id' => 1,
                 'standplatz' => $i,
                 'aussteller_id' => $i,
                 'stand' => $stand,
                 'warenangebot' => $warenangebot,
                 'herkunft' => $herkunft,
+                'created_at' => now()->subDays(rand(0, 30))->setHour(rand(8, 20))->setMinute(rand(0, 59)),
             ]);
 
             // Füge die Leistungen hinzu

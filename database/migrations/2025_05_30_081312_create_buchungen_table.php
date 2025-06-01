@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('buchung', function (Blueprint $table) {
             $table->id();
-            $table->enum('status', ['anfrage', 'bestätigt', 'abgelehnt'])->default('anfrage');
+            $table->enum('status', ['anfrage', 'bearbeitung', 'bestätigt', 'erledigt', 'abgelehnt'])->default('anfrage');
             $table->foreignId('termin_id')->constrained('termin')->cascadeOnDelete();
             $table->foreignId('standort_id')->constrained('standort')->cascadeOnDelete();
             $table->string('standplatz');
