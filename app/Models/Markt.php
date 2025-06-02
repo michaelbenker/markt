@@ -2,16 +2,31 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Markt extends Model
 {
+    use HasFactory;
+
     protected $table = 'markt';
     protected $fillable = [
-        'slug',
         'name',
-        'bemerkung',
-        'url',
+        'slug',
+        'beschreibung',
+        'start',
+        'ende',
+        'ort',
+        'strasse',
+        'hausnummer',
+        'plz',
+        'land',
+        'status',
+    ];
+
+    protected $casts = [
+        'start' => 'datetime',
+        'ende' => 'datetime',
     ];
 
     public function getRouteKeyName(): string

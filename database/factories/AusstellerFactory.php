@@ -20,13 +20,12 @@ class AusstellerFactory extends Factory
             'hausnummer' => $this->faker->buildingNumber,
             'plz' => $this->faker->postcode,
             'ort' => $this->faker->city,
-            'land' => $this->faker->randomElement(['Deutschland', 'Österreich', 'Schweiz', 'Italien', 'Frankreich', 'Niederlande']),
+            'land' => $this->faker->randomElement(['Deutschland', 'Österreich', 'Schweiz']),
             'telefon' => $this->faker->phoneNumber,
             'mobil' => $this->faker->phoneNumber,
-            'homepage' => $this->faker->url,
             'email' => $this->faker->unique()->safeEmail,
-            'briefanrede' => $this->faker->title,
-            'bemerkung' => $this->faker->paragraph,
+            'homepage' => $this->faker->url,
+            'bemerkung' => $this->faker->optional()->paragraph,
         ];
     }
 }
