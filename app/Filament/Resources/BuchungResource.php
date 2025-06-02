@@ -240,6 +240,15 @@ class BuchungResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
+                Tables\Filters\SelectFilter::make('status')
+                    ->options([
+                        'anfrage' => 'Anfrage',
+                        'bearbeitung' => 'Bearbeitung',
+                        'bestätigt' => 'Bestätigt',
+                        'erledigt' => 'Erledigt',
+                        'abgelehnt' => 'Abgelehnt',
+                    ])
+                    ->label('Status'),
                 Tables\Filters\SelectFilter::make('markt')
                     ->relationship('termin.markt', 'name')
                     ->label('Markt'),

@@ -44,7 +44,7 @@ class AusstellerBestaetigung extends Mailable
             ? $this->aussteller->email
             : config('mail.dev_redirect_email');
 
-        Log::debug('Versand an: ' . $toEmail);
+        // Log::debug('Versand an: ' . $toEmail);
 
         return $this->to($toEmail)
             ->markdown('emails.aussteller.bestaetigung')

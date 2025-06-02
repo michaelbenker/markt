@@ -134,6 +134,7 @@ return [
     */
 
     'watchers' => [
+        Watchers\MailWatcher::class => true,
         Watchers\BatchWatcher::class => env('TELESCOPE_BATCH_WATCHER', true),
 
         Watchers\CacheWatcher::class => [
