@@ -15,7 +15,7 @@ class AnfrageController extends Controller
             $query->where('start', '>', now());
         })->get();
 
-        return view('buchung.create', compact('maerkte'));
+        return view('anfrage.create', compact('maerkte'));
     }
 
     public function store(Request $request)

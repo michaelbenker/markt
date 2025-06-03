@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use DragonCode\Contracts\Http\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class BuchungLeistung extends Model
