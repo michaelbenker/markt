@@ -1,0 +1,19 @@
+{
+    "allgemein": {
+        "name": "veranstaltungsforum fürstenfeld",
+        "abteilung": "Märkte & Veranstaltungen",
+        "telefon": "+49 8141 6665140",
+        "web": "https://fuerstenfeld.de",
+        "strasse": "Fürstenfeld 12",
+        "plz": 82256,
+        "ort": "Fürstenfeldbruck",
+        "leitung": "Norbert Leinweber",
+        "sitz": "Fürstenfeldbruck",
+        "registergericht": "AG München, HRA 79973"
+    },
+    "ansprechpartner": {
+        "name": "Michaela Landmann",
+        "telefon": "+49 8141 6665166",
+        "email": "michaela.landmann@fuerstenfeld.de"
+    }
+}
