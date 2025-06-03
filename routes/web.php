@@ -3,16 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BuchungPublicController;
 use App\Http\Controllers\BuchungController;
+use App\Http\Controllers\AnfrageController;
 
-Route::get('/buchung', [BuchungPublicController::class, 'create']);
-Route::post('/buchung', [BuchungPublicController::class, 'store']);
 Route::get('/buchung/{uuid}', [BuchungPublicController::class, 'show']);
 
-Route::prefix('buchung')->name('buchung.')->group(function () {
-    Route::get('/create', [BuchungController::class, 'create'])->name('create');
-    Route::post('/', [BuchungController::class, 'store'])->name('store');
-    Route::get('/success', [BuchungController::class, 'success'])->name('success');
-});
+Route::get('/anfrage', [AnfrageController::class, 'create'])->name('anfrage.create');
+Route::post('/anfrage', [AnfrageController::class, 'store'])->name('anfrage.store');
+Route::get('/anfrage/success', [AnfrageController::class, 'success'])->name('anfrage.success');
 
 Route::get('/', function () {
     return view('home');

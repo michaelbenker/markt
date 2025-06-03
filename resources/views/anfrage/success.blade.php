@@ -15,13 +15,13 @@
             </p>
 
             <div class="space-y-4">
-                <a href="{{ route('buchung.create') }}"
+                <a href="{{ route('anfrage.create') }}"
                     class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded">
                     Neue Buchungsanfrage
                 </a>
 
                 <p class="text-sm text-gray-500">
-                    Bei Fragen erreichen Sie uns unter <a href="mailto:info@markt-app.de" class="text-indigo-600 hover:text-indigo-700">info@markt-app.de</a>
+                    Bei Fragen erreichen Sie uns unter <a href="mailto:{{ $stammdaten['ansprechpartner']['email'] }}" class="text-indigo-600 hover:text-indigo-700">{{ $stammdaten['ansprechpartner']['email'] }}</a>
                 </p>
             </div>
         </div>

@@ -19,8 +19,8 @@
     </main>
     <footer class="px-6 text-xs text-gray-600 bg-gray-100  flex items-center justify-center">
         <div class="text-center">
-            <b>veranstaltungsforum fürstenfeld</b> · Märkte & Veranstaltungen · Michael Landmann
-            <br>Tel. <a href="tel:+4981416665166">+49 8141 / 6665-166</a> · E-Mail: <a href="mailto:michaela.landmann@fuerstenfeld.de">michaela.landmann@fuerstenfeld.de</a>
+            <b>{{ $stammdaten['allgemein']['name'] }}</b> · {{ $stammdaten['allgemein']['abteilung'] }} · {{ $stammdaten['ansprechpartner']['name'] }}
+            <br>Tel. <a href="tel:{{ preg_replace('/\D+/', '', $stammdaten['ansprechpartner']['telefon']) }}">{{ $stammdaten['ansprechpartner']['telefon'] }}</a> · E-Mail: <a href="mailto:{{ $stammdaten['ansprechpartner']['email'] }}">{{ $stammdaten['ansprechpartner']['email'] }}</a>
         </div>
     </footer>
 </body>

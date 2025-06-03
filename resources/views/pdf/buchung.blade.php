@@ -96,10 +96,10 @@
     </div>
 
     <div class="page-footer">
-        <b>veranstaltungsforum fürstenfeld</b> · Märkte & Veranstaltungen · Michael Landmann
-        <br>Fürstenfeld 12 · 82256 Fürstenfeldbruck · Tel. +49 8141 / 6665-166
-        <br>E-Mail: michaela.landmann@fuerstenfeld.de · www.fuerstenfeld.de
-        <br>Werkleitung: Norbert Leinweber · Sitz: Fürstenfeldbruck; Registergericht: AG München, HRA 79973
+        <b>{{ $stammdaten['allgemein']['name'] }}</b> · {{ $stammdaten['allgemein']['abteilung'] }} · {{ $stammdaten['ansprechpartner']['name'] }}
+        <br>{{ $stammdaten['allgemein']['strasse'] }} · {{ $stammdaten['allgemein']['plz'] }} {{ $stammdaten['allgemein']['ort'] }} · Tel. {{ $stammdaten['ansprechpartner']['telefon'] }}
+        <br>E-Mail: {{ $stammdaten['ansprechpartner']['email'] }} · {{ $stammdaten['allgemein']['web'] }}
+        <br>Werkleitung: {{ $stammdaten['allgemein']['leitung'] }} · Sitz: {{ $stammdaten['allgemein']['sitz'] }}; Registergericht: {{ $stammdaten['allgemein']['registergericht'] }}
     </div>
 
     <div class="content">

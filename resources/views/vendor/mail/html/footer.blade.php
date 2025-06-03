@@ -4,10 +4,10 @@
             <tr>
                 <td class="content-cell" align="center">
                     <p style="text-align: left; font-size: 0.7em;">
-                        <b>veranstaltungsforum fürstenfeld</b> · Märkte & Veranstaltungen · Michael Landmann
-                        <br>Fürstenfeld 12 · 82256 Fürstenfeldbruck · Tel. <a href="tel:+4981416665166">+49 8141 / 6665-166</a>
-                        <br>E-Mail: michaela.landmann@fuerstenfeld.de <mailto:michaela.landmann@fuerstenfeld.de> · <a href="https://www.fuerstenfeld.de">www.fuerstenfeld.de</a>
-                            <br>Werkleitung: Norbert Leinweber · Sitz: Fürstenfeldbruck; Registergericht: AG München, HRA 79973
+                        <b>{{ $stammdaten['allgemein']['name'] }}</b> · {{ $stammdaten['allgemein']['abteilung'] }} · {{ $stammdaten['ansprechpartner']['name'] }}
+                        <br>{{ $stammdaten['allgemein']['strasse'] }} · {{ $stammdaten['allgemein']['plz'] }} {{ $stammdaten['allgemein']['ort'] }} · Tel. <a href="tel:{{ preg_replace('/\D+/', '', $stammdaten['ansprechpartner']['telefon']) }}">{{ $stammdaten['ansprechpartner']['telefon'] }}</a>
+                        <br>E-Mail: <a href="mailto:{{ $stammdaten['ansprechpartner']['email'] }}">{{ $stammdaten['ansprechpartner']['email'] }}</a> · <a href="{{ $stammdaten['allgemein']['web'] }}">{{ $stammdaten['allgemein']['web'] }}</a>
+                        <br>Werkleitung: {{ $stammdaten['allgemein']['leitung'] }} · Sitz: {{ $stammdaten['allgemein']['sitz'] }}; Registergericht: {{ $stammdaten['allgemein']['registergericht'] }}
                     </p>
                 </td>
             </tr>

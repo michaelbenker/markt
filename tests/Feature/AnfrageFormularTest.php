@@ -3,26 +3,24 @@
 namespace Tests\Feature;
 
 use App\Models\Markt;
-use App\Models\Aussteller;
+use App\Models\Anfrage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class BuchungTest extends TestCase
+class AnfrageFormularTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_buchung_wird_mit_status_anfrage_erstellt()
+    public function test_anfrage_formular_speichert_erfolgreich()
     {
-        // Arrange
         $markt = Markt::factory()->create();
-        $aussteller = Aussteller::factory()->create();
 
-        $buchungData = [
+        $payload = [
             'markt' => $markt->id,
-            'firma' => 'Test Firma',
+            'firma' => 'Test GmbH',
             'anrede' => 'Herr',
             'vorname' => 'Max',
-            'name' => 'Mustermann',
+            'nachname' => 'Mustermann',
             'strasse' => 'Teststraße',
             'hausnummer' => '1',
             'plz' => '12345',
@@ -40,18 +38,20 @@ class BuchungTest extends TestCase
                 'eigenfertigung' => 50,
                 'industrieware_nicht_entwicklungslaender' => 30,
                 'industrieware_entwicklungslaender' => 20
-            ]
+            ],
+            'bereits_ausgestellt' => true,
+            'bemerkung' => 'Test-Bemerkung',
         ];
 
-        // Act
-        $response = $this->post('/buchung', $buchungData);
+        $response = $this->post(route('anfrage.store'), $payload);
 
-        // Assert
-        $response->assertRedirect();
-        $this->assertDatabaseHas('buchung', [
-            'status' => 'anfrage',
+        $response->assertRedirect(route('anfrage.success'));
+        $this->assertDatabaseHas('anfrage', [
+            'email' => 'test@example.com',
             'markt_id' => $markt->id,
-            'aussteller_id' => $aussteller->id
+            'vorname' => 'Max',
+            'nachname' => 'Mustermann',
+            'bemerkung' => 'Test-Bemerkung',
         ]);
     }
 }
