@@ -26,25 +26,27 @@ class AnfrageResource extends Resource
             ->modifyQueryUsing(fn(Builder $query) => $query->where('importiert', false))
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Datum der Anfrage')
-                    ->dateTime('d.m.Y H:i')
+                    ->label('Vom')
+                    ->dateTime('d.m.Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('markt.name')
+                Tables\Columns\TextColumn::make('markt')
                     ->label('Markt')
-                    ->formatStateUsing(fn($state, $record) => $record->markt?->name ?? '-')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('markt.start')
-                    ->label('Markt-Datum')
-                    ->formatStateUsing(fn($state, $record) => $record->markt?->start ? \Carbon\Carbon::parse($record->markt->start)->format('d.m.Y') : '-')
-                    ->sortable(),
+                    ->formatStateUsing(function ($state, $record) {
+                        $markt = $record->markt;
+                        if (!$markt) return '-';
+                        $name = $markt->name ?? '-';
+                        $datum = $markt->termine?->sortBy('start')->first()?->start;
+                        $datumStr = $datum ? \Carbon\Carbon::parse($datum)->format('d.m.Y') : '-';
+                        return $name . ' (' . $datumStr . ')';
+                    }),
                 Tables\Columns\TextColumn::make('firma')
                     ->label('Firma')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('vorname')
-                    ->label('Vorname')
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('nachname')
-                    ->label('Nachname')
+                    ->label('Name')
+                    ->formatStateUsing(function ($state, $record) {
+                        return $record->nachname . ', ' . $record->vorname;
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('ort')
                     ->label('Ort')
@@ -60,17 +62,14 @@ class AnfrageResource extends Resource
             ->actions([
                 // Keine Edit-Action
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->headerActions([]);
     }
 
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListAnfrage::route('/'),
+            'view' => Pages\ViewAnfrage::route('/{record}'),
         ];
     }
 }

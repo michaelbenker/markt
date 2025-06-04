@@ -8,6 +8,8 @@ use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\HtmlString;
 use Filament\Actions\Action;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\BuchungProtokoll;
+use Illuminate\Support\Facades\Auth;
 
 class EditBuchung extends EditRecord
 {
@@ -21,6 +23,14 @@ class EditBuchung extends EditRecord
                 ->icon('heroicon-o-printer')
                 ->action(function ($record) {
                     $pdf = Pdf::loadView('pdf.buchung', ['buchung' => $record]);
+                    BuchungProtokoll::create([
+                        'buchung_id' => $record->id,
+                        'user_id' => Auth::id(),
+                        'aktion' => 'buchungsbestaetigung_pdf_erzeugt',
+                        'from_status' => $record->status,
+                        'to_status' => $record->status,
+                        'details' => 'Buchungsbestätigung als PDF erzeugt.',
+                    ]);
                     return response()->streamDownload(function () use ($pdf) {
                         echo $pdf->output();
                     }, 'buchung-' . $record->id . '.pdf');

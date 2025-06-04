@@ -138,12 +138,10 @@ class AusstellerResource extends Resource
                                                 'pinterest' => 'Pinterest',
                                                 'xing' => 'Xing',
                                                 'other' => 'Andere',
-                                            ])
-                                            ->required(),
+                                            ]),
                                         TextInput::make('url')
                                             ->label('URL')
-                                            ->url()
-                                            ->required(),
+                                            ->url(),
                                     ])
                                     ->columns(2)
                                     ->addActionLabel('hinzufügen')

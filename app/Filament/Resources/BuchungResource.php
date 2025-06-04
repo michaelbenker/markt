@@ -191,6 +191,10 @@ class BuchungResource extends Resource
                                     ->defaultItems(0)
                                     ->helperText('Nach dem Hinzufügen, Sortieren und Entfernen einer Leistung manuell speichern.'),
                             ]),
+                        Tab::make('Protokoll')
+                            ->schema([
+                                \Filament\Forms\Components\View::make('filament.resources.buchung-resource.tabs.protokoll')
+                            ]),
                     ])
             ]);
     }

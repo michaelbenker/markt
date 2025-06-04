@@ -12,6 +12,8 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Mail\Mailables\Attachment;
+use App\Models\BuchungProtokoll;
+use Illuminate\Support\Facades\Auth;
 
 class AusstellerBestaetigung extends Mailable
 {
@@ -44,7 +46,17 @@ class AusstellerBestaetigung extends Mailable
             ? $this->aussteller->email
             : config('mail.dev_redirect_email');
 
-        // Log::debug('Versand an: ' . $toEmail);
+        $buchung = $this->aussteller->buchungen()->latest()->first();
+        if ($buchung) {
+            BuchungProtokoll::create([
+                'buchung_id' => $buchung->id,
+                'user_id' => Auth::id(),
+                'aktion' => 'buchungsbestaetigung_email_versendet',
+                'from_status' => $buchung->status,
+                'to_status' => $buchung->status,
+                'details' => 'Buchungsbestätigung wurde per E-Mail an ' . $toEmail . ' versendet.',
+            ]);
+        }
 
         return $this->to($toEmail)
             ->markdown('emails.aussteller.bestaetigung')

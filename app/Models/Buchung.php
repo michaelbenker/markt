@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Models\BuchungProtokoll;
+use Illuminate\Support\Facades\Auth;
 
 class Buchung extends Model
 {
@@ -34,6 +36,41 @@ class Buchung extends Model
                 $model->uuid = Str::uuid();
             }
         });
+
+        static::created(function ($model) {
+            BuchungProtokoll::create([
+                'buchung_id' => $model->id,
+                'user_id' => Auth::id(),
+                'aktion' => 'created',
+                'from_status' => '',
+                'to_status' => $model->status,
+                'details' => 'Buchung wurde erstellt.',
+            ]);
+        });
+
+        static::updating(function ($model) {
+            $original = $model->getOriginal();
+            // Statuswechsel gesondert loggen
+            if (array_key_exists('status', $model->getDirty()) && $original['status'] !== $model->status) {
+                BuchungProtokoll::create([
+                    'buchung_id' => $model->id,
+                    'user_id' => Auth::id(),
+                    'aktion' => 'status_changed',
+                    'from_status' => $original['status'],
+                    'to_status' => $model->status,
+                    'details' => 'Status wurde geändert.',
+                ]);
+            } else {
+                BuchungProtokoll::create([
+                    'buchung_id' => $model->id,
+                    'user_id' => Auth::id(),
+                    'aktion' => 'updated',
+                    'from_status' => $original['status'] ?? '',
+                    'to_status' => $model->status,
+                    'details' => json_encode($model->getDirty()),
+                ]);
+            }
+        });
     }
 
     public function termin()
@@ -54,5 +91,10 @@ class Buchung extends Model
     public function leistungen()
     {
         return $this->hasMany(Buchungleistung::class);
+    }
+
+    public function protokolle()
+    {
+        return $this->hasMany(\App\Models\BuchungProtokoll::class);
     }
 }

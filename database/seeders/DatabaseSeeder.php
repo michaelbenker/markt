@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
             LeistungSeeder::class,
             TerminSeeder::class,
             BuchungSeeder::class,
+            AnfrageSeeder::class,
         ]);
     }
 }

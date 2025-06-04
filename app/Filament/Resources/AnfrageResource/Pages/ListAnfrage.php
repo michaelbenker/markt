@@ -13,7 +13,7 @@ class ListAnfrage extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            // Kein Create-Button mehr
         ];
     }
 }
