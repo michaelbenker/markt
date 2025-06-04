@@ -9,3 +9,7 @@ php artisan migrate:fresh --seed
 ## Migration
 
 php artisan make:migration name_der_migration
+
+## Deployment
+
+chmod +x deploy.sh
