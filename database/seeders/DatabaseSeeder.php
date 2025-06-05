@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Michael Benker',
                 'password' => Hash::make('1Pdimnmk!'),
+                'is_admin' => true,
             ]
         );
         User::updateOrCreate(
@@ -26,6 +27,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Michaela Landmann',
                 'password' => Hash::make('test1234'),
+                'is_admin' => true,
             ]
         );
 
