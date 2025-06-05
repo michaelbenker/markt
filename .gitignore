@@ -4,6 +4,7 @@
 /storage/pail
 /vendor
 .env
+.env_local
 .env.backup
 .env.production
 .phpactor.json

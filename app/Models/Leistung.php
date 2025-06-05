@@ -21,7 +21,7 @@ class Leistung extends Model
 
     public function buchungen()
     {
-        return $this->belongsToMany(Buchungleistung::class)
+        return $this->belongsToMany(BuchungLeistung::class)
             ->withPivot('preis', 'menge')
             ->withTimestamps();
     }

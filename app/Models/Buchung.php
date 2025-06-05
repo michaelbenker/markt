@@ -90,7 +90,7 @@ class Buchung extends Model
 
     public function leistungen()
     {
-        return $this->hasMany(Buchungleistung::class);
+        return $this->hasMany(BuchungLeistung::class);
     }
 
     public function protokolle()
