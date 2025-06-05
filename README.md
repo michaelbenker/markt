@@ -1,10 +1,12 @@
 # Markt App
 
+```
 php artisan cache:clear
 php artisan config:clear
 php artisan route:clear
 php artisan view:clear
 php artisan migrate:fresh --seed
+```
 
 ## Migration
 
@@ -12,7 +14,7 @@ php artisan make:migration name_der_migration
 
 ## Deployment
 
-chmod +x deploy.sh
+`./deploy.sh`
 
 ## Hetzner
 
@@ -29,5 +31,4 @@ remote commands
 /usr/bin/php84 artisan config:cache
 
 /usr/bin/php84 artisan migrate:fresh --seed
-
 ```

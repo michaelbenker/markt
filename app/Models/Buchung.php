@@ -19,12 +19,14 @@ class Buchung extends Model
         'stand',
         'warenangebot',
         'herkunft',
+        'werbematerial',
     ];
 
     protected $casts = [
         'stand' => 'array',
         'warenangebot' => 'array',
         'herkunft' => 'array',
+        'werbematerial' => 'array',
     ];
 
     protected static function boot()

@@ -27,6 +27,21 @@ class BuchungSeeder extends Seeder
             'industrieware_entwicklungslaender' => 20
         ];
 
+        $werbematerial = [
+            [
+                'typ' => 'flyer',
+                'anzahl' => 10,
+                'physisch' => true,
+                'digital' => false,
+            ],
+            [
+                'typ' => 'brochure',
+                'anzahl' => 10,
+                'physisch' => true,
+                'digital' => false,
+            ],
+        ];
+
         $leistungen = [
             [
                 'leistung_id' => 1,
@@ -62,6 +77,7 @@ class BuchungSeeder extends Seeder
                 'stand' => $stand,
                 'warenangebot' => $warenangebot,
                 'herkunft' => $herkunft,
+                'werbematerial' => $werbematerial,
                 'created_at' => now()->subDays(rand(0, 30))->setHour(rand(8, 20))->setMinute(rand(0, 59)),
             ]);
 

@@ -1,14 +1,6 @@
-<!DOCTYPE html>
-<html lang="de">
-
-<head>
-    <meta charset="UTF-8">
-    <title>Markt-App</title>
-</head>
-
-<body>
-    <h1>Willkommen zur Markt-App</h1>
-    <p>Hier entsteht eine Anwendung zur Verwaltung von Ausstellern und Märkten.</p>
-</body>
-
-</html>
+<x-layout>
+    <div class="max-w-4xl mx-auto py-12 px-6">
+        <h1 class="text-3xl font-bold mb-3">Willkommen zur Markt-App</h1>
+        <p class="mb-6 text-gray-600"><a href="{{ route('anfrage.create') }}" class="text-indigo-600 hover:text-indigo-700">Hier kommen Sie zur unseren Aussteller Anfragen.</a></p>
+    </div>
+</x-layout>

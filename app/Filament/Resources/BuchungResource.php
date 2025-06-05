@@ -153,6 +153,38 @@ class BuchungResource extends Resource
                                     ])
                                     ->columns(3),
                             ]),
+                        Tab::make('Werbematerial')
+                            ->schema([
+                                Forms\Components\Repeater::make('werbematerial')
+                                    ->label(false)
+                                    ->schema([
+                                        Select::make('typ')
+                                            ->label('Typ')
+                                            ->options([
+                                                'flyer' => 'Flyer',
+                                                'brochure' => 'Broschüre',
+                                                'plakat' => 'Plakat',
+                                                // Hier kannst du weitere Typen ergänzen
+                                            ])
+                                            ->required(),
+                                        TextInput::make('anzahl')
+                                            ->label('Anzahl')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->required(),
+                                        Forms\Components\Toggle::make('physisch')
+                                            ->label('Physisch')
+                                            ->inline(false),
+                                        Forms\Components\Toggle::make('digital')
+                                            ->label('Digital')
+                                            ->inline(false),
+                                    ])
+                                    ->columns(4)
+                                    ->addActionLabel('Werbematerial hinzufügen')
+                                    ->defaultItems(0)
+                                    ->reorderable(false)
+                                    ->helperText('Füge verschiedene Werbematerialien hinzu.'),
+                            ]),
                         Tab::make('Gebuchte Leistungen')
                             ->schema([
                                 Forms\Components\Repeater::make('leistungen')

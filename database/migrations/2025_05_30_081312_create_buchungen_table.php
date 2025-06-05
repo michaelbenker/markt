@@ -22,6 +22,7 @@ return new class extends Migration
             $table->json('stand')->nullable();
             $table->json('warenangebot')->nullable();
             $table->json('herkunft')->nullable();
+            $table->json('werbematerial')->nullable();
             $table->timestamps();
         });
     }
