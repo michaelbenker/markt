@@ -1,5 +1,9 @@
 # Markt App
 
+## ToDo
+
+-   Server Cronjob für Benachrichtiungen
+
 ```
 php artisan cache:clear
 php artisan config:clear

@@ -6,6 +6,8 @@ use App\Models\Anfrage;
 use App\Models\Markt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use App\Notifications\NeueAnfrageNotification;
+use App\Models\User;
 
 class AnfrageController extends Controller
 {
@@ -72,7 +74,13 @@ class AnfrageController extends Controller
             'bemerkung' => $validated['bemerkung'] ?? null,
         ]);
 
+        // Bestätigungsmail an den Anfragesteller
         Mail::to($anfrage->email)->send(new \App\Mail\AnfrageBestaetigung($anfrage));
+
+        // Benachrichtigung an alle User
+        User::all()->each(function ($user) use ($anfrage) {
+            $user->notify(new NeueAnfrageNotification($anfrage));
+        });
 
         return redirect()->route('anfrage.success')->with('success', 'Ihre Anfrage wurde erfolgreich übermittelt.');
     }

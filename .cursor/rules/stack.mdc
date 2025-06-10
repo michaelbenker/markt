@@ -1,0 +1,25 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: "Verwendeter Tech-Stack: Laravel 12 + Filament 3.3"
+globs: ["app/**/*.php", "routes/**/*.php", "resources/views/**/*.blade.php"]
+alwaysApply: true
+---
+
+Dieses Projekt basiert auf dem Laravel-Framework in Version 12.x und verwendet das Admin-Toolkit Filament in Version 3.3.x.
+
+Bitte berücksichtige bei Code-Vorschlägen:
+
+- Nutze **aktuelle Laravel 12-Syntax** (z. B. Route-Groups mit Middleware, Requests über Dependency Injection, moderne Collection-Methoden etc.)
+- Verwende **Filament 3.3 Features**, z. B.:
+  - `Panels`, `Pages`, `Resources`, `Actions`, `Forms`, `Tables`
+  - `Livewire` 3.x-Kompatibilität
+  - Tailwind CSS 3.x-Styling
+- Keine Vorschläge für Filament 2 oder veraltete Laravel-Versionen.
+- Nutze `php artisan make:...` nur mit gültigen Laravel 12-Kommandos.
+- Blade-Dateien sollten modernen Laravel‑Standards folgen (keine altmodischen `@php`-Blöcke etc.).
+
+Wenn du etwas nicht weißt, frage lieber nach als eine Annahme auf Basis älterer Versionen zu treffen.

@@ -1,4 +1,4 @@
-<x-layout>
+<x-layouts.app>
     <div class="max-w-4xl mx-auto py-12 px-6">
         <h1 class="text-3xl font-bold mb-3">Buchungsformular</h1>
 
@@ -321,4 +321,4 @@
             });
         </script>
     </div>
-</x-layout>
+</x-layouts.app>
