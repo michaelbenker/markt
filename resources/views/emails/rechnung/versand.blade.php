@@ -1,29 +1,61 @@
 @component('mail::message')
+<style>
+    .highlight {
+        background-color: #e8f4fd !important;
+        padding: 15px !important;
+        border-radius: 5px !important;
+        margin: 20px 0 !important;
+    }
+
+    .info-section {
+        background-color: #f8f9fa !important;
+        padding: 15px !important;
+        border-left: 4px solid #34495e !important;
+        margin: 20px 0 !important;
+    }
+
+    .payment-info {
+        background-color: #fff3cd !important;
+        padding: 15px !important;
+        border-left: 4px solid #ffc107 !important;
+        margin: 20px 0 !important;
+    }
+</style>
+
 # Rechnung {{ $rechnung->rechnungsnummer }}
 
-@if($rechnung->empf_anrede){{ $rechnung->empf_anrede }} @endif{{ $rechnung->empf_vorname }} {{ $rechnung->empf_name }},
+@php
+$aussteller = $rechnung->aussteller ?? $rechnung->buchung?->aussteller;
+$anrede = $aussteller?->briefanrede ?: ($rechnung->empf_anrede ? $rechnung->empf_anrede . ' ' . $rechnung->empf_vorname . ' ' . $rechnung->empf_name : 'Sehr geehrte Damen und Herren');
+@endphp
 
-{{ $rechnung->anschreiben ?: 'hiermit erhalten Sie Ihre Rechnung.' }}
+{{ $anrede }},
 
-**Rechnungsdetails:**
-- Rechnungsnummer: {{ $rechnung->rechnungsnummer }}
-- Rechnungsdatum: {{ $rechnung->rechnungsdatum->format('d.m.Y') }}
-- Fälligkeitsdatum: {{ $rechnung->faelligkeitsdatum->format('d.m.Y') }}
-- Rechnungsbetrag: {{ number_format($rechnung->bruttobetrag, 2, ',', '.') }} €
+{{ $rechnung->anschreiben ?: 'hiermit erhalten Sie Ihre Rechnung für die gebuchten Leistungen.' }}
 
-@if($rechnung->zahlungsziel)
-**Zahlungsziel:** {{ $rechnung->zahlungsziel }}
-@endif
+<div class="info-section">
+    <div><strong>Rechnungsnummer:</strong> {{ $rechnung->rechnungsnummer }}</div>
+    <div><strong>Rechnungsdatum:</strong> {{ $rechnung->rechnungsdatum->format('d.m.Y') }}</div>
+    <div><strong>Fälligkeitsdatum:</strong> {{ $rechnung->faelligkeitsdatum->format('d.m.Y') }}</div>
+    <div><strong>Rechnungsbetrag:</strong> {{ number_format($rechnung->bruttobetrag, 2, ',', '.') }} €</div>
+    @if($rechnung->zahlungsziel)
+    <div><strong>Zahlungsziel:</strong> {{ $rechnung->zahlungsziel }}</div>
+    @endif
+</div>
 
-**Bankverbindung:**
-Veranstaltungsforum Fürstenfeld
-IBAN: DE12 7005 1540 0280 8173 47
-BIC: BYLADEM1FFB
-Sparkasse Fürstenfeldbruck
+<div class="payment-info">
+    <div><strong>Bankverbindung:</strong><br>
+        Veranstaltungsforum Fürstenfeld<br>
+        <strong>IBAN:</strong> DE12 7005 1540 0280 8173 47<br>
+        <strong>BIC:</strong> BYLADEM1FFB<br>
+        Sparkasse Fürstenfeldbruck
+    </div>
+    <div>Bitte geben Sie bei der Überweisung die <strong>Rechnungsnummer {{ $rechnung->rechnungsnummer }}</strong> als Verwendungszweck an.</div>
+</div>
 
-Bitte geben Sie bei der Überweisung die Rechnungsnummer {{ $rechnung->rechnungsnummer }} als Verwendungszweck an.
-
-Die detaillierte Rechnung finden Sie im PDF-Anhang.
+<div class="highlight">
+    Die detaillierte Rechnung finden Sie im PDF-Anhang.
+</div>
 
 @if($rechnung->schlussschreiben)
 {{ $rechnung->schlussschreiben }}
@@ -31,10 +63,6 @@ Die detaillierte Rechnung finden Sie im PDF-Anhang.
 Bei Fragen stehen wir Ihnen gerne zur Verfügung.
 @endif
 
-@component('mail::button', ['url' => route('rechnung.pdf', $rechnung->rechnungsnummer)])
-Rechnung online anzeigen
-@endcomponent
-
-Viele Grüße
-Ihr Team vom Veranstaltungsforum Fürstenfeld
+Mit freundlichen Grüßen<br>
+**Ihr Team vom Veranstaltungsforum Fürstenfeld**
 @endcomponent

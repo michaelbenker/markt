@@ -249,9 +249,22 @@
                     <td>{{ number_format(($leistung->preis * $leistung->menge) / 100, 2) }} €</td>
                 </tr>
                 @endforeach
+                @php
+                $summeNetto = $buchung->leistungen->sum(function($l) { return ($l->preis * $l->menge); }) / 100;
+                $mwst = $summeNetto * 0.19;
+                $summeBrutto = $summeNetto + $mwst;
+                @endphp
                 <tr>
-                    <td colspan="3"><strong>Summe</strong></td>
-                    <td><strong>{{ number_format($buchung->leistungen->sum(function($l) { return ($l->preis * $l->menge); }) / 100, 2) }} €</strong></td>
+                    <td colspan="3"><strong>Summe (netto)</strong></td>
+                    <td><strong>{{ number_format($summeNetto, 2) }} €</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="3">zzgl. 19% MwSt.</td>
+                    <td>{{ number_format($mwst, 2) }} €</td>
+                </tr>
+                <tr style="border-top: 2px solid #34495e;">
+                    <td colspan="3"><strong>Gesamtsumme (brutto)</strong></td>
+                    <td><strong>{{ number_format($summeBrutto, 2) }} €</strong></td>
                 </tr>
             </table>
         </div>

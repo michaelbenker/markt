@@ -6,7 +6,6 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -28,52 +27,39 @@ class AusstellerBestaetigung extends Mailable
 
     public function envelope(): Envelope
     {
+        $toEmail = app()->environment('production')
+            ? $this->aussteller->email
+            : config('mail.dev_redirect_email');
+
         return new Envelope(
-            subject: 'Ihre Anmeldebestätigung',
+            subject: 'Deine Anmeldung zum Markt',
+            to: $toEmail,
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'emails.aussteller-bestaetigung',
+            markdown: 'emails.aussteller.bestaetigung',
+            with: ['aussteller' => $this->aussteller]
         );
     }
 
-    public function build()
+    public function attachments(): array
     {
-        $toEmail = App::environment('production')
-            ? $this->aussteller->email
-            : config('mail.dev_redirect_email');
-
         $buchung = $this->aussteller->buchungen()->latest()->first();
+
         if ($buchung) {
+            // Protokoll-Eintrag für E-Mail-Versand
             BuchungProtokoll::create([
                 'buchung_id' => $buchung->id,
                 'user_id' => Auth::id(),
                 'aktion' => 'buchungsbestaetigung_email_versendet',
                 'from_status' => $buchung->status,
                 'to_status' => $buchung->status,
-                'details' => 'Anmeldebestätigung wurde per E-Mail an ' . $toEmail . ' versendet.',
+                'details' => 'Anmeldebestätigung wurde per E-Mail versendet.',
             ]);
-        }
 
-        return $this->to($toEmail)
-            ->markdown('emails.aussteller.bestaetigung')
-            ->subject('Deine Anmeldung zum Markt')
-            ->with(['aussteller' => $this->aussteller]);
-    }
-
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
-     */
-    public function attachments(): array
-    {
-        $buchung = $this->aussteller->buchungen()->latest()->first();
-
-        if ($buchung) {
             $pdf = Pdf::loadView('pdf.buchung', ['buchung' => $buchung]);
 
             return [

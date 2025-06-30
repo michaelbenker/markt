@@ -25,9 +25,13 @@ class RechnungMail extends Mailable
 
     public function envelope(): Envelope
     {
+        $toEmail = app()->environment('production')
+            ? $this->rechnung->empf_email
+            : config('mail.dev_redirect_email');
+
         return new Envelope(
             subject: 'Rechnung ' . $this->rechnung->rechnungsnummer,
-            to: $this->rechnung->empf_email,
+            to: $toEmail,
         );
     }
 

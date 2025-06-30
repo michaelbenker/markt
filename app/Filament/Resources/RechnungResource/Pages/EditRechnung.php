@@ -29,7 +29,7 @@ class EditRechnung extends EditRecord
             });
 
         // E-Mail senden (nur bei Draft)
-        if ($this->record->status === 'draft') {
+        if (in_array($this->record->status, ['draft', 'sent', 'partial', 'overdue'])) {
             $actions[] = Actions\Action::make('send_email')
                 ->label('E-Mail senden')
                 ->icon('heroicon-o-envelope')

@@ -1,19 +1,45 @@
 @component('mail::message')
-# Vielen Dank für deine Anmeldung, {{ $aussteller->vorname }}!
+<style>
+    .highlight {
+        background-color: #e8f4fd !important;
+        padding: 15px !important;
+        border-radius: 5px !important;
+        margin: 20px 0 !important;
+    }
 
-Wir freuen uns, dass du dich für unseren Markt angemeldet hast.
+    .info-section {
+        background-color: #f8f9fa !important;
+        padding: 15px !important;
+        border-left: 4px solid #34495e !important;
+        margin: 20px 0 !important;
+    }
+</style>
 
-@if($aussteller->firma)**Firma:** {{ $aussteller->firma }}@endif
-@if($aussteller->name)**Name:** {{ $aussteller->vorname }} {{ $aussteller->name }}@endif
+# Vielen Dank für Ihre Anmeldung!
 
-Alle relevanten Information findest du anbei in deiner Anmeldebestätigung oder auf deiner Buchungsseite.
+@php
+$anrede = $aussteller->briefanrede ?: ($aussteller->anrede ? $aussteller->anrede . ' ' . $aussteller->vorname . ' ' . $aussteller->name : 'Sehr geehrte Damen und Herren');
+@endphp
 
-@component('mail::button', ['url' => config('app.url')])
-Zur Buchungsseite
-@endcomponent
+{{ $anrede }},
 
-Bei Fragen stehen wir dir jederzeit gerne zur Verfügung.
+wir freuen uns, dass Sie sich für unseren Markt angemeldet haben.
 
-Viele Grüße,
-Dein Markt-Team
+<div class="info-section">
+    @if($aussteller->firma)
+    <div><strong>Firma:</strong> {{ $aussteller->firma }}</div>
+    @endif
+    @if($aussteller->name)
+    <div><strong>Name:</strong> {{ $aussteller->vorname }} {{ $aussteller->name }}</div>
+    @endif
+</div>
+
+<div class="highlight">
+    Alle relevanten Informationen finden Sie anbei in Ihrer Anmeldebestätigung.
+</div>
+
+Bei Fragen stehen wir Ihnen jederzeit gerne zur Verfügung.
+
+Mit freundlichen Grüßen<br>
+**Ihr Team vom Veranstaltungsforum Fürstenfeld**
 @endcomponent

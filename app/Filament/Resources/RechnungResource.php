@@ -530,15 +530,6 @@ class RechnungResource extends Resource
                             echo $pdf->output();
                         }, 'rechnung-' . $record->rechnungsnummer . '.pdf');
                     }),
-
-                Action::make('email')
-                    ->label('')
-                    ->icon('heroicon-o-envelope')
-                    ->tooltip('E-Mail senden')
-                    ->visible(fn($record) => $record->status === 'draft')
-                    ->action(function ($record) {
-                        // TODO: E-Mail-Versand implementieren
-                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
