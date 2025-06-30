@@ -50,7 +50,7 @@ class EditBuchung extends EditRecord
                         'aktion' => 'buchungsbestaetigung_pdf_erzeugt',
                         'from_status' => $record->status,
                         'to_status' => $record->status,
-                        'details' => 'Buchungsbestätigung als PDF erzeugt.',
+                        'details' => 'Anmeldebestätigung als PDF erzeugt.',
                     ]);
                     return response()->streamDownload(function () use ($pdf) {
                         echo $pdf->output();

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Buchungsbestätigung</title>
+    <title>Anmeldebestätigung</title>
     <style>
         @page {
             size: A4;
@@ -103,7 +103,7 @@
     </div>
 
     <div class="content">
-        <h1 style="text-align: center;">Buchungsbestätigung</h1>
+        <h1 style="text-align: center;">Anmeldebestätigung</h1>
 
         <div class="section">
             <div class="section-title">Buchungsdetails</div>

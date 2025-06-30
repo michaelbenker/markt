@@ -29,7 +29,7 @@ class AusstellerBestaetigung extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Ihre Buchungsbestätigung',
+            subject: 'Ihre Anmeldebestätigung',
         );
     }
 
@@ -54,7 +54,7 @@ class AusstellerBestaetigung extends Mailable
                 'aktion' => 'buchungsbestaetigung_email_versendet',
                 'from_status' => $buchung->status,
                 'to_status' => $buchung->status,
-                'details' => 'Buchungsbestätigung wurde per E-Mail an ' . $toEmail . ' versendet.',
+                'details' => 'Anmeldebestätigung wurde per E-Mail an ' . $toEmail . ' versendet.',
             ]);
         }
 
