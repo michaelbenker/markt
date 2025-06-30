@@ -18,6 +18,27 @@ class EditBuchung extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('create_rechnung')
+                ->label('Rechnung erstellen')
+                ->icon('heroicon-o-document-text')
+                ->color('success')
+                ->visible(fn($record) => !$record->hatAktiveRechnung())
+                ->action(function ($record) {
+                    // Erstelle Rechnung aus Buchung
+                    $rechnung = \App\Services\RechnungService::createFromBuchung($record);
+
+                    return redirect()->route('filament.admin.resources.rechnungen.edit', $rechnung);
+                }),
+
+            Action::make('view_rechnungen')
+                ->label('Rechnungen anzeigen')
+                ->icon('heroicon-o-eye')
+                ->visible(fn($record) => $record->hatRechnungen())
+                ->url(fn($record) => route('filament.admin.resources.rechnungen.index', [
+                    'tableFilters[buchung_typ][value]' => 'buchung',
+                    'tableSearch' => $record->id,
+                ])),
+
             Action::make('print')
                 ->label('Buchung drucken')
                 ->icon('heroicon-o-printer')

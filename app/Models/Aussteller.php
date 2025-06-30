@@ -51,4 +51,9 @@ class Aussteller extends Model
     {
         return $this->hasMany(Buchung::class);
     }
+
+    public function rechnungen()
+    {
+        return $this->hasMany(Rechnung::class);
+    }
 }

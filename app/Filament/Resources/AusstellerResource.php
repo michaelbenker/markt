@@ -31,7 +31,7 @@ class AusstellerResource extends Resource
     protected static ?string $pluralLabel = 'Aussteller';
     protected static ?string $navigationLabel = 'Aussteller';
     protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 20;
     protected static ?string $slug = 'aussteller';
 
     public static function form(Form $form): Form

@@ -99,4 +99,27 @@ class Buchung extends Model
     {
         return $this->hasMany(\App\Models\BuchungProtokoll::class);
     }
+
+    public function rechnungen()
+    {
+        return $this->hasMany(Rechnung::class);
+    }
+
+    public function aktuelleRechnung()
+    {
+        return $this->hasOne(Rechnung::class)
+            ->where('status', '!=', 'canceled')
+            ->latest();
+    }
+
+    // Helper für Rechnungserstellung
+    public function hatAktiveRechnung(): bool
+    {
+        return $this->aktuelleRechnung()->exists();
+    }
+
+    public function hatRechnungen(): bool
+    {
+        return $this->rechnungen()->exists();
+    }
 }

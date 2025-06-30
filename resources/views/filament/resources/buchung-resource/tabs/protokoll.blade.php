@@ -1,4 +1,4 @@
-@php($protokolle = $getRecord()->protokolle()->latest()->get())
+@php($protokolle = $getRecord() ? $getRecord()->protokolle()->latest()->get() : collect())
 <div class="overflow-x-auto">
     <table class="min-w-full w-full text-sm">
         <thead>
