@@ -14,34 +14,42 @@ class StatsOverview extends BaseWidget
 {
     protected function getStats(): array
     {
-        return [
+        // Alle Märkte mit aktiven Terminen
+        $aktiveMaerkte = DB::table('termin')
+            ->join('markt', 'termin.markt_id', '=', 'markt.id')
+            ->where('termin.start', '>', now())
+            ->select('markt.name', 'termin.start', 'markt.slug')
+            ->orderBy('termin.start')
+            ->get();
+
+        $stats = [
             Stat::make('Neue Anfragen', Anfrage::where('created_at', '>=', now()->subDays(7))->count())
                 ->description('In den letzten 7 Tagen')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('success')
                 ->url(route('filament.admin.resources.anfrage.index')),
-            // Stat::make('Ungelesene Nachrichten', DB::table('notifications')
-            //     ->where('notifiable_id', Auth::id())
-            //     ->where('notifiable_type', get_class(Auth::user()))
-            //     ->whereNull('read_at')
-            //     ->count())
-            //     ->description('Benachrichtigungen')
-            //     ->descriptionIcon('heroicon-m-bell')
-            //     ->color('warning')
-            //     ->url(route('filament.admin.pages.notifications')),
-            Stat::make('Nächster Markt', function () {
-                $nextTermin = Termin::where('start', '>', now())
-                    ->orderBy('start')
-                    ->first();
-                if (!$nextTermin) return 'Keine';
-
-                $startDate = Carbon::parse($nextTermin->start);
-                return $nextTermin->markt->name . ' (' . $startDate->format('d.m.Y') . ')';
-            })
-                ->description('Termin')
-                ->descriptionIcon('heroicon-m-clock')
-                ->color('primary')
-                ->url(route('filament.admin.resources.markt.edit', ['record' => Termin::where('start', '>', now())->orderBy('start')->first()?->markt?->slug ?? 0])),
         ];
+
+        // Weitere aktive Märkte (maximal 3 zusätzliche)
+        foreach ($aktiveMaerkte->skip(1)->take(3) as $markt) {
+            $startDate = Carbon::parse($markt->start);
+
+            $stats[] = Stat::make('Markt', $markt->name)
+                ->description($startDate->format('d.m.Y'))
+                ->descriptionIcon('heroicon-m-calendar-days')
+                ->color('info')
+                ->url(route('filament.admin.resources.markt.edit', ['record' => $markt->slug]));
+        }
+
+        // Falls mehr als 4 aktive Märkte vorhanden sind, Übersicht anzeigen
+        if ($aktiveMaerkte->count() > 4) {
+            $stats[] = Stat::make('Weitere Märkte', $aktiveMaerkte->count() - 4 . ' weitere')
+                ->description('Märkte mit Terminen')
+                ->descriptionIcon('heroicon-m-ellipsis-horizontal')
+                ->color('gray')
+                ->url(route('filament.admin.resources.markt.index'));
+        }
+
+        return $stats;
     }
 }
