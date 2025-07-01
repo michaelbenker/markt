@@ -209,4 +209,35 @@ class ViewAnfrage extends Page
         ]);
         return $this->createBuchung($aus->id);
     }
+
+    public function ausstellerNeuOhneBuchung()
+    {
+        $a = $this->getCurrentAnfrage();
+        $aus = Aussteller::create([
+            'firma' => $a->firma,
+            'anrede' => $a->anrede,
+            'vorname' => $a->vorname,
+            'name' => $a->nachname,
+            'strasse' => $a->strasse,
+            'hausnummer' => $a->hausnummer,
+            'plz' => $a->plz,
+            'ort' => $a->ort,
+            'land' => $a->land,
+            'telefon' => $a->telefon,
+            'email' => $a->email,
+            'bemerkung' => $a->bemerkung,
+        ]);
+
+        // Anfrage als importiert markieren
+        $a->importiert = true;
+        $a->save();
+
+        Notification::make()
+            ->title('Aussteller erfolgreich angelegt')
+            ->body('Der Aussteller wurde ohne Buchung erstellt.')
+            ->success()
+            ->send();
+
+        return redirect()->route('filament.admin.resources.aussteller.edit', ['record' => $aus->id]);
+    }
 }

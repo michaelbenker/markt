@@ -91,9 +91,14 @@
                     @else
                     <div class="text-gray-500 mb-4">Kein passender Aussteller gefunden.</div>
                     @endif
-                    <form wire:submit.prevent="ausstellerNeuUndBuchung()">
-                        <x-filament::button color="primary" class="w-full mt-4" type="submit">Aussteller neu anlegen und Buchung erzeugen</x-filament::button>
-                    </form>
+                    <div class="flex flex-col gap-2 mt-4">
+                        <form wire:submit.prevent="ausstellerNeuUndBuchung()">
+                            <x-filament::button color="primary" class="w-full" type="submit">Aussteller anlegen und Buchung erzeugen</x-filament::button>
+                        </form>
+                        <form wire:submit.prevent="ausstellerNeuOhneBuchung()">
+                            <x-filament::button color="gray" class="w-full" type="submit">Aussteller anlegen ohne Buchung</x-filament::button>
+                        </form>
+                    </div>
                 </dd>
             </div>
         </dl>
