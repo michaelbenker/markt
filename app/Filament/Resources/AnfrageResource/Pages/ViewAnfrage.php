@@ -180,6 +180,7 @@ class ViewAnfrage extends Page
             'telefon' => $a->telefon,
             'email' => $a->email,
             'bemerkung' => $a->bemerkung,
+            'stand' => $a->stand,
         ]);
         return $this->createBuchung($ausstellerId);
     }
@@ -206,6 +207,7 @@ class ViewAnfrage extends Page
             'telefon' => $a->telefon,
             'email' => $a->email,
             'bemerkung' => $a->bemerkung,
+            'stand' => $a->stand,
         ]);
         return $this->createBuchung($aus->id);
     }
@@ -226,6 +228,7 @@ class ViewAnfrage extends Page
             'telefon' => $a->telefon,
             'email' => $a->email,
             'bemerkung' => $a->bemerkung,
+            'stand' => $a->stand,
         ]);
 
         // Anfrage als importiert markieren

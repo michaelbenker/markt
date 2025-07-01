@@ -14,7 +14,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Forms\Components\{TextInput, Textarea, Select, KeyValue, FileUpload, Grid};
+use Filament\Forms\Components\{TextInput, Textarea, Select, KeyValue, FileUpload, Grid, Section};
 use Filament\Tables\Columns\{TextColumn, IconColumn};
 use Filament\Forms\Components\MultiSelect;
 use Filament\Forms\Components\Repeater;
@@ -97,7 +97,7 @@ class AusstellerResource extends Resource
                                 ]),
                                 Textarea::make('bemerkung')->label('Bemerkung')->rows(4)->columnSpan(2),
                             ]),
-                        Tab::make('Kategorie')
+                        Tab::make('Kategorie & Stand')
                             ->schema([
                                 Select::make('filterKategorie')
                                     ->label('Kategorie wählen')
@@ -129,6 +129,26 @@ class AusstellerResource extends Resource
                                     ->afterStateHydrated(function (callable $set, $state, $record) {
                                         $set('subkategorien', $record?->subkategorien()->pluck('id')->toArray());
                                     }),
+                                Section::make('Stand')
+                                    ->schema([
+                                        // Select::make('stand.art')
+                                        //     ->label('Art')
+                                        //     ->options([
+                                        //         'klein' => 'Klein',
+                                        //         'mittel' => 'Mittel',
+                                        //         'groß' => 'Groß',
+                                        //     ]),
+                                        TextInput::make('stand.laenge')
+                                            ->label('Länge (m)')
+                                            ->numeric(),
+                                        TextInput::make('stand.tiefe')
+                                            ->label('Tiefe (m)')
+                                            ->numeric(),
+                                        TextInput::make('stand.flaeche')
+                                            ->label('Fläche (m²)')
+                                            ->numeric(),
+                                    ])
+                                    ->columns(3),
                             ]),
                         Tab::make('Soziale Medien')
                             ->schema([

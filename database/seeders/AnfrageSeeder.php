@@ -37,7 +37,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '491708666718',
                 'email' => 'mb@sistecs.de',
-                'stand' => ['art' => 'klein', 'laenge' => 3, 'flaeche' => 12],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['kleidung'],
                 'herkunft' => [
                     'eigenfertigung' => 100,
@@ -62,7 +62,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '491708666718',
                 'email' => 'michael.benker@sistecs.de',
-                'stand' => ['art' => 'klein', 'laenge' => 3, 'flaeche' => 12],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['kleidung'],
                 'herkunft' => [
                     'eigenfertigung' => 100,
@@ -87,7 +87,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '491708666718',
                 'email' => 'mb@sistecs.de',
-                'stand' => ['art' => 'klein', 'laenge' => 3, 'flaeche' => 12],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['kleidung'],
                 'herkunft' => [
                     'eigenfertigung' => 100,
@@ -112,7 +112,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '498912345678',
                 'email' => 'anna.mueller@example.de',
-                'stand' => ['art' => 'mittel', 'laenge' => 5, 'flaeche' => 20],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['schmuck', 'accessoires'],
                 'herkunft' => [
                     'eigenfertigung' => 80,
@@ -137,7 +137,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '498987654321',
                 'email' => 'thomas.schmidt@example.de',
-                'stand' => ['art' => 'groß', 'laenge' => 8, 'flaeche' => 30],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['kunst', 'handwerk'],
                 'herkunft' => [
                     'eigenfertigung' => 100,
@@ -162,7 +162,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '498912345679',
                 'email' => 'maria.weber@example.de',
-                'stand' => ['art' => 'mittel', 'laenge' => 6, 'flaeche' => 24],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['lebensmittel', 'getraenke'],
                 'herkunft' => [
                     'eigenfertigung' => 90,
@@ -187,7 +187,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '498912345680',
                 'email' => 'peter.fischer@example.de',
-                'stand' => ['art' => 'groß', 'laenge' => 10, 'flaeche' => 30],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['antiquitäten'],
                 'herkunft' => [
                     'eigenfertigung' => 0,
@@ -212,7 +212,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '498912345681',
                 'email' => 'lisa.wagner@example.de',
-                'stand' => ['art' => 'mittel', 'laenge' => 5, 'flaeche' => 20],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['kleidung', 'accessoires'],
                 'herkunft' => [
                     'eigenfertigung' => 70,
@@ -237,7 +237,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '498912345682',
                 'email' => 'max.becker@example.de',
-                'stand' => ['art' => 'groß', 'laenge' => 8, 'flaeche' => 30],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['kunst', 'dekoration'],
                 'herkunft' => [
                     'eigenfertigung' => 100,
@@ -262,7 +262,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '498912345683',
                 'email' => 'sophie.hoffmann@example.de',
-                'stand' => ['art' => 'klein', 'laenge' => 3, 'flaeche' => 12],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['schmuck'],
                 'herkunft' => [
                     'eigenfertigung' => 100,
@@ -287,7 +287,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '498912345684',
                 'email' => 'andreas.koch@example.de',
-                'stand' => ['art' => 'mittel', 'laenge' => 6, 'flaeche' => 24],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['dekoration', 'handwerk'],
                 'herkunft' => [
                     'eigenfertigung' => 85,
@@ -312,7 +312,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '498912345685',
                 'email' => 'julia.schaefer@example.de',
-                'stand' => ['art' => 'klein', 'laenge' => 4, 'flaeche' => 16],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['getraenke'],
                 'herkunft' => [
                     'eigenfertigung' => 100,
@@ -337,7 +337,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '498912345686',
                 'email' => 'martin.wolf@example.de',
-                'stand' => ['art' => 'mittel', 'laenge' => 5, 'flaeche' => 20],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['handwerk', 'kunst'],
                 'herkunft' => [
                     'eigenfertigung' => 100,
@@ -362,7 +362,7 @@ class AnfrageSeeder extends Seeder
                 'land' => 'Deutschland',
                 'telefon' => '498912345687',
                 'email' => 'sarah.meyer@example.de',
-                'stand' => ['art' => 'klein', 'laenge' => 3, 'flaeche' => 12],
+                'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
                 'warenangebot' => ['sonstiges'],
                 'herkunft' => [
                     'eigenfertigung' => 100,

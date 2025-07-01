@@ -29,12 +29,14 @@ class Aussteller extends Model
         'soziale_medien',
         'bilder',
         'files',
+        'stand',
     ];
 
     protected $casts = [
         'soziale_medien' => 'array',
         'bilder' => 'array',
         'files' => 'array',
+        'stand' => 'array',
     ];
 
     public function kategorien()
