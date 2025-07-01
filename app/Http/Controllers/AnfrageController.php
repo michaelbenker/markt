@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Notifications\NeueAnfrageNotification;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class AnfrageController extends Controller
 {
@@ -36,8 +37,9 @@ class AnfrageController extends Controller
             'telefon' => 'nullable|string|max:20',
             'email' => 'required|email|max:255',
             'stand' => 'required|array',
-            'stand.art' => 'required|string|in:klein,mittel,groß',
+            // 'stand.art' => 'required|string|in:klein,mittel,groß',
             'stand.laenge' => 'nullable|numeric|min:0',
+            'stand.tiefe' => 'nullable|numeric|min:0',
             'stand.flaeche' => 'nullable|numeric|min:0',
             'warenangebot' => 'required|array',
             'warenangebot.*' => 'string|in:kleidung,schmuck,kunst,accessoires,dekoration,lebensmittel,getraenke,handwerk,antiquitäten,sonstiges',
@@ -75,11 +77,19 @@ class AnfrageController extends Controller
         ]);
 
         // Bestätigungsmail an den Anfragesteller
-        Mail::to($anfrage->email)->send(new \App\Mail\AnfrageBestaetigung($anfrage));
+        try {
+            Mail::to($anfrage->email)->send(new \App\Mail\AnfrageBestaetigung($anfrage));
+        } catch (\Exception $e) {
+            Log::error('Fehler beim Versenden der Bestätigungsmail: ' . $e->getMessage());
+        }
 
-        // Benachrichtigung an alle User
+        // Benachrichtigung an alle User (sofort, nicht in Queue)
         User::all()->each(function ($user) use ($anfrage) {
-            $user->notify(new NeueAnfrageNotification($anfrage));
+            try {
+                $user->notify(new NeueAnfrageNotification($anfrage));
+            } catch (\Exception $e) {
+                Log::error('Fehler beim Versenden der Notification: ' . $e->getMessage());
+            }
         });
 
         return redirect()->route('anfrage.success')->with('success', 'Ihre Anfrage wurde erfolgreich übermittelt.');

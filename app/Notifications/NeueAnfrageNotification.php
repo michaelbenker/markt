@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification as BaseNotification;
 
-class NeueAnfrageNotification extends BaseNotification implements ShouldQueue
+class NeueAnfrageNotification extends BaseNotification
 {
     use Queueable;
 
@@ -28,7 +28,7 @@ class NeueAnfrageNotification extends BaseNotification implements ShouldQueue
      */
     public function via($notifiable): array
     {
-        return ['mail', 'database'];
+        return ['database']; // Nur App-Notifications, keine E-Mail
     }
 
     /**
