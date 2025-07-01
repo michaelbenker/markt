@@ -10,6 +10,7 @@ use Filament\Notifications\Notification;
 use App\Models\Buchung;
 use App\Models\BuchungProtokoll;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ViewAnfrage extends Page
 {
@@ -242,5 +243,47 @@ class ViewAnfrage extends Page
             ->send();
 
         return redirect()->route('filament.admin.resources.aussteller.edit', ['record' => $aus->id]);
+    }
+
+    public function ausstellerAbsagen()
+    {
+        $a = $this->getCurrentAnfrage();
+
+        try {
+            // E-Mail-Adresse für Testmodus oder Produktiv bestimmen
+            $emailTo = config('mail.dev_redirect_email') ?: $a->email;
+
+            // Absage-E-Mail senden
+            \Illuminate\Support\Facades\Mail::to($emailTo)->send(new \App\Mail\AusstellerAbsage($a));
+
+            // Anfrage löschen
+            $anfrageId = $a->id;
+            $marktName = $a->markt->name ?? 'Unbekannt';
+            $originalEmail = $a->email;
+            $a->delete();
+
+            $message = config('mail.dev_redirect_email')
+                ? "Die Absage wurde im Testmodus an {$emailTo} gesendet (Original: {$originalEmail}) und die Anfrage #{$anfrageId} wurde gelöscht."
+                : "Die Absage wurde an {$originalEmail} gesendet und die Anfrage #{$anfrageId} wurde gelöscht.";
+
+            Notification::make()
+                ->title('Absage erfolgreich versendet')
+                ->body($message)
+                ->success()
+                ->send();
+
+            // Zurück zur Anfragen-Liste
+            return redirect()->route('filament.admin.resources.anfrage.index');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Fehler beim Versenden der Absage: ' . $e->getMessage());
+
+            Notification::make()
+                ->title('Fehler beim Versenden der Absage')
+                ->body('Die Absage konnte nicht versendet werden: ' . $e->getMessage())
+                ->danger()
+                ->send();
+
+            return false;
+        }
     }
 }
