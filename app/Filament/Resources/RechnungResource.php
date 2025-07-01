@@ -48,11 +48,9 @@ class RechnungResource extends Resource
                                 Grid::make(2)->schema([
                                     TextInput::make('rechnungsnummer')
                                         ->label('Rechnungsnummer')
-                                        ->required(fn($record) => $record !== null) // Nur bei bestehenden Rechnungen required
-                                        ->unique(ignoreRecord: true)
-                                        ->disabled(fn($record) => $record && !$record->isEditable())
-                                        ->placeholder('Wird automatisch generiert')
-                                        ->helperText('Leer lassen für automatische Generierung'),
+                                        ->readOnly()
+                                        ->disabled(true)
+                                        ->placeholder('Wird automatisch generiert'),
 
                                     Select::make('status')
                                         ->label('Status')
@@ -149,6 +147,11 @@ class RechnungResource extends Resource
                                     ->label('Zahlungsziel')
                                     ->placeholder('z.B. 14 Tage netto')
                                     ->disabled(fn($record) => $record && !$record->isEditable()),
+
+
+                                Textarea::make('notiz')
+                                    ->label('Notiz')
+                                    ->rows(4)
                             ]),
 
                         Tabs\Tab::make('Empfänger')

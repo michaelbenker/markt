@@ -24,6 +24,7 @@ return new class extends Migration {
             $table->text('anschreiben')->nullable();
             $table->text('schlussschreiben')->nullable();
             $table->string('zahlungsziel')->nullable(); // z.B. "14 Tage netto"
+            $table->text('notiz')->nullable();
 
             // Finanzielle Daten (alle Beträge in Cent)
             $table->decimal('gesamtrabatt_prozent', 5, 2)->default(0);

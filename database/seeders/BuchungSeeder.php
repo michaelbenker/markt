@@ -11,6 +11,8 @@ use Illuminate\Database\Seeder;
 
 class BuchungSeeder extends Seeder
 {
+    private static $rechnungsnummerCounter = 1;
+
     /**
      * Run the database seeds.
      */
@@ -106,10 +108,9 @@ class BuchungSeeder extends Seeder
         $rechnungsDatum = Carbon::parse($buchung->created_at)->addDays(rand(1, 10));
         $faelligkeitsDatum = $rechnungsDatum->copy()->addDays(14);
 
-        // Generiere Rechnungsnummer
+        // Generiere eindeutige Rechnungsnummer
         $year = $rechnungsDatum->year;
-        $nummer = rand(1, 9999);
-        $rechnungsnummer = $year . sprintf('%04d', $nummer);
+        $rechnungsnummer = $year . sprintf('%04d', self::$rechnungsnummerCounter++);
 
         // Erstelle Rechnung
         $rechnung = Rechnung::create([
@@ -220,10 +221,9 @@ class BuchungSeeder extends Seeder
             $aussteller = \App\Models\Aussteller::find($ausstellerId);
             if (!$aussteller) continue;
 
-            // Generiere Rechnungsnummer
+            // Generiere eindeutige Rechnungsnummer
             $year = $rechnungsDatum->year;
-            $nummer = rand(8000, 9999); // Höhere Nummern für manuelle Rechnungen
-            $rechnungsnummer = $year . sprintf('%04d', $nummer);
+            $rechnungsnummer = $year . sprintf('%04d', self::$rechnungsnummerCounter++);
 
             $rechnung = Rechnung::create([
                 'rechnungsnummer' => $rechnungsnummer,

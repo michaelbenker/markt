@@ -249,17 +249,11 @@
                 <td style="width: 50%; border: none; text-align: right; vertical-align: top;">
                     <div class="rechnung-info">
                         <div class="rechnung-nummer">Rechnung {{ $rechnung->rechnungsnummer }}</div>
-                        <span class="status-badge status-{{ $rechnung->status }}">
-                            {{ match($rechnung->status) {
-                                'draft' => 'Entwurf',
-                                'sent' => 'Versendet',
-                                'paid' => 'Bezahlt',
-                                'overdue' => 'Überfällig',
-                                'canceled' => 'Storniert',
-                                'partial' => 'Teilweise bezahlt',
-                                default => $rechnung->status
-                            } }}
+                        @if($rechnung->status === 'canceled')
+                        <span class="status-badge status-canceled">
+                            Storniert
                         </span><br><br>
+                        @endif
 
                         <div class="datum-info"><strong>Rechnungsdatum:</strong> {{ $rechnung->rechnungsdatum->format('d.m.Y') }}</div>
                         @if($rechnung->lieferdatum)
@@ -290,7 +284,6 @@
                     <th style="width: 40%;">Bezeichnung</th>
                     <th style="width: 12%;">Menge</th>
                     <th style="width: 15%;">Einzelpreis</th>
-                    <th style="width: 10%;">MwSt</th>
                     <th style="width: 15%;">Gesamtpreis</th>
                 </tr>
             </thead>
@@ -306,8 +299,7 @@
                     </td>
                     <td>{{ number_format($position->menge, 2, ',', '.') }} {{ $position->einheit ?? 'Stk' }}</td>
                     <td style="text-align: right;">{{ number_format($position->einzelpreis / 100, 2, ',', '.') }} €</td>
-                    <td style="text-align: right;">{{ number_format($position->steuersatz, 1, ',', '.') }}%</td>
-                    <td style="text-align: right;">{{ number_format($position->bruttobetrag / 100, 2, ',', '.') }} €</td>
+                    <td style="text-align: right;">{{ number_format(($position->menge * $position->einzelpreis) / 100, 2, ',', '.') }} €</td>
                 </tr>
                 @endforeach
             </tbody>

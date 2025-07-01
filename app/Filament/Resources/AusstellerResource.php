@@ -23,6 +23,15 @@ use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
+use Filament\Tables\Actions\BulkAction;
+use Illuminate\Database\Eloquent\Collection;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use App\Exports\AusstellerExport;
 
 class AusstellerResource extends Resource
 {
@@ -193,6 +202,25 @@ class AusstellerResource extends Resource
                 TextColumn::make('telefon')->label('Telefon'),
                 TextColumn::make('ort')->label('Ort'),
                 TextColumn::make('land')->label('Land'),
+                TextColumn::make('buchungen.termin.markt.name')
+                    ->label('Märkte')
+                    ->formatStateUsing(function ($record) {
+                        return $record->buchungen
+                            ->pluck('termin.markt.name')
+                            ->unique()
+                            ->filter()
+                            ->implode(', ') ?: 'Keine Buchungen';
+                    })
+                    ->searchable()
+                    ->sortable(false),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('markt')
+                    ->label('Markt')
+                    ->relationship('buchungen.termin.markt', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->multiple(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -219,6 +247,23 @@ class AusstellerResource extends Resource
                                 ->send();
                         }
                     }),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                    BulkAction::make('exportExcel')
+                        ->label('Excel Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->action(function (Collection $records) {
+                            $filename = 'aussteller_export_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+
+                            return Excel::download(new AusstellerExport($records), $filename);
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('Aussteller exportieren')
+                        ->modalDescription('Möchten Sie die ausgewählten Aussteller als Excel-Datei (XLSX) exportieren?')
+                        ->modalSubmitActionLabel('Exportieren'),
+                ]),
             ]);
     }
 

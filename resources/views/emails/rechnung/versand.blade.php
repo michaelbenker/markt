@@ -37,7 +37,7 @@ $anrede = $aussteller?->briefanrede ?: ($rechnung->empf_anrede ? $rechnung->empf
     <div><strong>Rechnungsnummer:</strong> {{ $rechnung->rechnungsnummer }}</div>
     <div><strong>Rechnungsdatum:</strong> {{ $rechnung->rechnungsdatum->format('d.m.Y') }}</div>
     <div><strong>Fälligkeitsdatum:</strong> {{ $rechnung->faelligkeitsdatum->format('d.m.Y') }}</div>
-    <div><strong>Rechnungsbetrag:</strong> {{ number_format($rechnung->bruttobetrag, 2, ',', '.') }} €</div>
+    <div><strong>Rechnungsbetrag:</strong> {{ number_format(($rechnung->bruttobetrag / 100), 2, ',', '.') }} €</div>
     @if($rechnung->zahlungsziel)
     <div><strong>Zahlungsziel:</strong> {{ $rechnung->zahlungsziel }}</div>
     @endif
