@@ -98,15 +98,18 @@ class BuchungResource extends Resource
                             ->schema([
                                 Section::make('Stand')
                                     ->schema([
-                                        Select::make('stand.art')
-                                            ->label('Art')
-                                            ->options([
-                                                'klein' => 'Klein',
-                                                'mittel' => 'Mittel',
-                                                'groß' => 'Groß',
-                                            ]),
+                                        // Select::make('stand.art')
+                                        //     ->label('Art')
+                                        //     ->options([
+                                        //         'klein' => 'Klein',
+                                        //         'mittel' => 'Mittel',
+                                        //         'groß' => 'Groß',
+                                        //     ]),
                                         TextInput::make('stand.laenge')
                                             ->label('Länge (m)')
+                                            ->numeric(),
+                                        TextInput::make('stand.tiefe')
+                                            ->label('Tiefe (m)')
                                             ->numeric(),
                                         TextInput::make('stand.flaeche')
                                             ->label('Fläche (m²)')

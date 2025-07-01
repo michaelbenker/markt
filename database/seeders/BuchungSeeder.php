@@ -19,8 +19,9 @@ class BuchungSeeder extends Seeder
     public function run(): void
     {
         $stand = [
-            'art' => 'klein',
+            // 'art' => 'klein',
             'flaeche' => 6,
+            'tiefe' => 3,
             'laenge' => 4
         ];
 

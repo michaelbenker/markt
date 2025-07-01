@@ -11,7 +11,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Laravel 12 - Web-Middleware ist standardmäßig aktiv
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -176,7 +176,7 @@
             <div class="bg-white p-6 rounded-lg shadow">
                 <h2 class="text-xl font-semibold mb-4">Stand Informationen</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div>
+                    <!-- <div>
                         <label for="stand_art" class="block font-medium text-sm text-gray-700">Stand Art</label>
                         <select name="stand[art]" id="stand_art"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
@@ -184,12 +184,18 @@
                             <option value="mittel" {{ old('stand.art') == 'mittel' ? 'selected' : '' }}>Mittel</option>
                             <option value="groß" {{ old('stand.art') == 'groß' ? 'selected' : '' }}>Groß</option>
                         </select>
-                    </div>
+                    </div> -->
 
                     <div>
                         <label for="stand_laenge" class="block font-medium text-sm text-gray-700">Länge (m)</label>
                         <input type="number" name="stand[laenge]" id="stand_laenge" step="0.1"
                             value="{{ old('stand.laenge') }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="stand_tiefe" class="block font-medium text-sm text-gray-700">Tiefe (m)</label>
+                        <input type="number" name="stand[tiefe]" id="stand_tiefe" step="0.1"
+                            value="{{ old('stand.tiefe') }}"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
 

@@ -31,6 +31,7 @@ return new class extends Migration
             $table->json('soziale_medien')->nullable();
             $table->json('bilder')->nullable();
             $table->json('files')->nullable();
+            $table->json('stand')->nullable();
             $table->timestamps();
         });
     }
