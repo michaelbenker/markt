@@ -167,30 +167,22 @@
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Name</th>
                         <th>Firma</th>
                         <th>E-Mail</th>
                         <th>Markt</th>
                         <th>Eingereicht</th>
-                        <th>Status</th>
                         <th>Aktionen</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($neueAnfragen as $anfrage)
                     <tr>
-                        <td><strong>#{{ $anfrage->id }}</strong></td>
                         <td>{{ $anfrage->vorname }} {{ $anfrage->nachname }}</td>
                         <td>{{ $anfrage->firma ?? '-' }}</td>
                         <td>{{ $anfrage->email }}</td>
                         <td>{{ $anfrage->markt->name ?? 'Unbekannt' }}</td>
                         <td>{{ $anfrage->created_at->format('d.m.Y H:i') }}</td>
-                        <td>
-                            <span class="{{ $anfrage->importiert ? 'status-importiert' : 'status-neu' }}">
-                                {{ $anfrage->importiert ? 'Importiert' : 'Neu' }}
-                            </span>
-                        </td>
                         <td>
                             <a href="{{ route('filament.admin.resources.anfrage.view', $anfrage->id) }}" class="btn">
                                 Ansehen
