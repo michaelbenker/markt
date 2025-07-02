@@ -58,12 +58,17 @@ class EditBuchung extends EditRecord
                         echo $pdf->output();
                     }, 'buchung-' . $record->id . '.pdf');
                 }),
+
             Action::make('E-Mail senden')
                 ->label('Bestätigung senden')
                 ->action(function () {
-                    \Illuminate\Support\Facades\Mail::send(
-                        new \App\Mail\AusstellerBestaetigung($this->record->aussteller)
-                    );
+                    // E-Mail-Adresse bestimmen
+                    $toEmail = config('mail.dev_redirect_email') 
+                        ? config('mail.dev_redirect_email') 
+                        : $this->record->aussteller->email;
+
+                    \Illuminate\Support\Facades\Mail::to($toEmail)
+                        ->send(new \App\Mail\AusstellerBestaetigung($this->record->aussteller));
                 })
                 ->requiresConfirmation()
                 ->modalHeading('E-Mail senden')
@@ -78,51 +83,56 @@ class EditBuchung extends EditRecord
                 ->icon('heroicon-o-envelope')
                 ->iconSize('md'),
 
+            Action::make('absage')
+                ->label('Absagen')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('Buchung absagen')
+                ->modalDescription(function () {
+                    $aussteller = $this->record->aussteller;
+                    $name = $aussteller->firma ?: "{$aussteller->vorname} {$aussteller->name}";
+                    return new HtmlString("Sind Sie sicher, dass Sie die Buchung absagen und eine Absage-E-Mail an <strong>{$name}</strong> ({$aussteller->email}) senden möchten?");
+                })
+                ->modalSubmitActionLabel('Ja, absagen')
+                ->modalCancelActionLabel('Abbrechen')
+                ->action(function () {
+                    // Status auf abgelehnt setzen
+                    $this->record->update(['status' => 'abgelehnt']);
+
+                    // Protokoll-Eintrag erstellen
+                    BuchungProtokoll::create([
+                        'buchung_id' => $this->record->id,
+                        'user_id' => Auth::id(),
+                        'aktion' => 'buchung_abgelehnt',
+                        'from_status' => $this->record->getOriginal('status'),
+                        'to_status' => 'abgelehnt',
+                        'details' => 'Buchung wurde abgelehnt und Absage-E-Mail gesendet.',
+                    ]);
+
+                    // Absage-E-Mail senden - Anfrage aus Buchungsdaten erstellen
+                    $anfrage = new \App\Models\Anfrage();
+                    $anfrage->email = $this->record->aussteller->email;
+                    $anfrage->markt = $this->record->termin->markt ?? null;
+                    $anfrage->created_at = $this->record->created_at;
+                    $anfrage->firma = $this->record->aussteller->firma;
+                    $anfrage->warenangebot = $this->record->warenangebot;
+                    $anfrage->vorname = $this->record->aussteller->vorname;
+                    $anfrage->name = $this->record->aussteller->name;
+
+                    // E-Mail-Adresse bestimmen
+                    $toEmail = config('mail.dev_redirect_email') 
+                        ? config('mail.dev_redirect_email') 
+                        : $this->record->aussteller->email;
+
+                    Mail::to($toEmail)->send(new AusstellerAbsage($anfrage));
+
+                    // Seite refreshen
+                    $this->refreshFormData([$this->record->getKeyName()]);
+                }),
+
             Actions\ActionGroup::make([
                 Actions\DeleteAction::make(),
-                Action::make('absage')
-                    ->visible(fn($record) => $record->status !== 'abgelehnt')
-                    ->label('Absagen')
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->modalHeading('Buchung absagen')
-                    ->modalDescription(function () {
-                        $aussteller = $this->record->aussteller;
-                        $name = $aussteller->firma ?: "{$aussteller->vorname} {$aussteller->name}";
-                        return new HtmlString("Sind Sie sicher, dass Sie die Buchung absagen und eine Absage-E-Mail an <strong>{$name}</strong> ({$aussteller->email}) senden möchten?");
-                    })
-                    ->modalSubmitActionLabel('Ja, absagen')
-                    ->modalCancelActionLabel('Abbrechen')
-                    ->action(function () {
-                        // Status auf abgelehnt setzen
-                        $this->record->update(['status' => 'abgelehnt']);
-
-                        // Protokoll-Eintrag erstellen
-                        BuchungProtokoll::create([
-                            'buchung_id' => $this->record->id,
-                            'user_id' => Auth::id(),
-                            'aktion' => 'buchung_abgelehnt',
-                            'from_status' => $this->record->getOriginal('status'),
-                            'to_status' => 'abgelehnt',
-                            'details' => 'Buchung wurde abgelehnt und Absage-E-Mail gesendet.',
-                        ]);
-
-                        // Absage-E-Mail senden - Anfrage aus Buchungsdaten erstellen
-                        $anfrage = new \App\Models\Anfrage();
-                        $anfrage->email = $this->record->aussteller->email;
-                        $anfrage->markt = $this->record->termin->markt ?? null;
-                        $anfrage->created_at = $this->record->created_at;
-                        $anfrage->firma = $this->record->aussteller->firma;
-                        $anfrage->warenangebot = $this->record->warenangebot;
-                        $anfrage->vorname = $this->record->aussteller->vorname;
-                        $anfrage->name = $this->record->aussteller->name;
-
-                        Mail::to($this->record->aussteller->email)->send(new AusstellerAbsage($anfrage));
-
-                        // Seite refreshen
-                        $this->refreshFormData([$this->record->getKeyName()]);
-                    }),
             ]),
         ];
     }

@@ -56,6 +56,26 @@
                     </tr>
 
                     {!! $footer ?? '' !!}
+
+                    @if(!isset($footer))
+                    <!-- Standard Footer wenn kein Footer definiert ist -->
+                    <tr>
+                        <td>
+                            <table class="footer" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation">
+                                <tr>
+                                    <td class="content-cell" align="center">
+                                        <p style="font-size: 12px; color: #b0adc5; margin: 0; text-align: center;">
+                                            © {{ date('Y') }} {{ config('app.name') }}. Alle Rechte vorbehalten.
+                                        </p>
+                                        <p style="font-size: 12px; color: #b0adc5; margin: 5px 0 0 0; text-align: center;">
+                                            Bei Fragen wenden Sie sich gerne an uns.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    @endif
                 </table>
             </td>
         </tr>

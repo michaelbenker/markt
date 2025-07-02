@@ -41,10 +41,14 @@ class EditRechnung extends EditRecord
                     $empfaenger = $this->record->empf_email;
                     return "Möchten Sie die Rechnung #{$this->record->rechnungsnummer} an {$empfaenger} senden?";
                 })->action(function () {
+                    // E-Mail-Adresse bestimmen
+                    $toEmail = config('mail.dev_redirect_email')
+                        ? config('mail.dev_redirect_email')
+                        : $this->record->empf_email;
+
                     // E-Mail senden
-                    \Illuminate\Support\Facades\Mail::send(
-                        new \App\Mail\RechnungMail($this->record)
-                    );
+                    \Illuminate\Support\Facades\Mail::to($toEmail)
+                        ->send(new \App\Mail\RechnungMail($this->record));
 
                     // Status auf "sent" setzen
                     $this->record->update([

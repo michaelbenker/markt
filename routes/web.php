@@ -19,3 +19,28 @@ Route::get('/rechnung/{rechnungsnummer}/download', [RechnungController::class, '
 Route::get('/', function () {
     return view('home');
 });
+
+// Test-Route für E-Mail-Templates
+Route::get('/test-email', function () {
+    $aussteller = App\Models\Aussteller::first();
+    if (!$aussteller) {
+        return 'Kein Aussteller gefunden';
+    }
+
+    $service = new App\Services\EmailTemplateService();
+    $data = [
+        'aussteller_name' => $aussteller->name,
+        'markt_name' => 'Test Markt',
+        'stand_nummer' => '123',
+        'anmeldedatum' => now()->format('d.m.Y')
+    ];
+
+    // Test Template Service
+    $result = $service->renderTemplate('aussteller_bestaetigung', $data);
+
+    if ($result['hasTemplate']) {
+        return view('emails.template-wrapper', ['content' => $result['content']]);
+    } else {
+        return 'Kein Template verfügbar - würde Standard-View verwenden';
+    }
+});
