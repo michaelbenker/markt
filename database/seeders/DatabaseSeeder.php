@@ -41,6 +41,7 @@ class DatabaseSeeder extends Seeder
             TerminSeeder::class,
             BuchungSeeder::class,
             AnfrageSeeder::class,
+            EmailTemplateSeeder::class,
         ]);
     }
 }

@@ -11,26 +11,13 @@ class EmailTemplateService
 {
     /**
      * Sendet eine E-Mail basierend auf einem Template
+     * @deprecated Verwende stattdessen MailService::send()
      */
     public function sendTemplatedEmail(string $templateKey, string $toEmail, array $variables = [], ?string $toName = null): bool
     {
-        $template = EmailTemplate::getByKey($templateKey);
-
-        if (!$template) {
-            throw new \Exception("E-Mail-Template mit Key '{$templateKey}' nicht gefunden.");
-        }
-
-        $rendered = $template->render($variables);
-
-        $mailable = new TemplatedMail($rendered['subject'], $rendered['content']);
-
-        try {
-            Mail::to($toEmail, $toName)->send($mailable);
-            return true;
-        } catch (\Exception $e) {
-            Log::error("Fehler beim Senden der Template-E-Mail: " . $e->getMessage());
-            return false;
-        }
+        // Weiterleitung an den neuen MailService
+        $mailService = new MailService();
+        return $mailService->send($templateKey, $toEmail, $variables, $toName);
     }
 
     /**

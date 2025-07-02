@@ -46,20 +46,36 @@ class EditRechnung extends EditRecord
                         ? config('mail.dev_redirect_email')
                         : $this->record->empf_email;
 
-                    // E-Mail senden
-                    \Illuminate\Support\Facades\Mail::to($toEmail)
-                        ->send(new \App\Mail\RechnungMail($this->record));
+                    // E-Mail über den zentralen MailService senden
+                    $mailService = new \App\Services\MailService();
+                    $success = $mailService->send(
+                        'rechnung_versand',
+                        $toEmail,
+                        [
+                            'rechnung' => $this->record,
+                            'aussteller' => $this->record->aussteller,
+                        ],
+                        $this->record->empf_vorname . ' ' . $this->record->empf_name
+                    );
 
-                    // Status auf "sent" setzen
-                    $this->record->update([
-                        'status' => 'sent',
-                        'versendet_am' => now(),
-                    ]);
+                    if ($success) {
+                        // Status auf "sent" setzen
+                        $this->record->update([
+                            'status' => 'sent',
+                            'versendet_am' => now(),
+                        ]);
 
-                    Notification::make()
-                        ->title('Rechnung wurde versendet')
-                        ->success()
-                        ->send();
+                        Notification::make()
+                            ->title('Rechnung wurde versendet')
+                            ->success()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title('Fehler beim Versenden')
+                            ->body('Die Rechnung konnte nicht versendet werden.')
+                            ->danger()
+                            ->send();
+                    }
 
                     // Livewire-kompatible Lösung
                     $this->record = $this->record->fresh();
