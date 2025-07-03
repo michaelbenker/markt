@@ -27,20 +27,19 @@ class AusstellerBestaetigung extends Mailable
     {
         $this->aussteller = $aussteller;
 
-        // Template laden und rendern
+        // Template aus Datenbank laden
         $template = EmailTemplate::getByKey('aussteller_bestaetigung');
 
-        if ($template) {
-            $variables = $this->prepareVariables();
-            $rendered = $template->render($variables);
-
-            $this->subject = $rendered['subject'];
-            $this->htmlContent = $rendered['content'];
-        } else {
-            // Fallback auf ursprüngliches Template
-            $this->subject = 'Bestätigung Ihrer Anmeldung';
-            $this->htmlContent = null; // Wird dann die Blade-View verwenden
+        if (!$template || !$template->is_active) {
+            throw new \Exception('E-Mail-Template "aussteller_bestaetigung" ist nicht verfügbar');
         }
+
+        // Variablen vorbereiten und Template rendern
+        $variables = $this->prepareVariables();
+        $rendered = $template->render($variables);
+
+        $this->subject = $rendered['subject'];
+        $this->htmlContent = $rendered['content'];
     }
 
     /**
@@ -88,31 +87,20 @@ class AusstellerBestaetigung extends Mailable
     }
     public function content(): Content
     {
-        // Ansonsten Fallback auf Blade-View
+        // Bei Blade-Templates (die bereits das Layout enthalten) direkt verwenden
+        // Verwende generischen Template-Wrapper für Datenbank-Templates
         return new Content(
-            markdown: 'emails.aussteller.bestaetigung',
-            with: ['aussteller' => $this->aussteller]
+            markdown: 'emails.template-wrapper',
+            with: [
+                'content' => $this->htmlContent,
+                'aussteller' => $this->aussteller
+            ]
         );
     }
+
     /**
-     * Build the message.
+     * Build the message - nicht mehr benötigt, da content() verwendet wird
      */
-    public function build()
-    {
-        // Wenn HTML-Content vom Template vorhanden ist, verwende diesen im Layout
-        if ($this->htmlContent) {
-            return $this->subject($this->subject)
-                ->view('emails.template-wrapper', [
-                    'content' => $this->htmlContent,
-                    'aussteller' => $this->aussteller
-                ]);
-        }
-
-        // Ansonsten verwende die normale content() Methode
-        return $this->subject($this->subject)
-            ->markdown('emails.aussteller.bestaetigung', ['aussteller' => $this->aussteller]);
-    }
-
     public function attachments(): array
     {
         $buchung = $this->aussteller->buchungen()->latest()->first();

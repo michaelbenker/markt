@@ -20,24 +20,25 @@ class RechnungMail extends Mailable
     public Rechnung $rechnung;
     public $subject;
     public $htmlContent;
+    public $templateResult;
 
     public function __construct(Rechnung $rechnung)
     {
         $this->rechnung = $rechnung;
 
-        // Template laden und rendern
-        $template = EmailTemplate::getByKey('rechnung_versand');
+        // Template Service mit Fallback verwenden
+        $service = new \App\Services\EmailTemplateService();
+        $variables = $this->prepareVariables();
 
-        if ($template) {
-            $variables = $this->prepareVariables();
-            $rendered = $template->render($variables);
+        try {
+            $this->templateResult = $service->renderTemplate('rechnung_versand', $variables);
+            $this->subject = $this->templateResult['subject'];
+            $this->htmlContent = $this->templateResult['content'];
 
-            $this->subject = $rendered['subject'];
-            $this->htmlContent = $rendered['content'];
-        } else {
-            // Fallback auf ursprüngliches Template
-            $this->subject = 'Rechnung ' . $this->rechnung->rechnungsnummer;
-            $this->htmlContent = null; // Wird dann die Blade-View verwenden
+            // Debug: Logge welche Template-Quelle verwendet wird
+            \Illuminate\Support\Facades\Log::info('RechnungMail Template Source: ' . $this->templateResult['source']);
+        } catch (\Exception $e) {
+            throw new \Exception('E-Mail-Template "rechnung_versand" konnte nicht geladen werden: ' . $e->getMessage());
         }
     }
 
@@ -69,29 +70,18 @@ class RechnungMail extends Mailable
     }
     public function content(): Content
     {
-        // Ansonsten Fallback auf Blade-View
-        return new Content(
-            markdown: 'emails.rechnung.versand',
-            with: ['rechnung' => $this->rechnung]
-        );
-    }
-    /**
-     * Build the message.
-     */
-    public function build()
-    {
-        // Wenn HTML-Content vom Template vorhanden ist, verwende diesen im Layout
-        if ($this->htmlContent) {
-            return $this->subject($this->subject)
-                ->view('emails.template-wrapper', [
-                    'content' => $this->htmlContent,
-                    'rechnung' => $this->rechnung
-                ]);
-        }
+        // Debug-Output direkt in die Konsole
+        error_log('RechnungMail content() wurde aufgerufen!');
+        \Illuminate\Support\Facades\Log::debug('RechnungMail content() aufgerufen - DEBUG');
+        \Illuminate\Support\Facades\Log::debug('Template Source: ' . $this->templateResult['source']);
 
-        // Ansonsten verwende die normale content() Methode
-        return $this->subject($this->subject)
-            ->markdown('emails.rechnung.versand', ['rechnung' => $this->rechnung]);
+        return new Content(
+            markdown: 'emails.template-wrapper',
+            with: [
+                'content' => $this->htmlContent, // HTML-Content aus Datenbank
+                'rechnung' => $this->rechnung
+            ]
+        );
     }
 
     public function attachments(): array

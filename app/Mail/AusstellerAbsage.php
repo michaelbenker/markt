@@ -25,20 +25,19 @@ class AusstellerAbsage extends Mailable
     {
         $this->anfrage = $anfrage;
 
-        // Template laden und rendern
+        // Template aus Datenbank laden
         $template = EmailTemplate::getByKey('aussteller_absage');
 
-        if ($template) {
-            $variables = $this->prepareVariables();
-            $rendered = $template->render($variables);
-
-            $this->subject = $rendered['subject'];
-            $this->htmlContent = $rendered['content'];
-        } else {
-            // Fallback auf ursprüngliches Template
-            $this->subject = 'Absage für Ihre Standanfrage - ' . ($this->anfrage->markt->name ?? 'Markt');
-            $this->htmlContent = null; // Wird dann die Blade-View verwenden
+        if (!$template || !$template->is_active) {
+            throw new \Exception('E-Mail-Template "aussteller_absage" ist nicht verfügbar');
         }
+
+        // Variablen vorbereiten und Template rendern
+        $variables = $this->prepareVariables();
+        $rendered = $template->render($variables);
+
+        $this->subject = $rendered['subject'];
+        $this->htmlContent = $rendered['content'];
     }
 
     /**
@@ -86,28 +85,14 @@ class AusstellerAbsage extends Mailable
      */
     public function content(): Content
     {
-        // Ansonsten Fallback auf Blade-View
+        // Verwende generischen Template-Wrapper für Datenbank-Templates
         return new Content(
-            view: 'emails.aussteller.absage',
+            markdown: 'emails.template-wrapper',
+            with: [
+                'content' => $this->htmlContent,
+                'anfrage' => $this->anfrage
+            ]
         );
-    }
-    /**
-     * Build the message.
-     */
-    public function build()
-    {
-        // Wenn HTML-Content vom Template vorhanden ist, verwende diesen im Layout
-        if ($this->htmlContent) {
-            return $this->subject($this->subject)
-                ->view('emails.template-wrapper', [
-                    'content' => $this->htmlContent,
-                    'anfrage' => $this->anfrage
-                ]);
-        }
-
-        // Ansonsten verwende die normale content() Methode
-        return $this->subject($this->subject)
-            ->view('emails.aussteller.absage', ['anfrage' => $this->anfrage]);
     }
 
     /**

@@ -459,7 +459,9 @@ class UniversalMail extends Mailable
     public function build()
     {
         $mail = $this->subject($this->subject)
-            ->html($this->htmlContent);
+            ->markdown('emails.template-wrapper', [
+                'content' => $this->htmlContent
+            ]);
 
         // Attachments hinzufügen
         foreach ($this->attachmentData as $attachment) {

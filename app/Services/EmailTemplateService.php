@@ -76,6 +76,26 @@ class EmailTemplateService
         }
     }
 
+    /**
+     * Rendert ein Template mit Fallback auf Dateisystem-Templates
+     */
+    public function renderTemplate(string $key, array $variables = []): array
+    {
+        // 1. Versuche Datenbank-Template
+        $template = EmailTemplate::getByKey($key);
+
+        $rendered = $template->render($variables);
+        return [
+            'hasTemplate' => true,
+            'source' => 'database',
+            'subject' => $rendered['subject'],
+            'content' => $rendered['content']
+        ];
+
+        // 3. Kein Template gefunden
+        throw new \Exception("E-Mail-Template '{$key}' weder in Datenbank noch als Blade-Template gefunden");
+    }
+
     private function getAusstellerAbsageTemplate(): string
     {
         return '

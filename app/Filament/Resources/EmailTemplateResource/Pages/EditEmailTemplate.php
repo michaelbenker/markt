@@ -36,6 +36,27 @@ class EditEmailTemplate extends EditRecord
                     }
 
                     try {
+                        // Für rechnung_versand die echte RechnungMail-Klasse verwenden
+                        if ($this->record->key === 'rechnung_versand') {
+                            // Erste Rechnung für Test finden
+                            $rechnung = \App\Models\Rechnung::first();
+                            if (!$rechnung) {
+                                throw new \Exception('Keine Test-Rechnung gefunden');
+                            }
+
+                            // Echte RechnungMail-Klasse verwenden
+                            $mail = new \App\Mail\RechnungMail($rechnung);
+                            \Illuminate\Support\Facades\Mail::to($testEmail)->send($mail);
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Test E-Mail versendet (Echte RechnungMail)')
+                                ->body("Test E-Mail wurde erfolgreich an {$testEmail} gesendet. (Rechnung #{$rechnung->rechnungsnummer})")
+                                ->success()
+                                ->send();
+                            return;
+                        }
+
+                        // Für andere Templates den bisherigen MailService verwenden
                         $mailService = new \App\Services\MailService();
                         $success = $mailService->send(
                             $this->record->key,

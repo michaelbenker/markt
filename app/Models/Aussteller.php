@@ -58,4 +58,12 @@ class Aussteller extends Model
     {
         return $this->hasMany(Rechnung::class);
     }
+
+    /**
+     * Gibt den vollständigen Namen des Ausstellers zurück
+     */
+    public function getFullName(): string
+    {
+        return trim($this->vorname . ' ' . $this->name);
+    }
 }
