@@ -250,11 +250,24 @@ class ViewAnfrage extends Page
         $a = $this->getCurrentAnfrage();
 
         try {
-            // E-Mail-Adresse für Testmodus oder Produktiv bestimmen
-            $emailTo = config('mail.dev_redirect_email') ?: $a->email;
+            // Aussteller-Objekt für MailService erstellen
+            $aussteller = new \App\Models\Aussteller();
+            $aussteller->email = $a->email;
+            $aussteller->vorname = $a->vorname;
+            $aussteller->name = $a->name;
+            $aussteller->firma = $a->firma;
+            $aussteller->warenangebot = $a->warenangebot;
 
-            // Absage-E-Mail senden
-            \Illuminate\Support\Facades\Mail::to($emailTo)->send(new \App\Mail\AusstellerAbsage($a));
+            // Absage-E-Mail über MailService senden
+            $mailService = new \App\Services\MailService();
+            $success = $mailService->sendAusstellerAbsage($aussteller, [
+                'markt_name' => $a->termin->markt->name ?? 'Unbekannter Markt',
+                'eingereicht_am' => $a->created_at->format('d.m.Y')
+            ]);
+
+            if (!$success) {
+                throw new \Exception('E-Mail-Versand fehlgeschlagen');
+            }
 
             // Anfrage löschen
             $anfrageId = $a->id;
@@ -263,7 +276,7 @@ class ViewAnfrage extends Page
             $a->delete();
 
             $message = config('mail.dev_redirect_email')
-                ? "Die Absage wurde im Testmodus an {$emailTo} gesendet (Original: {$originalEmail}) und die Anfrage #{$anfrageId} wurde gelöscht."
+                ? "Die Absage wurde im Testmodus an " . config('mail.dev_redirect_email') . " gesendet (Original: {$originalEmail}) und die Anfrage #{$anfrageId} wurde gelöscht."
                 : "Die Absage wurde an {$originalEmail} gesendet und die Anfrage #{$anfrageId} wurde gelöscht.";
 
             Notification::make()

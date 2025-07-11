@@ -69,6 +69,9 @@ class EditRechnung extends EditRecord
                             ->title('Rechnung wurde versendet')
                             ->success()
                             ->send();
+
+                        // Seite neu laden, damit Status sofort sichtbar ist
+                        $this->redirect(request()->header('Referer') ?? url()->current());
                     } else {
                         Notification::make()
                             ->title('Fehler beim Versenden')

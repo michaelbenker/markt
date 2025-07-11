@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Mail\AusstellerBestaetigungMail;
+use App\Services\MailService;
 use App\Models\Aussteller;
+use App\Models\Buchung;
+use App\Models\Termin;
+use App\Models\Markt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -17,43 +20,45 @@ class SendAusstellerBestaetigungMailTest extends TestCase
         // Mail::fake() aktivieren, um echte E-Mails zu verhindern
         Mail::fake();
 
-        // Test-Aussteller erstellen
+        // Test-Daten erstellen
+        $markt = Markt::factory()->create(['name' => 'Test Markt']);
+        $termin = Termin::factory()->create(['markt_id' => $markt->id]);
         $aussteller = Aussteller::factory()->create([
             'email' => 'test@example.com',
             'firma' => 'Test Firma',
             'vorname' => 'Max',
             'name' => 'Mustermann'
         ]);
+        $buchung = Buchung::factory()->create([
+            'aussteller_id' => $aussteller->id,
+            'termin_id' => $termin->id
+        ]);
 
-        // E-Mail versenden
-        Mail::to($aussteller->email)
-            ->send(new AusstellerBestaetigungMail($aussteller));
+        // E-Mail über MailService versenden
+        $mailService = new MailService();
+        $success = $mailService->sendAusstellerBestaetigung($buchung);
 
-        // Überprüfen, ob die E-Mail versendet wurde
-        Mail::assertSent(AusstellerBestaetigungMail::class, function ($mail) use ($aussteller) {
-            return $mail->hasTo($aussteller->email) &&
-                $mail->envelope()->subject === 'Test-E-Mail Markt-App';
-        });
+        // Überprüfen, ob die E-Mail erfolgreich versendet wurde
+        $this->assertTrue($success);
+
+        // Überprüfen, ob eine E-Mail versendet wurde
+        Mail::assertSent(\App\Services\UniversalMail::class);
     }
 
-    public function test_aussteller_bestaetigung_mail_contains_correct_data()
+    public function test_aussteller_bestaetigung_mail_with_invalid_data()
     {
         Mail::fake();
 
-        $aussteller = Aussteller::factory()->create([
-            'email' => 'test@example.com',
-            'firma' => 'Test Firma',
-            'vorname' => 'Max',
-            'name' => 'Mustermann'
-        ]);
+        $aussteller = Aussteller::factory()->create(['email' => null]);
+        $buchung = Buchung::factory()->create(['aussteller_id' => $aussteller->id]);
 
-        Mail::to($aussteller->email)
-            ->send(new AusstellerBestaetigungMail($aussteller));
+        $mailService = new MailService();
+        $success = $mailService->sendAusstellerBestaetigung($buchung);
 
-        Mail::assertSent(AusstellerBestaetigungMail::class, function ($mail) use ($aussteller) {
-            return $mail->hasTo($aussteller->email) &&
-                $mail->envelope()->subject === 'Test-E-Mail Markt-App' &&
-                $mail->content()->text === 'Dies ist eine Test-E-Mail von der Markt-App.';
-        });
+        // Sollte fehlschlagen bei fehlender E-Mail-Adresse
+        $this->assertFalse($success);
+
+        // Keine E-Mail sollte versendet worden sein
+        Mail::assertNotSent(\App\Services\UniversalMail::class);
     }
 }

@@ -10,7 +10,6 @@ use Filament\Actions\Action;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\BuchungProtokoll;
 use Illuminate\Support\Facades\Auth;
-use App\Mail\AusstellerAbsage;
 use Illuminate\Support\Facades\Mail;
 
 class EditBuchung extends EditRecord
@@ -62,13 +61,20 @@ class EditBuchung extends EditRecord
             Action::make('E-Mail senden')
                 ->label('Bestätigung senden')
                 ->action(function () {
-                    // E-Mail-Adresse bestimmen
-                    $toEmail = config('mail.dev_redirect_email') 
-                        ? config('mail.dev_redirect_email') 
-                        : $this->record->aussteller->email;
+                    $mailService = new \App\Services\MailService();
+                    $success = $mailService->sendAusstellerBestaetigung($this->record);
 
-                    \Illuminate\Support\Facades\Mail::to($toEmail)
-                        ->send(new \App\Mail\AusstellerBestaetigung($this->record->aussteller));
+                    if ($success) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('E-Mail erfolgreich versendet')
+                            ->success()
+                            ->send();
+                    } else {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Fehler beim E-Mail-Versand')
+                            ->danger()
+                            ->send();
+                    }
                 })
                 ->requiresConfirmation()
                 ->modalHeading('E-Mail senden')
@@ -120,12 +126,23 @@ class EditBuchung extends EditRecord
                     $anfrage->vorname = $this->record->aussteller->vorname;
                     $anfrage->name = $this->record->aussteller->name;
 
-                    // E-Mail-Adresse bestimmen
-                    $toEmail = config('mail.dev_redirect_email') 
-                        ? config('mail.dev_redirect_email') 
-                        : $this->record->aussteller->email;
+                    $mailService = new \App\Services\MailService();
+                    $success = $mailService->sendAusstellerAbsage($this->record->aussteller, [
+                        'markt_name' => $this->record->termin->markt->name ?? 'Unbekannter Markt',
+                        'eingereicht_am' => $this->record->created_at->format('d.m.Y')
+                    ]);
 
-                    Mail::to($toEmail)->send(new AusstellerAbsage($anfrage));
+                    if ($success) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Absage-E-Mail erfolgreich versendet')
+                            ->success()
+                            ->send();
+                    } else {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Fehler beim E-Mail-Versand')
+                            ->danger()
+                            ->send();
+                    }
 
                     // Seite refreshen
                     $this->refreshFormData([$this->record->getKeyName()]);

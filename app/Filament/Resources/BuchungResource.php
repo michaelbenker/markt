@@ -328,9 +328,8 @@ class BuchungResource extends Resource
                 Tables\Actions\Action::make('E-Mail senden')
                     ->label('')
                     ->action(function ($record) {
-                        Mail::send(
-                            new \App\Mail\AusstellerBestaetigung($record->aussteller)
-                        );
+                        $mailService = new \App\Services\MailService();
+                        $mailService->sendAusstellerBestaetigung($record);
                     })
                     ->requiresConfirmation()
                     ->color('success')

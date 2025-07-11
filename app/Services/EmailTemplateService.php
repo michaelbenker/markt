@@ -76,89 +76,104 @@ class EmailTemplateService
         }
     }
 
+    /**
+     * Rendert ein Template mit Fallback auf Dateisystem-Templates
+     */
+    public function renderTemplate(string $key, array $variables = []): array
+    {
+        // 1. Versuche Datenbank-Template
+        $template = EmailTemplate::getByKey($key);
+
+        $rendered = $template->render($variables);
+        return [
+            'hasTemplate' => true,
+            'source' => 'database',
+            'subject' => $rendered['subject'],
+            'content' => $rendered['content']
+        ];
+
+        // 3. Kein Template gefunden
+        throw new \Exception("E-Mail-Template '{$key}' weder in Datenbank noch als Blade-Template gefunden");
+    }
+
     private function getAusstellerAbsageTemplate(): string
     {
-        return '
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-    <h2>Absage für Ihre Standanfrage</h2>
-    
-    <p>Sehr geehrte Damen und Herren,</p>
-    
-    <p>vielen Dank für Ihr Interesse an unserem Markt <strong>{{markt_name}}</strong>.</p>
-    
-    <p>Leider können wir Ihr Angebot nicht berücksichtigen.</p>
-    
-    <p>Aufgrund der begrenzten Platzkapazität und der hohen Nachfrage können wir Ihnen leider keinen Stand anbieten. Wir bedauern diese Entscheidung sehr.</p>
-    
-    <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 20px 0;">
-        <h3>Ihre Anfrage im Überblick:</h3>
-        <p><strong>Markt:</strong> {{markt_name}}</p>
-        <p><strong>Eingereicht am:</strong> {{eingereicht_am}}</p>
-        <p><strong>Firma:</strong> {{firma}}</p>
-        <p><strong>Warenangebot:</strong> {{warenangebot}}</p>
-    </div>
-    
-    <p>Wir möchten Sie gerne über zukünftige Märkte informieren und laden Sie herzlich ein, sich auch in Zukunft bei uns zu bewerben.</p>
-    
-    <p>Sollten Sie Fragen haben, stehen wir Ihnen gerne zur Verfügung.</p>
-    
-    <p>Wir wünschen Ihnen alles Gute und hoffen auf eine zukünftige Zusammenarbeit.</p>
-    
-    <p>Mit freundlichen Grüßen<br>
-    Ihr Markt-Team</p>
-</div>';
+        return '# Absage für Ihre Standanfrage
+
+Sehr geehrte Damen und Herren,
+
+vielen Dank für Ihr Interesse an unserem Markt **{{markt_name}}**.
+
+Leider können wir Ihr Angebot nicht berücksichtigen.
+
+Aufgrund der begrenzten Platzkapazität und der hohen Nachfrage können wir Ihnen leider keinen Stand anbieten. Wir bedauern diese Entscheidung sehr.
+
+> **Ihre Anfrage im Überblick:**
+> 
+> **Markt:** {{markt_name}}
+> 
+> **Eingereicht am:** {{eingereicht_am}}
+> 
+> **Firma:** {{firma}}
+> 
+> **Warenangebot:** {{warenangebot}}
+
+Wir möchten Sie gerne über zukünftige Märkte informieren und laden Sie herzlich ein, sich auch in Zukunft bei uns zu bewerben.
+
+Sollten Sie Fragen haben, stehen wir Ihnen gerne zur Verfügung.
+
+Wir wünschen Ihnen alles Gute und hoffen auf eine zukünftige Zusammenarbeit.
+
+Mit freundlichen Grüßen  
+Ihr Markt-Team';
     }
 
     private function getAusstellerBestaetigungTemplate(): string
     {
-        return '
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-    <h2>Bestätigung Ihrer Anmeldung</h2>
-    
-    <p>Sehr geehrte{{aussteller_name}},</p>
-    
-    <p>wir freuen uns, Ihnen mitteilen zu können, dass Ihre Anmeldung für den Markt <strong>{{markt_name}}</strong> erfolgreich war!</p>
-    
-    <div style="background-color: #d4edda; padding: 15px; border-left: 4px solid #28a745; margin: 20px 0;">
-        <h3>Ihre Buchungsdetails:</h3>
-        <p><strong>Markt:</strong> {{markt_name}}</p>
-        <p><strong>Termine:</strong> {{termine}}</p>
-        <p><strong>Standplatz:</strong> {{standplatz}}</p>
-    </div>
-    
-    <p>Weitere Informationen und Unterlagen erhalten Sie in den kommenden Tagen.</p>
-    
-    <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
-    
-    <p>Mit freundlichen Grüßen<br>
-    Ihr Markt-Team</p>
-</div>';
+        return '# Bestätigung Ihrer Anmeldung
+
+Sehr geehrte{{aussteller_name}},
+
+wir freuen uns, Ihnen mitteilen zu können, dass Ihre Anmeldung für den Markt **{{markt_name}}** erfolgreich war!
+
+> **Ihre Buchungsdetails:**
+> 
+> **Markt:** {{markt_name}}
+> 
+> **Termine:** {{termine}}
+> 
+> **Standplatz:** {{standplatz}}
+
+Weitere Informationen und Unterlagen erhalten Sie in den kommenden Tagen.
+
+Bei Fragen stehen wir Ihnen gerne zur Verfügung.
+
+Mit freundlichen Grüßen  
+Ihr Markt-Team';
     }
 
     private function getRechnungVersandTemplate(): string
     {
-        return '
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-    <h2>Ihre Rechnung {{rechnung_nummer}}</h2>
-    
-    <p>Sehr geehrte{{aussteller_name}},</p>
-    
-    <p>anbei erhalten Sie Ihre Rechnung für den Markt <strong>{{markt_name}}</strong>.</p>
-    
-    <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 20px 0;">
-        <h3>Rechnungsdetails:</h3>
-        <p><strong>Rechnungsnummer:</strong> {{rechnung_nummer}}</p>
-        <p><strong>Betrag:</strong> {{betrag}}</p>
-        <p><strong>Markt:</strong> {{markt_name}}</p>
-    </div>
-    
-    <p>Die Rechnung finden Sie als PDF-Anhang.</p>
-    
-    <p>Bei Fragen zur Rechnung stehen wir Ihnen gerne zur Verfügung.</p>
-    
-    <p>Mit freundlichen Grüßen<br>
-    Ihr Markt-Team</p>
-</div>';
+        return '# Ihre Rechnung {{rechnung_nummer}}
+
+Sehr geehrte{{aussteller_name}},
+
+anbei erhalten Sie Ihre Rechnung für den Markt **{{markt_name}}**.
+
+> **Rechnungsdetails:**
+> 
+> **Rechnungsnummer:** {{rechnung_nummer}}
+> 
+> **Betrag:** {{betrag}}
+> 
+> **Markt:** {{markt_name}}
+
+Die Rechnung finden Sie als PDF-Anhang.
+
+Bei Fragen zur Rechnung stehen wir Ihnen gerne zur Verfügung.
+
+Mit freundlichen Grüßen  
+Ihr Markt-Team';
     }
 }
 

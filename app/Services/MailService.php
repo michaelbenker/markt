@@ -94,6 +94,9 @@ class MailService
             return false;
         }
 
+        // Sicherstellen, dass alle Relationen geladen sind
+        $buchung->load(['termin.markt']);
+
         $data = [
             'buchung' => $buchung,
             'aussteller' => $aussteller,
@@ -147,7 +150,11 @@ class MailService
                         : ($aussteller->vorname . ' ' . $aussteller->name);
 
                     $marktName = 'Unbekannter Markt';
-                    if (isset($rechnung->buchung) && is_object($rechnung->buchung) && isset($rechnung->buchung->markt)) {
+                    // NEU: Markt über Termin holen
+                    if (isset($rechnung->buchung) && is_object($rechnung->buchung) && isset($rechnung->buchung->termin) && is_object($rechnung->buchung->termin) && isset($rechnung->buchung->termin->markt) && is_object($rechnung->buchung->termin->markt)) {
+                        $marktName = $rechnung->buchung->termin->markt->name;
+                    } elseif (isset($rechnung->buchung) && is_object($rechnung->buchung) && isset($rechnung->buchung->markt)) {
+                        // Fallback: wie bisher
                         $marktName = $rechnung->buchung->markt->name;
                     }
 
@@ -164,37 +171,50 @@ class MailService
                 $buchung = $data['buchung'] ?? null;
                 $aussteller = $data['aussteller'] ?? null;
 
+                // Template-Daten für Debug-Zwecke schön formatiert loggen
+                Log::debug('Template-Daten für aussteller_bestaetigung', [
+                    'data_pretty' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                ]);
+
                 if ($buchung && $aussteller) {
-                    // Behandle sowohl echte Objekte als auch Dummy-Objekte
                     $ausstellerName = method_exists($aussteller, 'getFullName')
                         ? $aussteller->getFullName()
                         : ($aussteller->vorname . ' ' . $aussteller->name);
 
-                    $termine = 'Termine werden noch bekannt gegeben';
-                    if (isset($buchung->markt->termine) && is_object($buchung->markt->termine)) {
-                        if (method_exists($buchung->markt->termine, 'orderBy')) {
-                            // Echtes Laravel Collection
-                            $termine = $buchung->markt->termine()
-                                ->orderBy('datum')
-                                ->get()
-                                ->map(fn($t) => $t->datum->format('d.m.Y'))
-                                ->join(', ');
-                        } else {
-                            // Dummy Collection
-                            $termine = $buchung->markt->termine
-                                ->map(fn($t) => $t->datum->format('d.m.Y'))
-                                ->join(', ');
+                    // Termin-Logik: Nur $buchung->termin verwenden
+
+                    $termine = 'Termin wird noch bekannt gegeben';
+                    if (isset($buchung->termin) && is_object($buchung->termin)) {
+                        if (isset($buchung->termin->start) && isset($buchung->termin->ende)) {
+                            // Wenn Start und Ende unterschiedlich sind, beide anzeigen
+                            $start = \Carbon\Carbon::parse($buchung->termin->start)->format('d.m.Y');
+                            $ende = \Carbon\Carbon::parse($buchung->termin->ende)->format('d.m.Y');
+
+                            if ($start === $ende) {
+                                $termine = $start;
+                            } else {
+                                $termine = $start . ' - ' . $ende;
+                            }
+                        } elseif (isset($buchung->termin->start)) {
+                            $termine = \Carbon\Carbon::parse($buchung->termin->start)->format('d.m.Y');
+                        } elseif (isset($buchung->termin->datum)) {
+                            // Fallback für alte Datenstruktur
+                            $termine = \Carbon\Carbon::parse($buchung->termin->datum)->format('d.m.Y');
                         }
                     }
 
                     $standplatz = 'Wird noch zugeteilt';
-                    if (isset($buchung->stand) && isset($buchung->stand->bezeichnung)) {
+                    if (isset($buchung->standplatz) && !empty($buchung->standplatz)) {
+                        $standplatz = 'Stand Nr. ' . $buchung->standplatz;
+                    } elseif (isset($buchung->stand) && isset($buchung->stand->bezeichnung)) {
                         $standplatz = $buchung->stand->bezeichnung;
                     }
 
+                    $marktName = isset($buchung->termin->markt->name) ? $buchung->termin->markt->name : 'Unbekannter Markt';
+
                     $processedData = [
                         'aussteller_name' => $ausstellerName,
-                        'markt_name' => $buchung->markt->name,
+                        'markt_name' => $marktName,
                         'termine' => $termine,
                         'standplatz' => $standplatz,
                     ];
@@ -250,7 +270,24 @@ class MailService
                 break;
 
             case 'aussteller_bestaetigung':
-                // Hier könnten später z.B. Standortpläne oder Infodokumente angehängt werden
+                $buchung = $data['buchung'] ?? null;
+                if ($buchung) {
+                    // Buchungsbestätigung als PDF-Attachment (gleiche wie "Buchung drucken")
+                    try {
+                        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.buchung', ['buchung' => $buchung]);
+                        $attachments[] = [
+                            'data' => $pdf->output(),
+                            'name' => 'anmeldebestaetigung-' . $buchung->id . '.pdf',
+                            'mime' => 'application/pdf'
+                        ];
+                    } catch (\Exception $e) {
+                        // Falls PDF-Generierung fehlschlägt, einfach ohne Anhang senden
+                        Log::warning('PDF-Generierung für Anmeldebestätigung fehlgeschlagen', [
+                            'buchung_id' => $buchung->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
                 break;
 
             case 'aussteller_absage':
@@ -459,7 +496,9 @@ class UniversalMail extends Mailable
     public function build()
     {
         $mail = $this->subject($this->subject)
-            ->html($this->htmlContent);
+            ->markdown('emails.template-wrapper', [
+                'content' => $this->htmlContent
+            ]);
 
         // Attachments hinzufügen
         foreach ($this->attachmentData as $attachment) {

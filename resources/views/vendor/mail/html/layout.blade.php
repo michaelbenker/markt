@@ -23,6 +23,43 @@
                 width: 100% !important;
             }
         }
+
+        /* Template-spezifische Styles für Datenbank-Templates */
+        .template-content {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .template-content h1,
+        .template-content h2,
+        .template-content h3 {
+            color: #2d3748;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .template-content p {
+            margin-bottom: 10px;
+        }
+
+        .template-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .template-content table th,
+        .template-content table td {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        .template-content table th {
+            background-color: #f7fafc;
+            font-weight: bold;
+        }
     </style>
     {!! $head ?? '' !!}
 </head>
@@ -55,27 +92,30 @@
                         </td>
                     </tr>
 
-                    {!! $footer ?? '' !!}
-
-                    @if(!isset($footer))
-                    <!-- Standard Footer wenn kein Footer definiert ist -->
+                    <!-- Immer Standard Footer mit Stammdaten -->
                     <tr>
                         <td>
                             <table class="footer" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation">
                                 <tr>
                                     <td class="content-cell" align="center">
-                                        <p style="font-size: 12px; color: #b0adc5; margin: 0; text-align: center;">
-                                            © {{ date('Y') }} {{ config('app.name') }}. Alle Rechte vorbehalten.
+                                        @if(isset($stammdaten))
+                                        <p style="text-align: left; font-size: 0.7em;">
+                                            <b>{{ $stammdaten['allgemein']['name'] }}</b> · {{ $stammdaten['allgemein']['abteilung'] }} · {{ $stammdaten['ansprechpartner']['name'] }}
+                                            <br>{{ $stammdaten['allgemein']['strasse'] }} · {{ $stammdaten['allgemein']['plz'] }} {{ $stammdaten['allgemein']['ort'] }} · Tel. <a href="tel:{{ preg_replace('/\D+/', '', $stammdaten['ansprechpartner']['telefon']) }}">{{ $stammdaten['ansprechpartner']['telefon'] }}</a>
+                                            <br>E-Mail: <a href="mailto:{{ $stammdaten['ansprechpartner']['email'] }}">{{ $stammdaten['ansprechpartner']['email'] }}</a> · <a href="{{ $stammdaten['allgemein']['web'] }}">{{ $stammdaten['allgemein']['web'] }}</a>
+                                            <br>Werkleitung: {{ $stammdaten['allgemein']['leitung'] }} · Sitz: {{ $stammdaten['allgemein']['sitz'] }}; Registergericht: {{ $stammdaten['allgemein']['registergericht'] }}
                                         </p>
-                                        <p style="font-size: 12px; color: #b0adc5; margin: 5px 0 0 0; text-align: center;">
+                                        @else
+                                        <p style="text-align: center; font-size: 0.7em; color: #b0adc5;">
+                                            © {{ date('Y') }} {{ config('app.name') }}. Alle Rechte vorbehalten.<br>
                                             Bei Fragen wenden Sie sich gerne an uns.
                                         </p>
+                                        @endif
                                     </td>
                                 </tr>
                             </table>
                         </td>
                     </tr>
-                    @endif
                 </table>
             </td>
         </tr>

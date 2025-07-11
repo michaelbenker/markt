@@ -20,27 +20,27 @@ Route::get('/', function () {
     return view('home');
 });
 
-// Test-Route für E-Mail-Templates
-Route::get('/test-email', function () {
-    $aussteller = App\Models\Aussteller::first();
-    if (!$aussteller) {
-        return 'Kein Aussteller gefunden';
+// Test-Route für echte Mail-Klassen (nur für Admin)
+Route::post('/admin/test-real-mail/rechnung', function () {
+    try {
+        // Erste Rechnung für Test finden
+        $rechnung = \App\Models\Rechnung::first();
+        if (!$rechnung) {
+            return response()->json(['success' => false, 'message' => 'Keine Test-Rechnung gefunden']);
+        }
+
+        // MailService verwenden
+        $mailService = new \App\Services\MailService();
+        $success = $mailService->sendRechnung($rechnung);
+
+        return response()->json([
+            'success' => $success,
+            'message' => $success
+                ? "✅ Test-Rechnung #{$rechnung->rechnungsnummer} versendet!"
+                : 'Fehler beim Versand'
+        ]);
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('Test-Mail Fehler: ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => '❌ Fehler: ' . $e->getMessage()]);
     }
-
-    $service = new App\Services\EmailTemplateService();
-    $data = [
-        'aussteller_name' => $aussteller->name,
-        'markt_name' => 'Test Markt',
-        'stand_nummer' => '123',
-        'anmeldedatum' => now()->format('d.m.Y')
-    ];
-
-    // Test Template Service
-    $result = $service->renderTemplate('aussteller_bestaetigung', $data);
-
-    if ($result['hasTemplate']) {
-        return view('emails.template-wrapper', ['content' => $result['content']]);
-    } else {
-        return 'Kein Template verfügbar - würde Standard-View verwenden';
-    }
-});
+})->middleware('auth');

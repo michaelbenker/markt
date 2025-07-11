@@ -185,7 +185,7 @@
             <table>
                 <tr>
                     <th>Art</th>
-                    <td>{{ ucfirst($buchung->stand['art']) }}</td>
+                    <td>{{ ucfirst($buchung->stand['tiefe']) }}</td>
                 </tr>
                 <tr>
                     <th>Länge</th>

@@ -9,7 +9,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use FilamentTiptapEditor\TiptapEditor;
 
 class EmailTemplateResource extends Resource
 {
@@ -27,11 +26,7 @@ class EmailTemplateResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Template-Informationen')
                     ->schema([
-                        Forms\Components\TextInput::make('key')
-                            ->label('Template-Key')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->helperText('Eindeutiger Schlüssel (z.B. aussteller_absage, rechnung_versand)'),
+                        Forms\Components\Hidden::make('key'),
 
                         Forms\Components\TextInput::make('name')
                             ->label('Template-Name')
@@ -42,10 +37,6 @@ class EmailTemplateResource extends Resource
                             ->label('Beschreibung')
                             ->rows(2)
                             ->helperText('Kurze Beschreibung des Templates'),
-
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Aktiv')
-                            ->default(true),
                     ])
                     ->columns(2),
 
@@ -54,62 +45,99 @@ class EmailTemplateResource extends Resource
                         Forms\Components\TextInput::make('subject')
                             ->label('E-Mail-Betreff')
                             ->required()
+                            ->columnSpanFull()
                             ->helperText('Verwende Platzhalter wie {{aussteller_name}} oder {{markt_name}}'),
 
-                        TiptapEditor::make('content')
-                            ->label('E-Mail-Inhalt')
-                            ->required()
-                            ->columnSpanFull()
-                            ->profile('simple')
-                            ->tools([
-                                'heading',
-                                '|',
-                                'bold',
-                                'italic',
-                                'underline',
-                                'strike',
-                                '|',
-                                'bullet-list',
-                                'ordered-list',
-                                '|',
-                                'align-left',
-                                'align-center',
-                                'align-right',
-                                '|',
-                                'link',
-                                'blockquote',
-                                'hr',
-                                '|',
-                                'table',
-                                '|',
-                                'undo',
-                                'redo',
-                                'source',
-                            ])
-                            ->extraInputAttributes([
-                                'style' => 'min-height: 300px;'
-                            ])
-                            ->helperText('HTML-Inhalt der E-Mail. Verwende Platzhalter wie {{aussteller_name}}, {{markt_name}}, etc. Keine Bilder erlaubt.'),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\MarkdownEditor::make('content')
+                                    ->label('E-Mail-Inhalt')
+                                    ->required()
+                                    ->live()
+                                    ->helperText('Verwende Markdown-Syntax und Platzhalter')
+                                    ->toolbarButtons([
+                                        'bold',
+                                        'italic',
+                                        'link',
+                                        'heading',
+                                        'bulletList',
+                                        'orderedList',
+                                        'blockquote',
+                                        'undo',
+                                        'redo',
+                                    ])
+                                    ->extraAttributes(['style' => 'min-height:700px; max-height:700px; overflow-y:auto;']),
+
+                                Forms\Components\Placeholder::make('content_preview')
+                                    ->label('Vorschau')
+                                    ->content(function (Forms\Get $get) {
+                                        $content = $get('content') ?? '';
+                                        $templateKey = $get('key') ?? '';
+
+                                        if (empty($content)) {
+                                            return 'Markdown-Inhalt eingeben für Vorschau';
+                                        }
+
+                                        // Dummy-Daten für Vorschau generieren
+                                        $mailService = new \App\Services\MailService();
+                                        $reflection = new \ReflectionClass($mailService);
+                                        $getDummyDataMethod = $reflection->getMethod('getDummyData');
+                                        $getDummyDataMethod->setAccessible(true);
+                                        $dummyData = $getDummyDataMethod->invoke($mailService, $templateKey ?: 'aussteller_bestaetigung');
+
+                                        $prepareTemplateDataMethod = $reflection->getMethod('prepareTemplateData');
+                                        $prepareTemplateDataMethod->setAccessible(true);
+                                        $processedData = $prepareTemplateDataMethod->invoke($mailService, $templateKey ?: 'aussteller_bestaetigung', $dummyData);
+
+                                        // Platzhalter mit Dummy-Daten ersetzen
+                                        $previewContent = $content;
+                                        foreach ($processedData as $key => $value) {
+                                            $previewContent = str_replace(['{{' . $key . '}}', '{' . $key . '}'], $value, $previewContent);
+                                        }
+
+                                        $markdownRenderer = new \League\CommonMark\CommonMarkConverter();
+                                        $rendered = $markdownRenderer->convert($previewContent);
+
+                                        return new \Illuminate\Support\HtmlString(
+                                            '<div class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-lg border" style="height:700px;overflow-y:auto;">' .
+                                                '<div class="mb-2 text-xs text-blue-600 font-medium">Vorschau mit Beispiel-Daten</div>' .
+                                                $rendered .
+                                                '</div>'
+                                        );
+                                    }),
+                            ]),
                     ]),
 
-                Forms\Components\Section::make('Verfügbare Variablen')
+                Forms\Components\Section::make('Verfügbare Platzhalter')
                     ->schema([
-                        Forms\Components\Repeater::make('available_variables')
-                            ->label('Platzhalter')
-                            ->schema([
-                                Forms\Components\TextInput::make('variable')
-                                    ->label('Variable')
-                                    ->required()
-                                    ->helperText('z.B. aussteller_name'),
-                                Forms\Components\TextInput::make('description')
-                                    ->label('Beschreibung')
-                                    ->required()
-                                    ->helperText('z.B. Name des Ausstellers'),
-                            ])
-                            ->columns(2)
-                            ->helperText('Liste der verfügbaren Platzhalter für dieses Template'),
-                    ])
-                    ->collapsible(),
+                        Forms\Components\Placeholder::make('variables_help')
+                            ->label(false)
+                            ->content(new \Illuminate\Support\HtmlString('
+                                <div class="bg-blue-50 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-blue-900 mb-3">Verfügbare Variablen:</h4>
+                                    <div class="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <h5 class="font-medium text-blue-800 mb-2">Allgemein:</h5>
+                                            <ul class="space-y-1 text-blue-700">
+                                                <li><code class="bg-blue-100 px-2 py-1 rounded">{{aussteller_name}}</code> - Name des Ausstellers</li>
+                                                <li><code class="bg-blue-100 px-2 py-1 rounded">{{markt_name}}</code> - Name des Marktes</li>
+                                                <li><code class="bg-blue-100 px-2 py-1 rounded">{{firma}}</code> - Firmenname</li>
+                                                <li><code class="bg-blue-100 px-2 py-1 rounded">{{app_name}}</code> - App-Name</li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h5 class="font-medium text-blue-800 mb-2">Spezifisch:</h5>
+                                            <ul class="space-y-1 text-blue-700">
+                                                <li><code class="bg-blue-100 px-2 py-1 rounded">{{rechnung_nummer}}</code> - Rechnungsnummer</li>
+                                                <li><code class="bg-blue-100 px-2 py-1 rounded">{{betrag}}</code> - Rechnungsbetrag</li>
+                                                <li><code class="bg-blue-100 px-2 py-1 rounded">{{termine}}</code> - Markttermine</li>
+                                                <li><code class="bg-blue-100 px-2 py-1 rounded">{{standplatz}}</code> - Standplatz</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            ')),
+                    ]),
             ]);
     }
 
@@ -154,12 +182,6 @@ class EmailTemplateResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('preview')
-                    ->label('Vorschau')
-                    ->icon('heroicon-o-eye')
-                    ->modalContent(fn(EmailTemplate $record) => view('filament.email-template-preview', ['template' => $record]))
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Schließen'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
