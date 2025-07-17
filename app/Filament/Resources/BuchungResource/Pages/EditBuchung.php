@@ -10,7 +10,6 @@ use Filament\Actions\Action;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\BuchungProtokoll;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 
 class EditBuchung extends EditRecord
 {
@@ -23,7 +22,7 @@ class EditBuchung extends EditRecord
                 ->label('Rechnung erstellen')
                 ->icon('heroicon-o-document-text')
                 ->color('success')
-                ->visible(fn($record) => !$record->hatAktiveRechnung())
+                ->disabled(fn($record) => $record->hatAktiveRechnung() || !$record->aussteller_id || !$record->leistungen()->exists())
                 ->action(function ($record) {
                     // Erstelle Rechnung aus Buchung
                     $rechnung = \App\Services\RechnungService::createFromBuchung($record);
