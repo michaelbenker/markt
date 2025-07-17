@@ -171,11 +171,6 @@ class MailService
                 $buchung = $data['buchung'] ?? null;
                 $aussteller = $data['aussteller'] ?? null;
 
-                // Template-Daten für Debug-Zwecke schön formatiert loggen
-                Log::debug('Template-Daten für aussteller_bestaetigung', [
-                    'data_pretty' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-                ]);
-
                 if ($buchung && $aussteller) {
                     $ausstellerName = method_exists($aussteller, 'getFullName')
                         ? $aussteller->getFullName()
@@ -244,6 +239,14 @@ class MailService
                 $processedData = $data;
                 break;
         }
+
+        Log::debug('Template-Daten für aussteller_bestaetigung', [
+            'data_pretty' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        ]);
+
+        Log::debug('Template-Daten für aussteller_bestaetigung', [
+            'processedData' => json_encode($processedData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        ]);
 
         return $processedData;
     }

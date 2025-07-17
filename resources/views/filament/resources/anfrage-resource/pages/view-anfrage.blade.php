@@ -1,109 +1,129 @@
 @php($a = $this->record)
 <x-filament::page>
     <x-filament::card>
-        <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-            <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                <dt class="font-semibold">Firma</dt>
-                <dd>{{ $a->firma }}</dd>
-
-                <dt class="font-semibold">Name</dt>
-                <dd>{{ $a->nachname }}, {{ $a->vorname }}</dd>
-
-                <dt class="font-semibold">Anschrift</dt>
-                <dd>{{ $a->strasse }} {{ $a->hausnummer }}</dd>
-
-                <dt class="font-semibold">Ort</dt>
-                <dd>{{ $a->plz }} {{ $a->ort }} ({{ $a->land }})</dd>
-
-                <dt class="font-semibold">Telefon</dt>
-                <dd>{{ $a->telefon }}</dd>
-
-                <dt class="font-semibold">E-Mail</dt>
-                <dd>{{ $a->email }}</dd>
-
-                <dt class="font-semibold">Stand</dt>
-                <dd>
-                    @if(is_array($a->stand))
-                    Art: {{ $a->stand['art'] ?? '-' }}, Länge: {{ $a->stand['laenge'] ?? '-' }}, Fläche: {{ $a->stand['flaeche'] ?? '-' }}
-                    @else
-                    {{ $a->stand }}
-                    @endif
-                </dd>
-
-                <dt class="font-semibold">Warenangebot</dt>
-                <dd>
-                    @if(is_array($a->warenangebot))
-                    {{ implode(', ', $a->warenangebot) }}
-                    @else
-                    {{ $a->warenangebot }}
-                    @endif
-                </dd>
-
-                <dt class="font-semibold">Herkunft</dt>
-                <dd>
-                    @if(is_array($a->herkunft))
-                    Eigenfertigung: {{ $a->herkunft['eigenfertigung'] ?? '-' }}%,
-                    Industrieware (nicht Entwicklungsländer): {{ $a->herkunft['industrieware_nicht_entwicklungslaender'] ?? '-' }}%,
-                    Industrieware (Entwicklungsländer): {{ $a->herkunft['industrieware_entwicklungslaender'] ?? '-' }}%
-                    @else
-                    {{ $a->herkunft }}
-                    @endif
-                </dd>
-
-                <dt class="font-semibold">Bereits ausgestellt?</dt>
-                <dd>{{ $a->bereits_ausgestellt ? 'Ja' : 'Nein' }}</dd>
-
-                <dt class="font-semibold">Bemerkung</dt>
-                <dd>{{ $a->bemerkung }}</dd>
-
-                <dt class="font-semibold text-gray-500 text-sm">Erstellt am</dt>
-                <dd class="text-gray-500 text-sm">{{ $a->created_at?->format('d.m.Y H:i') }}</dd>
-            </dl>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
             <div>
-                <dd>
-                    @if(count($this->matchingAussteller))
-                    <div class="grid gap-4 mb-4">
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                    <dt class="font-semibold">Firma</dt>
+                    <dd>{{ $a->firma }}</dd>
+
+                    <dt class="font-semibold">Name</dt>
+                    <dd>{{ $a->nachname }}, {{ $a->vorname }}</dd>
+
+                    <dt class="font-semibold">Anschrift</dt>
+                    <dd>{{ $a->strasse }} {{ $a->hausnummer }}</dd>
+
+                    <dt class="font-semibold">Ort</dt>
+                    <dd>{{ $a->plz }} {{ $a->ort }} ({{ $a->land }})</dd>
+
+                    <dt class="font-semibold">Telefon</dt>
+                    <dd>{{ $a->telefon }}</dd>
+
+                    <dt class="font-semibold">E-Mail</dt>
+                    <dd>{{ $a->email }}</dd>
+
+                    <dt class="font-semibold">Stand</dt>
+                    <dd>
+                        @if(is_array($a->stand))
+                        Art: {{ $a->stand['art'] ?? '-' }}, Länge: {{ $a->stand['laenge'] ?? '-' }}, Fläche: {{ $a->stand['flaeche'] ?? '-' }}
+                        @else
+                        {{ $a->stand }}
+                        @endif
+                    </dd>
+
+                    <dt class="font-semibold">Warenangebot</dt>
+                    <dd>
+                        @if(is_array($a->warenangebot))
+                        {{ implode(', ', $a->warenangebot) }}
+                        @else
+                        {{ $a->warenangebot }}
+                        @endif
+                    </dd>
+
+                    <dt class="font-semibold">Herkunft</dt>
+                    <dd>
+                        @if(is_array($a->herkunft))
+                        Eigenfertigung: {{ $a->herkunft['eigenfertigung'] ?? '-' }}%,
+                        Industrieware (nicht Entwicklungsländer): {{ $a->herkunft['industrieware_nicht_entwicklungslaender'] ?? '-' }}%,
+                        Industrieware (Entwicklungsländer): {{ $a->herkunft['industrieware_entwicklungslaender'] ?? '-' }}%
+                        @else
+                        {{ $a->herkunft }}
+                        @endif
+                    </dd>
+
+                    <dt class="font-semibold">Bereits ausgestellt?</dt>
+                    <dd>{{ $a->bereits_ausgestellt ? 'Ja' : 'Nein' }}</dd>
+
+                    <dt class="font-semibold">Bemerkung</dt>
+                    <dd>{{ $a->bemerkung }}</dd>
+
+                    <dt class="font-semibold text-gray-500 text-sm">Erstellt am</dt>
+                    <dd class="text-gray-500 text-sm">{{ $a->created_at?->format('d.m.Y H:i') }}</dd>
+                </dl>
+            </div>
+            <div>
+                @if(count($this->matchingAussteller))
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900">🔍 Gefundene Aussteller</h3>
+                    <div class="grid gap-4">
                         @foreach($this->matchingAussteller as $match)
                         @php($aus = $match['aussteller'])
+                        @php($differences = $this->getAusstellerDifferences($aus))
                         <div class="border rounded-lg p-4 bg-gray-50">
                             <div class="font-bold text-lg mb-1">{{ $aus->firma ?? '-' }}</div>
-                            <div>{{ $aus->name }}, {{ $aus->vorname }}</div>
-                            <div>{{ $aus->email }} | {{ $aus->telefon }}</div>
-                            <div>{{ $aus->plz }} {{ $aus->ort }}</div>
-                            <div class="text-xs text-gray-500 mt-1">Treffer: {{ implode(', ', $match['criteria']) }}</div>
-                            <div class="mt-2 flex flex-col gap-2">
-                                @if($match['perfect'])
-                                <form wire:submit.prevent="createBuchung({{ $aus->id }})">
-                                    <x-filament::button color="success" class="w-full" type="submit">Buchung erzeugen</x-filament::button>
-                                </form>
-                                @else
-                                <form wire:submit.prevent="updateAusstellerUndBuchung({{ $aus->id }})">
-                                    <x-filament::button color="warning" class="w-full" type="submit">Aussteller-Daten aktualisieren und Buchung erzeugen</x-filament::button>
-                                </form>
-                                <form wire:submit.prevent="buchungMitDatenUebernehmen({{ $aus->id }})">
-                                    <x-filament::button color="success" class="w-full" type="submit">Buchung erzeugen (Aussteller-Daten werden übernommen)</x-filament::button>
-                                </form>
+                            <div class="text-gray-700">{{ $aus->name }}, {{ $aus->vorname }}</div>
+                            <div class="text-gray-600">{{ $aus->email }} | {{ $aus->telefon }}</div>
+                            <div class="text-gray-600">{{ $aus->plz }} {{ $aus->ort }}</div>
+
+                            @if(count($differences) > 0)
+                            <div class="mt-2 mb-4 p-2 bg-amber-50 border border-amber-200 rounded text-sm">
+                                <div class="font-medium text-amber-800 mb-1">⚠️ Unterschiede gefunden:</div>
+                                <ul class="text-amber-700 list-disc list-inside">
+                                    @foreach($differences as $diff)
+                                    <li>{{ $diff }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            @endif
+
+                            <div class="flex gap-2 items-center">
+                                @if(count($differences) > 0)
+                                <label class="flex items-center gap-2 text-sm">
+                                    <input type="checkbox"
+                                        wire:model.defer="updateData.{{ $aus->id }}"
+                                        checked
+                                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                    <span class="text-gray-700">Geänderte Daten übernehmen</span>
+                                </label>
                                 @endif
                             </div>
                         </div>
                         @endforeach
                     </div>
-                    @else
-                    <div class="text-gray-500 mb-4">Kein passender Aussteller gefunden.</div>
-                    @endif
-                    <div class="flex flex-col gap-2 mt-4">
+                </div>
+                <div class="border-t pt-6"></div>
+                @endif
+
+                <div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-5">
                         <form wire:submit.prevent="ausstellerNeuUndBuchung()">
-                            <x-filament::button color="primary" class="w-full" type="submit">Aussteller neu anlegen und Buchung erzeugen</x-filament::button>
+                            <x-filament::button color="success" class="w-full" type="submit" icon="heroicon-o-plus-circle">
+                                Buchung anlegen
+                            </x-filament::button>
                         </form>
                         <form wire:submit.prevent="ausstellerNeuOhneBuchung()">
-                            <x-filament::button color="gray" class="w-full" type="submit">Aussteller anlegen ohne Buchung</x-filament::button>
+                            <x-filament::button color="info" class="w-full" type="submit" icon="heroicon-o-user-plus">
+                                Nur Aussteller anlegen
+                            </x-filament::button>
                         </form>
                         <form wire:submit.prevent="ausstellerAbsagen()">
-                            <x-filament::button color="danger" class="w-full" type="submit">Aussteller absagen</x-filament::button>
+                            <x-filament::button color="danger" class="w-full" type="submit" icon="heroicon-o-x-circle">
+                                Aussteller absagen
+                            </x-filament::button>
                         </form>
                     </div>
-                </dd>
+                </div>
             </div>
-        </dl>
+        </div>
     </x-filament::card>
 </x-filament::page>

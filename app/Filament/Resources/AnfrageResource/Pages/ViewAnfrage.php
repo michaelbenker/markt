@@ -19,12 +19,22 @@ class ViewAnfrage extends Page
     protected Anfrage $record;
     public array $matchingAussteller = [];
     public int $anfrageId;
+    public array $updateData = [];
 
     public function mount($record): void
     {
         $this->anfrageId = is_object($record) ? $record->id : $record;
         $this->record = Anfrage::findOrFail($this->anfrageId);
         $this->matchingAussteller = $this->getMatchingAussteller();
+
+        // Checkbox für alle Aussteller mit Unterschied standardmäßig anhaken
+        foreach ($this->matchingAussteller as $match) {
+            $aus = $match['aussteller'];
+            $differences = $this->getAusstellerDifferences($aus);
+            if (count($differences) > 0) {
+                $this->updateData[$aus->id] = true;
+            }
+        }
     }
 
     public function getMatchingAussteller(): array
@@ -119,13 +129,23 @@ class ViewAnfrage extends Page
         return Anfrage::findOrFail($this->anfrageId);
     }
 
+    /**
+     * Haupt-Action: Buchung für Aussteller anlegen, ggf. Daten übernehmen
+     */
     public function createBuchung($ausstellerId)
     {
         $a = $this->getCurrentAnfrage();
+        $aussteller = Aussteller::findOrFail($ausstellerId);
+
+        // Prüfe, ob die Checkbox "Geänderte Daten übernehmen" gesetzt ist
+        if ($this->updateData[$ausstellerId] ?? false) {
+            $this->updateAusstellerFromAnfrage($aussteller, $a);
+        }
+
         $markt = $a->markt;
         $termin = $markt?->termine?->sortBy('start')->first();
         $standort = $markt?->standorte?->first();
-        $maxStandplatz = \App\Models\Buchung::where('termin_id', $termin?->id)
+        $maxStandplatz = Buchung::where('termin_id', $termin?->id)
             ->where('standort_id', $standort?->id)
             ->max('standplatz');
         $nextStandplatz = $maxStandplatz ? ((int)$maxStandplatz + 1) : 1;
@@ -140,7 +160,7 @@ class ViewAnfrage extends Page
             'herkunft' => $a->herkunft,
         ]);
         // 'created'-Protokoll löschen, falls direkt importiert
-        \App\Models\BuchungProtokoll::where('buchung_id', $buchung->id)
+        BuchungProtokoll::where('buchung_id', $buchung->id)
             ->where('aktion', 'created')
             ->latest()
             ->first()?->delete();
@@ -152,7 +172,7 @@ class ViewAnfrage extends Page
             'from_status' => 'anfrage',
             'to_status' => 'bearbeitung',
             'details' => 'Buchung wurde aus Anfrage #' . $a->id . ' importiert.',
-            'daten' => $a instanceof \App\Models\Anfrage ? $a->toArray() : [],
+            'daten' => $a instanceof Anfrage ? $a->toArray() : [],
         ]);
         // Anfrage als importiert markieren
         $a->importiert = true;
@@ -164,34 +184,46 @@ class ViewAnfrage extends Page
         return redirect()->route('filament.admin.resources.buchung.edit', ['record' => $buchung->id]);
     }
 
-    public function updateAusstellerUndBuchung($ausstellerId)
+    /**
+     * Nur Aussteller-Daten aktualisieren, keine Buchung
+     */
+    public function updateAusstellerOnly(int $ausstellerId): void
     {
-        $a = $this->getCurrentAnfrage();
-        $aus = Aussteller::findOrFail($ausstellerId);
-        $aus->update([
-            'firma' => $a->firma,
-            'anrede' => $a->anrede,
-            'vorname' => $a->vorname,
-            'name' => $a->nachname,
-            'strasse' => $a->strasse,
-            'hausnummer' => $a->hausnummer,
-            'plz' => $a->plz,
-            'ort' => $a->ort,
-            'land' => $a->land,
-            'telefon' => $a->telefon,
-            'email' => $a->email,
-            'bemerkung' => $a->bemerkung,
-            'stand' => $a->stand,
-        ]);
-        return $this->createBuchung($ausstellerId);
+        try {
+            $aussteller = Aussteller::findOrFail($ausstellerId);
+            $anfrage = $this->getCurrentAnfrage();
+
+            $this->updateAusstellerFromAnfrage($aussteller, $anfrage);
+
+            // Anfrage als importiert markieren
+            $anfrage->update(['importiert' => true]);
+
+            Notification::make()
+                ->title('Aussteller aktualisiert')
+                ->body("Daten von {$aussteller->getFullName()} wurden erfolgreich aktualisiert.")
+                ->success()
+                ->send();
+
+            // Zur Anfragen-Liste zurück
+            $this->redirect(AnfrageResource::getUrl('index'));
+        } catch (\Exception $e) {
+            Log::error('Fehler beim Aktualisieren des Ausstellers', [
+                'aussteller_id' => $ausstellerId,
+                'anfrage_id' => $this->anfrageId,
+                'error' => $e->getMessage()
+            ]);
+
+            Notification::make()
+                ->title('Fehler')
+                ->body('Fehler beim Aktualisieren: ' . $e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 
-    public function buchungMitDatenUebernehmen($ausstellerId)
-    {
-        // Keine Änderung am Aussteller, nur Buchung anlegen
-        return $this->createBuchung($ausstellerId);
-    }
-
+    /**
+     * Aussteller neu anlegen und Buchung erstellen
+     */
     public function ausstellerNeuUndBuchung()
     {
         $a = $this->getCurrentAnfrage();
@@ -209,10 +241,15 @@ class ViewAnfrage extends Page
             'email' => $a->email,
             'bemerkung' => $a->bemerkung,
             'stand' => $a->stand,
+            'warenangebot' => $a->warenangebot,
+            'herkunft' => $a->herkunft,
         ]);
         return $this->createBuchung($aus->id);
     }
 
+    /**
+     * Nur Aussteller neu anlegen, keine Buchung
+     */
     public function ausstellerNeuOhneBuchung()
     {
         $a = $this->getCurrentAnfrage();
@@ -230,6 +267,8 @@ class ViewAnfrage extends Page
             'email' => $a->email,
             'bemerkung' => $a->bemerkung,
             'stand' => $a->stand,
+            'warenangebot' => $a->warenangebot,
+            'herkunft' => $a->herkunft,
         ]);
 
         // Anfrage als importiert markieren
@@ -245,13 +284,16 @@ class ViewAnfrage extends Page
         return redirect()->route('filament.admin.resources.aussteller.edit', ['record' => $aus->id]);
     }
 
+    /**
+     * Anfrage absagen und E-Mail versenden
+     */
     public function ausstellerAbsagen()
     {
         $a = $this->getCurrentAnfrage();
 
         try {
             // Aussteller-Objekt für MailService erstellen
-            $aussteller = new \App\Models\Aussteller();
+            $aussteller = new Aussteller();
             $aussteller->email = $a->email;
             $aussteller->vorname = $a->vorname;
             $aussteller->name = $a->name;
@@ -288,7 +330,7 @@ class ViewAnfrage extends Page
             // Zurück zur Anfragen-Liste
             return redirect()->route('filament.admin.resources.anfrage.index');
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Fehler beim Versenden der Absage: ' . $e->getMessage());
+            Log::error('Fehler beim Versenden der Absage: ' . $e->getMessage());
 
             Notification::make()
                 ->title('Fehler beim Versenden der Absage')
@@ -298,5 +340,53 @@ class ViewAnfrage extends Page
 
             return false;
         }
+    }
+
+    /**
+     * Ermittelt Unterschiede zwischen Anfrage und Aussteller
+     */
+    public function getAusstellerDifferences(Aussteller $aussteller): array
+    {
+        $anfrage = $this->record;
+        $differences = [];
+
+        if ($anfrage->email !== $aussteller->email) {
+            $differences[] = "E-Mail: {$anfrage->email} → {$aussteller->email}";
+        }
+        if ($anfrage->telefon !== $aussteller->telefon) {
+            $differences[] = "Telefon: {$anfrage->telefon} → {$aussteller->telefon}";
+        }
+        if ($anfrage->firma !== $aussteller->firma) {
+            $differences[] = "Firma: {$anfrage->firma} → {$aussteller->firma}";
+        }
+        if ($anfrage->ort !== $aussteller->ort) {
+            $differences[] = "Ort: {$anfrage->ort} → {$aussteller->ort}";
+        }
+
+        return $differences;
+    }
+
+    /**
+     * Hilfsmethode: Aktualisiert Aussteller-Daten aus Anfrage
+     */
+    private function updateAusstellerFromAnfrage(Aussteller $aussteller, Anfrage $anfrage): void
+    {
+        $aussteller->update([
+            'firma' => $anfrage->firma,
+            'anrede' => $anfrage->anrede,
+            'vorname' => $anfrage->vorname,
+            'name' => $anfrage->nachname,
+            'strasse' => $anfrage->strasse,
+            'hausnummer' => $anfrage->hausnummer,
+            'plz' => $anfrage->plz,
+            'ort' => $anfrage->ort,
+            'land' => $anfrage->land,
+            'telefon' => $anfrage->telefon,
+            'email' => $anfrage->email,
+            'bemerkung' => $anfrage->bemerkung,
+            'stand' => $anfrage->stand,
+            'warenangebot' => $anfrage->warenangebot,
+            'herkunft' => $anfrage->herkunft,
+        ]);
     }
 }
