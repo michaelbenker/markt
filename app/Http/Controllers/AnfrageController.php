@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Anfrage;
 use App\Models\Markt;
+use App\Models\Termin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Notifications\NeueAnfrageNotification;
@@ -12,19 +13,34 @@ use Illuminate\Support\Facades\Log;
 
 class AnfrageController extends Controller
 {
-    public function create()
+    public function create(Request $request)
     {
-        $maerkte = Markt::whereHas('termine', function ($query) {
-            $query->where('start', '>', now());
-        })->get();
+        $termine = Termin::with('markt')
+            ->where('start', '>', now())
+            ->orderBy('start')
+            ->get();
 
-        return view('anfrage.create', compact('maerkte'));
+        // Query Parameter für Vorauswahl eines Termins
+        $selectedTerminId = null;
+        if ($request->has('termin')) {
+            $selectedTerminId = $request->get('termin');
+        } elseif ($request->has('markt')) {
+            // Legacy: Falls noch markt-Parameter verwendet wird
+            $marktSlug = $request->get('markt');
+            $markt = Markt::where('slug', $marktSlug)->first();
+            if ($markt) {
+                $naechsterTermin = $termine->where('markt_id', $markt->id)->first();
+                $selectedTerminId = $naechsterTermin?->id;
+            }
+        }
+
+        return view('anfrage.create', compact('termine', 'selectedTerminId'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'markt' => 'required|exists:markt,id',
+            'termin' => 'required|exists:termin,id',
             'firma' => 'nullable|string|max:255',
             'anrede' => 'nullable|string|in:Herr,Frau,Divers',
             'vorname' => 'required|string|max:255',
@@ -56,7 +72,7 @@ class AnfrageController extends Controller
         ]);
 
         $anfrage = Anfrage::create([
-            'markt_id' => $validated['markt'],
+            'termin_id' => $validated['termin'],
             'firma' => $validated['firma'] ?? null,
             'anrede' => $validated['anrede'] ?? null,
             'vorname' => $validated['vorname'],

@@ -34,30 +34,21 @@
 
         <form action="{{ route('anfrage.store') }}" method="POST" class="space-y-8">
             @csrf
-            @if($marktVorwahl)
-            <input type="hidden" name="markt" value="{{ $marktVorwahl->id }}">
-            @else
             <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Markt Auswahl</h2>
+                <h2 class="text-xl font-semibold mb-4">Termin Auswahl</h2>
                 <div>
-                    <label for="markt" class="block font-medium text-sm text-gray-700">Markt</label>
-                    <select name="markt" id="markt" required
+                    <label for="termin" class="block font-medium text-sm text-gray-700">Termin</label>
+                    <select name="termin" id="termin" required
                         class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="">Bitte wählen Sie einen Markt</option>
-                        @foreach($maerkte as $markt)
-                        <option value="{{ $markt->id }}" {{ request('markt') === $markt->slug ? 'selected' : '' }}>
-                            {{ $markt->name }} (
-                            @php
-                            $termine = $markt->termine()->where('start', '>', now())->orderBy('start')->get();
-                            echo $termine->map(fn($t) => \Carbon\Carbon::parse($t->start)->format('d.m.Y'))->join(', ');
-                            @endphp
-                            )
+                        <option value="">Bitte wählen Sie einen Termin</option>
+                        @foreach($termine as $termin)
+                        <option value="{{ $termin->id }}" {{ $selectedTerminId == $termin->id ? 'selected' : '' }}>
+                            {{ $termin->markt->name }} - {{ \Carbon\Carbon::parse($termin->start)->format('d.m.Y') }} bis {{ \Carbon\Carbon::parse($termin->ende)->format('d.m.Y') }}
                         </option>
                         @endforeach
                     </select>
                 </div>
             </div>
-            @endif
 
             <!-- Aussteller Informationen -->
             <div class="bg-white p-6 rounded-lg shadow">

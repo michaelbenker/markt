@@ -138,6 +138,10 @@ class MailService
     {
         $processedData = [];
 
+        Log::debug('Template', [
+            'key' => $templateKey
+        ]);
+
         switch ($templateKey) {
             case 'rechnung_versand':
                 $rechnung = $data['rechnung'] ?? null;

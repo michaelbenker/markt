@@ -304,6 +304,7 @@ class ViewAnfrage extends Page
             $mailService = new \App\Services\MailService();
             $success = $mailService->sendAusstellerAbsage($aussteller, [
                 'markt_name' => $a->termin->markt->name ?? 'Unbekannter Markt',
+                'termin_datum' => $a->termin->start ? \Carbon\Carbon::parse($a->termin->start)->format('d.m.Y') : '',
                 'eingereicht_am' => $a->created_at->format('d.m.Y')
             ]);
 
@@ -313,7 +314,6 @@ class ViewAnfrage extends Page
 
             // Anfrage löschen
             $anfrageId = $a->id;
-            $marktName = $a->markt->name ?? 'Unbekannt';
             $originalEmail = $a->email;
             $a->delete();
 

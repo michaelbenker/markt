@@ -12,7 +12,7 @@ class Anfrage extends Model
     protected $table = 'anfrage';
 
     protected $fillable = [
-        'markt_id',
+        'termin_id',
         'firma',
         'anrede',
         'vorname',
@@ -40,8 +40,14 @@ class Anfrage extends Model
         'importiert' => 'boolean',
     ];
 
+    public function termin()
+    {
+        return $this->belongsTo(Termin::class);
+    }
+
+    // Shortcut für Markt über Termin
     public function markt()
     {
-        return $this->belongsTo(Markt::class);
+        return $this->hasOneThrough(Markt::class, Termin::class, 'id', 'id', 'termin_id', 'markt_id');
     }
 }

@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('anfrage', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('markt_id');
+            $table->unsignedBigInteger('termin_id');
             $table->string('firma')->nullable();
             $table->string('anrede')->nullable();
             $table->string('vorname');
@@ -29,7 +29,7 @@ return new class extends Migration {
             $table->text('bemerkung')->nullable();
             $table->timestamps();
 
-            $table->foreign('markt_id')->references('id')->on('markt')->onDelete('cascade');
+            $table->foreign('termin_id')->references('id')->on('termin')->onDelete('cascade');
         });
     }
 

@@ -3,12 +3,10 @@
 
 Wir haben Ihre Buchungsanfrage erhalten und werden uns in Kürze bei Ihnen melden.
 
-**Markt:** {{ $anfrage->markt->name ?? '-' }}
-@if($anfrage->markt && $anfrage->markt->termine && $anfrage->markt->termine->count())
-({{ $anfrage->markt->termine->map(fn($t) => \Carbon\Carbon::parse($t->start)->format('d.m.Y'))->join(', ') }})
-@endif
+**Markt:** {{ $anfrage->termin->markt->name ?? '-' }} \
+**Termin:** {{ $anfrage->termin ? \Carbon\Carbon::parse($anfrage->termin->start)->format('d.m.Y') . ' bis ' . \Carbon\Carbon::parse($anfrage->termin->ende)->format('d.m.Y') : '-' }}
 
-**Name:** {{ $anfrage->anrede ? $anfrage->anrede . ' ' : '' }}{{ $anfrage->vorname }} {{ $anfrage->nachname }}
+**Name:** {{ $anfrage->anrede ? $anfrage->anrede . ' ' : '' }}{{ $anfrage->vorname }} {{ $anfrage->nachname }} \
 **E-Mail:** {{ $anfrage->email }}
 
 **Warenangebot:**

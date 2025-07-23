@@ -25,7 +25,7 @@ class AnfrageSeeder extends Seeder
         // Create 15 records
         $records = [
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Sistecs Media Agentur',
                 'anrede' => 'Herr',
                 'vorname' => 'Michael',
@@ -50,7 +50,7 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Sistecs Media',
                 'anrede' => 'Herr',
                 'vorname' => 'M.',
@@ -75,7 +75,7 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Sistecs',
                 'anrede' => 'Herr',
                 'vorname' => 'Michael',
@@ -100,7 +100,7 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Müller & Schmidt GmbH',
                 'anrede' => 'Frau',
                 'vorname' => 'Anna',
@@ -125,7 +125,7 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Kreativwerkstatt',
                 'anrede' => 'Herr',
                 'vorname' => 'Thomas',
@@ -150,7 +150,7 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Bio-Lebensmittel',
                 'anrede' => 'Frau',
                 'vorname' => 'Maria',
@@ -175,7 +175,7 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Antiquitäten-Haus',
                 'anrede' => 'Herr',
                 'vorname' => 'Peter',
@@ -200,7 +200,7 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Mode-Atelier',
                 'anrede' => 'Frau',
                 'vorname' => 'Lisa',
@@ -225,7 +225,7 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Kunst-Galerie',
                 'anrede' => 'Herr',
                 'vorname' => 'Max',
@@ -250,7 +250,7 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Schmuck-Design',
                 'anrede' => 'Frau',
                 'vorname' => 'Sophie',
@@ -275,7 +275,7 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Deko-Studio',
                 'anrede' => 'Herr',
                 'vorname' => 'Andreas',
@@ -300,7 +300,7 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Getränke-Spezialitäten',
                 'anrede' => 'Frau',
                 'vorname' => 'Julia',
@@ -325,7 +325,7 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Handwerk-Kunst',
                 'anrede' => 'Herr',
                 'vorname' => 'Martin',
@@ -350,7 +350,7 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'markt_id' => 1,
+                'termin_id' => 1,
                 'firma' => 'Sonstiges-Kreativ',
                 'anrede' => 'Frau',
                 'vorname' => 'Sarah',
