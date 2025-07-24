@@ -15,6 +15,11 @@ class Termin extends Model
         'bemerkung',
     ];
 
+    protected $casts = [
+        'start' => 'datetime',
+        'ende' => 'datetime',
+    ];
+
     public function markt()
     {
         return $this->belongsTo(Markt::class);

@@ -60,16 +60,4 @@ class BuchungAbsage extends Mailable
         return [];
     }
 
-    /**
-     * Get the message's to address.
-     */
-    public function to($address, $name = null)
-    {
-        // Im Testmodus alle E-Mails an MAIL_DEV_REDIRECT_EMAIL umleiten
-        if (config('mail.dev_redirect_email')) {
-            return parent::to(config('mail.dev_redirect_email'), 'Test Recipient');
-        }
-
-        return parent::to($address, $name);
-    }
 }

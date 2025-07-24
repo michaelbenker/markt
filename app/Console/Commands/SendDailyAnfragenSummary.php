@@ -51,7 +51,8 @@ class SendDailyAnfragenSummary extends Command
 
         foreach ($users as $user) {
             try {
-                Mail::to($user->email)->send(new TaeglicheAnfragenUebersicht());
+                $mailService = new \App\Services\MailService();
+                $mailService->sendDailyAnfragenSummary($user);
                 $this->info("✓ E-Mail gesendet an: {$user->email}");
                 $successCount++;
             } catch (\Exception $e) {

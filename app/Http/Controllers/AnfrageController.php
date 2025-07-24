@@ -92,9 +92,10 @@ class AnfrageController extends Controller
             'bemerkung' => $validated['bemerkung'] ?? null,
         ]);
 
-        // Bestätigungsmail an den Anfragesteller
+        // Bestätigungsmail an den Anfragesteller über MailService
         try {
-            Mail::to($anfrage->email)->send(new \App\Mail\AnfrageBestaetigung($anfrage));
+            $mailService = new \App\Services\MailService();
+            $mailService->sendAnfrageBestaetigung($anfrage);
         } catch (\Exception $e) {
             Log::error('Fehler beim Versenden der Bestätigungsmail: ' . $e->getMessage());
         }

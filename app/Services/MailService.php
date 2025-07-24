@@ -39,7 +39,7 @@ class MailService
             // E-Mail erstellen und versenden
             $mailable = new UniversalMail($rendered['subject'], $rendered['content'], $attachments);
 
-            Mail::to($toEmail, $toName)->send($mailable);
+            $this->sendMail($toEmail, $toName, $mailable);
 
             // Log für Nachverfolgung
             Log::info("E-Mail versendet", [
@@ -129,6 +129,166 @@ class MailService
             $data,
             $aussteller->getFullName()
         );
+    }
+
+    /**
+     * Sendet eine individuelle E-Mail mit angepasstem Inhalt
+     */
+    public function sendCustomEmail(string $toEmail, string $subject, string $content, ?string $toName = null, array $attachments = []): bool
+    {
+        try {
+            // Anhänge verarbeiten
+            $processedAttachments = $this->processCustomAttachments($attachments);
+            
+            // E-Mail erstellen und versenden
+            $mailable = new UniversalMail($subject, $content, $processedAttachments);
+
+            $this->sendMail($toEmail, $toName, $mailable);
+
+            // Log für Nachverfolgung
+            Log::info("Custom E-Mail versendet", [
+                'to_email' => $toEmail,
+                'to_name' => $toName,
+                'subject' => $subject
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Fehler beim Custom E-Mail-Versand", [
+                'to_email' => $toEmail,
+                'subject' => $subject,
+                'error' => $e->getMessage()
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Spezielle Methode für Anfrage-Bestätigung
+     */
+    public function sendAnfrageBestaetigung(\App\Models\Anfrage $anfrage): bool
+    {
+        try {
+            $mailable = new \App\Mail\AnfrageBestaetigung($anfrage);
+            $this->sendMail($anfrage->email, null, $mailable);
+            
+            Log::info("Anfrage-Bestätigung versendet", [
+                'anfrage_id' => $anfrage->id,
+                'email' => $anfrage->email
+            ]);
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Fehler beim Anfrage-Bestätigung Versand", [
+                'anfrage_id' => $anfrage->id,
+                'email' => $anfrage->email,
+                'error' => $e->getMessage()
+            ]);
+            
+            return false;
+        }
+    }
+
+    /**
+     * Spezielle Methode für tägliche Anfragen-Zusammenfassung
+     */
+    public function sendDailyAnfragenSummary(\App\Models\User $user): bool
+    {
+        try {
+            $mailable = new \App\Mail\TaeglicheAnfragenUebersicht();
+            $this->sendMail($user->email, $user->name, $mailable);
+            
+            Log::info("Tägliche Anfragen-Zusammenfassung versendet", [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Fehler beim Versand der täglichen Zusammenfassung", [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage()
+            ]);
+            
+            return false;
+        }
+    }
+
+    /**
+     * Zentrale E-Mail Versendung mit Dev-Redirect Logik
+     */
+    private function sendMail(string $toEmail, ?string $toName, Mailable $mailable): void
+    {
+        // Im Development-Modus alle E-Mails an MAIL_DEV_REDIRECT_EMAIL umleiten
+        $devRedirectEmail = config('mail.dev_redirect_email');
+        
+        if ($devRedirectEmail) {
+            Log::info("E-Mail Dev-Redirect aktiv", [
+                'original_email' => $toEmail,
+                'original_name' => $toName,
+                'redirect_email' => $devRedirectEmail
+            ]);
+            
+            Mail::to($devRedirectEmail, 'Test Recipient (Original: ' . ($toName ?: $toEmail) . ')')->send($mailable);
+        } else {
+            Mail::to($toEmail, $toName)->send($mailable);
+        }
+    }
+
+    /**
+     * Verarbeitet benutzerdefinierte Anhänge
+     */
+    private function processCustomAttachments(array $attachments): array
+    {
+        $processedAttachments = [];
+        
+        foreach ($attachments as $attachment) {
+            $type = $attachment['type'] ?? null;
+            
+            switch ($type) {
+                case 'buchung_pdf':
+                    $buchung = $attachment['buchung'] ?? null;
+                    if ($buchung) {
+                        try {
+                            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.buchung', ['buchung' => $buchung]);
+                            $processedAttachments[] = [
+                                'data' => $pdf->output(),
+                                'name' => 'anmeldebestaetigung-' . $buchung->id . '.pdf',
+                                'mime' => 'application/pdf'
+                            ];
+                        } catch (\Exception $e) {
+                            Log::error("Fehler beim Generieren der Buchungs-PDF", [
+                                'buchung_id' => $buchung->id,
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    }
+                    break;
+                    
+                case 'rechnung_pdf':
+                    $rechnung = $attachment['rechnung'] ?? null;
+                    if ($rechnung) {
+                        try {
+                            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.rechnung', ['rechnung' => $rechnung]);
+                            $processedAttachments[] = [
+                                'data' => $pdf->output(),
+                                'name' => 'rechnung-' . $rechnung->rechnungsnummer . '.pdf',
+                                'mime' => 'application/pdf'
+                            ];
+                        } catch (\Exception $e) {
+                            Log::error("Fehler beim Generieren der Rechnungs-PDF", [
+                                'rechnung_id' => $rechnung->id,
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    }
+                    break;
+            }
+        }
+        
+        return $processedAttachments;
     }
 
     /**
@@ -232,6 +392,7 @@ class MailService
                     $processedData = [
                         'aussteller_name' => $ausstellerName,
                         'markt_name' => $data['markt_name'] ?? 'Unbekannter Markt',
+                        'termin' => $data['termin'] ?? 'Unbekanntes Datum',
                         'eingereicht_am' => $data['eingereicht_am'] ?? now()->format('d.m.Y'),
                         'firma' => $aussteller->firma ?? '-',
                         'warenangebot' => $aussteller->warenangebot ?? '-',
@@ -475,6 +636,7 @@ class MailService
                 return [
                     'aussteller' => $dummyAussteller,
                     'markt_name' => $baseDummyData['markt'],
+                    'termin' => $baseDummyData['termine'],
                     'eingereicht_am' => $baseDummyData['eingereicht_am'],
                 ];
 

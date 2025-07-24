@@ -8,6 +8,7 @@ use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
+use App\Filament\Actions\EmailRechnungAction;
 
 class EditRechnung extends EditRecord
 {
@@ -19,7 +20,7 @@ class EditRechnung extends EditRecord
 
         // PDF-Download
         $actions[] = Actions\Action::make('pdf')
-            ->label('PDF herunterladen')
+            ->label('Rechnung herunterladen')
             ->icon('heroicon-o-document-arrow-down')
             ->action(function () {
                 $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.rechnung', ['rechnung' => $this->record]);
@@ -29,60 +30,9 @@ class EditRechnung extends EditRecord
                 }, 'rechnung-' . $this->record->rechnungsnummer . '.pdf');
             });
 
-        // E-Mail senden (nur bei Draft)
+        // E-Mail senden (nur bei bestimmten Status)
         if (in_array($this->record->status, ['draft', 'sent', 'partial', 'overdue'])) {
-            $actions[] = Actions\Action::make('send_email')
-                ->label('E-Mail senden')
-                ->icon('heroicon-o-envelope')
-                ->color('success')
-                ->requiresConfirmation()
-                ->modalHeading('Rechnung per E-Mail senden')
-                ->modalDescription(function () {
-                    $empfaenger = $this->record->empf_email;
-                    return "Möchten Sie die Rechnung #{$this->record->rechnungsnummer} an {$empfaenger} senden?";
-                })->action(function () {
-                    // E-Mail-Adresse bestimmen
-                    $toEmail = config('mail.dev_redirect_email')
-                        ? config('mail.dev_redirect_email')
-                        : $this->record->empf_email;
-
-                    // E-Mail über den zentralen MailService senden
-                    $mailService = new \App\Services\MailService();
-                    $success = $mailService->send(
-                        'rechnung_versand',
-                        $toEmail,
-                        [
-                            'rechnung' => $this->record,
-                            'aussteller' => $this->record->aussteller,
-                        ],
-                        $this->record->empf_vorname . ' ' . $this->record->empf_name
-                    );
-
-                    if ($success) {
-                        // Status auf "sent" setzen
-                        $this->record->update([
-                            'status' => 'sent',
-                            'versendet_am' => now(),
-                        ]);
-
-                        Notification::make()
-                            ->title('Rechnung wurde versendet')
-                            ->success()
-                            ->send();
-
-                        // Seite neu laden, damit Status sofort sichtbar ist
-                        $this->redirect(request()->header('Referer') ?? url()->current());
-                    } else {
-                        Notification::make()
-                            ->title('Fehler beim Versenden')
-                            ->body('Die Rechnung konnte nicht versendet werden.')
-                            ->danger()
-                            ->send();
-                    }
-
-                    // Livewire-kompatible Lösung
-                    $this->record = $this->record->fresh();
-                });
+            $actions[] = EmailRechnungAction::make('send_rechnung_email');
         }
 
         // Als bezahlt markieren

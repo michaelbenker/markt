@@ -41,6 +41,7 @@ class BuchungResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
+            ->disabled(fn ($record) => $record && $record->status === 'abgelehnt')
             ->schema([
                 Tabs::make('Buchung')
                     ->columnSpan('full')

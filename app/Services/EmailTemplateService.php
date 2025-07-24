@@ -108,14 +108,11 @@ Leider können wir Ihr Angebot nicht berücksichtigen.
 
 Aufgrund der begrenzten Platzkapazität und der hohen Nachfrage können wir Ihnen leider keinen Stand anbieten. Wir bedauern diese Entscheidung sehr.
 
-> **Ihre Anfrage im Überblick:**
-> 
-> **Markt:** {{markt_name}}
-> 
-> **Eingereicht am:** {{eingereicht_am}}
-> 
-> **Firma:** {{firma}}
-> 
+> **Ihre Anfrage im Überblick:**  
+> **Markt:** {{markt_name}}  
+> **Termin:** {{termin}}
+> **Eingereicht am:** {{eingereicht_am}}  
+> **Firma:** {{firma}}  
 > **Warenangebot:** {{warenangebot}}
 
 Wir möchten Sie gerne über zukünftige Märkte informieren und laden Sie herzlich ein, sich auch in Zukunft bei uns zu bewerben.
@@ -138,13 +135,11 @@ wir freuen uns, Ihnen mitteilen zu können, dass Ihre Anmeldung für den Markt *
 
 > **Ihre Buchungsdetails:**
 > 
-> **Markt:** {{markt_name}}
-> 
-> **Termine:** {{termine}}
-> 
+> **Markt:** {{markt_name}}  
+> **Termin:** {{termine}}  
 > **Standplatz:** {{standplatz}}
 
-Weitere Informationen und Unterlagen erhalten Sie in den kommenden Tagen.
+Weitere Informationen und Unterlagen finden Sie im Anhang.
 
 Bei Fragen stehen wir Ihnen gerne zur Verfügung.
 
@@ -162,10 +157,8 @@ anbei erhalten Sie Ihre Rechnung für den Markt **{{markt_name}}**.
 
 > **Rechnungsdetails:**
 > 
-> **Rechnungsnummer:** {{rechnung_nummer}}
-> 
-> **Betrag:** {{betrag}}
-> 
+> **Rechnungsnummer:** {{rechnung_nummer}}  
+> **Betrag:** {{betrag}}  
 > **Markt:** {{markt_name}}
 
 Die Rechnung finden Sie als PDF-Anhang.

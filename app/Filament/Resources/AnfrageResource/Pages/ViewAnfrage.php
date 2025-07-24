@@ -302,9 +302,13 @@ class ViewAnfrage extends Page
 
             // Absage-E-Mail über MailService senden
             $mailService = new \App\Services\MailService();
+            // Termin-Daten korrekt ermitteln
+            $markt = $a->markt;
+            $termin = $markt?->termine?->sortBy('start')->first();
+            
             $success = $mailService->sendAusstellerAbsage($aussteller, [
-                'markt_name' => $a->termin->markt->name ?? 'Unbekannter Markt',
-                'termin_datum' => $a->termin->start ? \Carbon\Carbon::parse($a->termin->start)->format('d.m.Y') : '',
+                'markt_name' => $markt->name ?? 'Unbekannter Markt',
+                'termin' => $termin && $termin->start ? $termin->start->format('d.m.Y') : 'Unbekanntes Datum',
                 'eingereicht_am' => $a->created_at->format('d.m.Y')
             ]);
 

@@ -5,11 +5,12 @@ namespace App\Filament\Resources\BuchungResource\Pages;
 use App\Filament\Resources\BuchungResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Support\HtmlString;
 use Filament\Actions\Action;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\BuchungProtokoll;
 use Illuminate\Support\Facades\Auth;
+use App\Filament\Actions\EmailSendAction;
+use App\Filament\Actions\EmailAbsageAction;
 
 class EditBuchung extends EditRecord
 {
@@ -17,6 +18,11 @@ class EditBuchung extends EditRecord
 
     protected function getHeaderActions(): array
     {
+        // Keine Aktionen für abgelehnte Buchungen
+        if ($this->record->status === 'abgelehnt') {
+            return [];
+        }
+        
         return [
             Action::make('create_rechnung')
                 ->label('Rechnung erstellen')
@@ -57,95 +63,10 @@ class EditBuchung extends EditRecord
                     }, 'buchung-' . $record->id . '.pdf');
                 }),
 
-            Action::make('E-Mail senden')
-                ->label('Bestätigung senden')
-                ->action(function () {
-                    $mailService = new \App\Services\MailService();
-                    $success = $mailService->sendAusstellerBestaetigung($this->record);
+            EmailSendAction::make('send_email')
+                ->label('Bestätigung senden'),
 
-                    if ($success) {
-                        \Filament\Notifications\Notification::make()
-                            ->title('E-Mail erfolgreich versendet')
-                            ->success()
-                            ->send();
-                    } else {
-                        \Filament\Notifications\Notification::make()
-                            ->title('Fehler beim E-Mail-Versand')
-                            ->danger()
-                            ->send();
-                    }
-                })
-                ->requiresConfirmation()
-                ->modalHeading('E-Mail senden')
-                ->modalDescription(function () {
-                    $aussteller = $this->record->aussteller;
-                    $name = $aussteller->firma ?: "{$aussteller->vorname} {$aussteller->name}";
-                    return new HtmlString("Sind Sie sicher, dass Sie eine Nachricht mit der Terminbestätigung an den Aussteller <strong>{$name}</strong> ({$aussteller->email}) schicken möchten?");
-                })
-                ->modalSubmitActionLabel('Ja, E-Mail senden')
-                ->modalCancelActionLabel('Abbrechen')
-                ->color('success')
-                ->icon('heroicon-o-envelope')
-                ->iconSize('md'),
-
-            Action::make('absage')
-                ->label('Absagen')
-                ->icon('heroicon-o-x-circle')
-                ->color('danger')
-                ->requiresConfirmation()
-                ->modalHeading('Buchung absagen')
-                ->modalDescription(function () {
-                    $aussteller = $this->record->aussteller;
-                    $name = $aussteller->firma ?: "{$aussteller->vorname} {$aussteller->name}";
-                    return new HtmlString("Sind Sie sicher, dass Sie die Buchung absagen und eine Absage-E-Mail an <strong>{$name}</strong> ({$aussteller->email}) senden möchten?");
-                })
-                ->modalSubmitActionLabel('Ja, absagen')
-                ->modalCancelActionLabel('Abbrechen')
-                ->action(function () {
-                    // Status auf abgelehnt setzen
-                    $this->record->update(['status' => 'abgelehnt']);
-
-                    // Protokoll-Eintrag erstellen
-                    BuchungProtokoll::create([
-                        'buchung_id' => $this->record->id,
-                        'user_id' => Auth::id(),
-                        'aktion' => 'buchung_abgelehnt',
-                        'from_status' => $this->record->getOriginal('status'),
-                        'to_status' => 'abgelehnt',
-                        'details' => 'Buchung wurde abgelehnt und Absage-E-Mail gesendet.',
-                    ]);
-
-                    // Absage-E-Mail senden - Anfrage aus Buchungsdaten erstellen
-                    $anfrage = new \App\Models\Anfrage();
-                    $anfrage->email = $this->record->aussteller->email;
-                    $anfrage->markt = $this->record->termin->markt ?? null;
-                    $anfrage->created_at = $this->record->created_at;
-                    $anfrage->firma = $this->record->aussteller->firma;
-                    $anfrage->warenangebot = $this->record->warenangebot;
-                    $anfrage->vorname = $this->record->aussteller->vorname;
-                    $anfrage->name = $this->record->aussteller->name;
-
-                    $mailService = new \App\Services\MailService();
-                    $success = $mailService->sendAusstellerAbsage($this->record->aussteller, [
-                        'markt_name' => $this->record->termin->markt->name ?? 'Unbekannter Markt',
-                        'eingereicht_am' => $this->record->created_at->format('d.m.Y')
-                    ]);
-
-                    if ($success) {
-                        \Filament\Notifications\Notification::make()
-                            ->title('Absage-E-Mail erfolgreich versendet')
-                            ->success()
-                            ->send();
-                    } else {
-                        \Filament\Notifications\Notification::make()
-                            ->title('Fehler beim E-Mail-Versand')
-                            ->danger()
-                            ->send();
-                    }
-
-                    // Seite refreshen
-                    $this->refreshFormData([$this->record->getKeyName()]);
-                }),
+            EmailAbsageAction::make('send_absage_email'),
 
             Actions\ActionGroup::make([
                 Actions\DeleteAction::make(),
@@ -161,5 +82,21 @@ class EditBuchung extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         return $data;
+    }
+    
+    protected function authorizeAccess(): void
+    {
+        // Prüfe ob die Buchung bearbeitet werden kann
+        if ($this->record->status === 'abgelehnt') {
+            // Erlauben des Zugriffs zum Anzeigen, aber weitere Berechtigungen werden durch andere Methoden gesteuert
+        }
+        
+        parent::authorizeAccess();
+    }
+    
+    protected function hasFormActionsContainer(): bool
+    {
+        // Keine Form-Actions (Save, Cancel) für abgelehnte Buchungen
+        return $this->record->status !== 'abgelehnt';
     }
 }
