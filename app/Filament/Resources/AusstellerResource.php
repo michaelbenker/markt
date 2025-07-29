@@ -54,7 +54,7 @@ class AusstellerResource extends Resource
                         Tab::make('Allgemein')
                             ->schema([
                                 Grid::make(2)->schema([
-                                    TextInput::make('firma')->label('Firma')->required(),
+                                    TextInput::make('firma')->label('Firma'),
                                     Select::make('anrede')
                                         ->label('Anrede')
                                         ->options([
@@ -211,6 +211,7 @@ class AusstellerResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn(Builder $query) => $query->with(['subkategorien.kategorie']))
             ->columns([
                 TextColumn::make('firma')->label('Firma')->searchable()->sortable(),
                 TextColumn::make('name')
@@ -222,6 +223,24 @@ class AusstellerResource extends Resource
                 TextColumn::make('telefon')->label('Telefon'),
                 TextColumn::make('ort')->label('Ort'),
                 TextColumn::make('land')->label('Land'),
+                TextColumn::make('hauptkategorie')
+                    ->label('Hauptkategorie')
+                    ->getStateUsing(function ($record) {
+                        if (!$record->subkategorien || $record->subkategorien->isEmpty()) {
+                            return '';
+                        }
+
+                        $kategorien = $record->subkategorien
+                            ->map(function ($subkategorie) {
+                                return $subkategorie->kategorie ? $subkategorie->kategorie->name : null;
+                            })
+                            ->filter()
+                            ->unique();
+
+                        return $kategorien->count() > 0 ? $kategorien->implode(', ') : '';
+                    })
+                    ->searchable(false)
+                    ->sortable(false),
                 TextColumn::make('buchungen.termin.markt.name')
                     ->label('Märkte')
                     ->formatStateUsing(function ($record) {
@@ -238,6 +257,24 @@ class AusstellerResource extends Resource
                 Tables\Filters\SelectFilter::make('markt')
                     ->label('Markt')
                     ->relationship('buchungen.termin.markt', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->multiple(),
+
+                Tables\Filters\SelectFilter::make('hauptkategorie')
+                    ->label('Hauptkategorie')
+                    ->options(function () {
+                        return Kategorie::pluck('name', 'id');
+                    })
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['values'] ?? null,
+                            fn(Builder $query, $kategorieIds) => $query->whereHas(
+                                'subkategorien',
+                                fn(Builder $query) => $query->whereIn('kategorie_id', $kategorieIds)
+                            )
+                        );
+                    })
                     ->searchable()
                     ->preload()
                     ->multiple(),
