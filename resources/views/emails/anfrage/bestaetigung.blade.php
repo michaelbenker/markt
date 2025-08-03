@@ -11,7 +11,10 @@ Wir haben Ihre Buchungsanfrage erhalten und werden uns in Kürze bei Ihnen melde
 
 **Warenangebot:**
 @if(is_array($anfrage->warenangebot))
-- {{ implode(", ", $anfrage->warenangebot) }}
+@php
+$subkategorieNamen = \App\Models\Subkategorie::whereIn('id', $anfrage->warenangebot)->pluck('name')->toArray();
+@endphp
+- {{ implode(", ", $subkategorieNamen) }}
 @else
 - {{ $anfrage->warenangebot }}
 @endif
@@ -19,8 +22,8 @@ Wir haben Ihre Buchungsanfrage erhalten und werden uns in Kürze bei Ihnen melde
 **Stand:**
 @php $stand = $anfrage->stand; @endphp
 @if(is_array($stand))
-- Art: {{ $stand['art'] ?? '-' }}
 - Länge: {{ $stand['laenge'] ?? '-' }} m
+- Tiefe: {{ $stand['tiefe'] ?? '-' }} m
 - Fläche: {{ $stand['flaeche'] ?? '-' }} m²
 @endif
 

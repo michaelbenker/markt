@@ -6,6 +6,7 @@ use App\Models\Anfrage;
 use App\Models\Markt;
 use App\Models\Termin;
 use App\Models\Medien;
+use App\Models\Subkategorie;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Notifications\NeueAnfrageNotification;
@@ -35,7 +36,21 @@ class AnfrageController extends Controller
             }
         }
 
-        return view('anfrage.create', compact('termine', 'selectedTerminId'));
+        // Subkategorien für alle Märkte laden
+        $subkategorienByMarkt = [];
+        foreach ($termine as $termin) {
+            $markt = $termin->markt;
+            if ($markt && $markt->subkategorien) {
+                $subkategorien = Subkategorie::whereIn('id', $markt->subkategorien)
+                    ->with('kategorie')
+                    ->orderBy('kategorie_id')
+                    ->orderBy('name')
+                    ->get();
+                $subkategorienByMarkt[$markt->id] = $subkategorien;
+            }
+        }
+
+        return view('anfrage.create', compact('termine', 'selectedTerminId', 'subkategorienByMarkt'));
     }
 
     public function store(Request $request)
@@ -59,7 +74,7 @@ class AnfrageController extends Controller
             'stand.tiefe' => 'nullable|numeric|min:0',
             'stand.flaeche' => 'nullable|numeric|min:0',
             'warenangebot' => 'required|array',
-            'warenangebot.*' => 'string|in:kleidung,schmuck,kunst,accessoires,dekoration,lebensmittel,getraenke,handwerk,antiquitäten,sonstiges',
+            'warenangebot.*' => 'integer|exists:subkategorie,id',
             'herkunft' => 'required|array',
             'herkunft.eigenfertigung' => 'required|integer|min:0|max:100',
             'herkunft.industrieware_nicht_entwicklungslaender' => 'required|integer|min:0|max:100',

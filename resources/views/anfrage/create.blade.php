@@ -37,7 +37,7 @@
                         class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="">Bitte wählen Sie einen Termin</option>
                         @foreach($termine as $termin)
-                        <option value="{{ $termin->id }}" {{ $selectedTerminId == $termin->id ? 'selected' : '' }}>
+                        <option value="{{ $termin->id }}" data-markt-id="{{ $termin->markt->id }}" {{ $selectedTerminId == $termin->id ? 'selected' : '' }}>
                             {{ $termin->markt->name }} - {{ \Carbon\Carbon::parse($termin->start)->format('d.m.Y') }} bis {{ \Carbon\Carbon::parse($termin->ende)->format('d.m.Y') }}
                         </option>
                         @endforeach
@@ -203,52 +203,10 @@
                             Warenangebot (Mehrfachauswahl möglich) <span class="text-red-600">*</span>
                         </label>
                         <div id="warenangebot_error" class="text-red-600 text-sm mb-2 hidden">Bitte wählen Sie mindestens eine Kategorie aus.</div>
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="warenangebot[]" value="kleidung" {{ is_array(old('warenangebot')) && in_array('kleidung', old('warenangebot')) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <span class="ml-2">Kleidung</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="warenangebot[]" value="schmuck" {{ is_array(old('warenangebot')) && in_array('schmuck', old('warenangebot')) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <span class="ml-2">Schmuck</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="warenangebot[]" value="kunst" {{ is_array(old('warenangebot')) && in_array('kunst', old('warenangebot')) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <span class="ml-2">Kunst</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="warenangebot[]" value="accessoires" {{ is_array(old('warenangebot')) && in_array('accessoires', old('warenangebot')) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <span class="ml-2">Accessoires</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="warenangebot[]" value="dekoration" {{ is_array(old('warenangebot')) && in_array('dekoration', old('warenangebot')) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <span class="ml-2">Dekoration</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="warenangebot[]" value="lebensmittel" {{ is_array(old('warenangebot')) && in_array('lebensmittel', old('warenangebot')) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <span class="ml-2">Lebensmittel</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="warenangebot[]" value="getraenke" {{ is_array(old('warenangebot')) && in_array('getraenke', old('warenangebot')) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <span class="ml-2">Getränke</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="warenangebot[]" value="handwerk" {{ is_array(old('warenangebot')) && in_array('handwerk', old('warenangebot')) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <span class="ml-2">Handwerk</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="warenangebot[]" value="antiquitäten" {{ is_array(old('warenangebot')) && in_array('antiquitäten', old('warenangebot')) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <span class="ml-2">Antiquitäten</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="warenangebot[]" value="sonstiges" id="sonstiges_checkbox" {{ is_array(old('warenangebot')) && in_array('sonstiges', old('warenangebot')) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <span class="ml-2">Sonstiges</span>
-                            </label>
-                        </div>
-                        <div id="sonstiges_textarea_container" class="mt-4 hidden">
-                            <label for="sonstiges_beschreibung" class="block font-medium text-sm text-gray-700">Bitte beschreiben Sie Ihr Warenangebot</label>
-                            <textarea name="sonstiges_beschreibung" id="sonstiges_beschreibung" rows="3"
-                                class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('sonstiges_beschreibung') }}</textarea>
+                        <div id="warenangebot_container" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <div class="col-span-3 text-gray-500 text-center py-4">
+                                Bitte wählen Sie zuerst einen Termin aus, um die verfügbaren Kategorien zu sehen.
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -350,21 +308,74 @@
         </form>
 
         <script>
+            // Subkategorien-Daten von PHP
+            const subkategorienByMarkt = @json($subkategorienByMarkt);
+            const oldWarenangebotValues = @json(old('warenangebot', []));
+            
             document.addEventListener('DOMContentLoaded', function() {
-                const sonstigesCheckbox = document.getElementById('sonstiges_checkbox');
-                const sonstigesTextareaContainer = document.getElementById('sonstiges_textarea_container');
-                const sonstigesTextarea = document.getElementById('sonstiges_beschreibung');
-
-                sonstigesCheckbox.addEventListener('change', function() {
-                    if (this.checked) {
-                        sonstigesTextareaContainer.classList.remove('hidden');
-                        sonstigesTextarea.setAttribute('required', 'required');
-                    } else {
-                        sonstigesTextareaContainer.classList.add('hidden');
-                        sonstigesTextarea.removeAttribute('required');
-                        sonstigesTextarea.value = '';
-                    }
+                const terminSelect = document.getElementById('termin');
+                const warenangebotContainer = document.getElementById('warenangebot_container');
+                
+                // Event Listener für Termin-Auswahl
+                terminSelect.addEventListener('change', function() {
+                    updateWarenangebot();
                 });
+                
+                // Initial laden, falls ein Termin vorausgewählt ist
+                if (terminSelect.value) {
+                    updateWarenangebot();
+                }
+                
+                function updateWarenangebot() {
+                    const selectedTerminId = terminSelect.value;
+                    if (!selectedTerminId) {
+                        warenangebotContainer.innerHTML = '<div class="col-span-3 text-gray-500 text-center py-4">Bitte wählen Sie zuerst einen Termin aus, um die verfügbaren Kategorien zu sehen.</div>';
+                        return;
+                    }
+                    
+                    // Markt-ID aus dem ausgewählten Termin ermitteln
+                    const selectedOption = terminSelect.options[terminSelect.selectedIndex];
+                    const marktId = selectedOption.dataset.marktId;
+                    
+                    if (!marktId || !subkategorienByMarkt[marktId]) {
+                        warenangebotContainer.innerHTML = '<div class="col-span-3 text-gray-500 text-center py-4">Für diesen Markt sind keine Kategorien hinterlegt.</div>';
+                        return;
+                    }
+                    
+                    const subkategorien = subkategorienByMarkt[marktId];
+                    let html = '';
+                    
+                    subkategorien.forEach(function(subkat) {
+                        const isChecked = oldWarenangebotValues.includes(subkat.id.toString()) ? 'checked' : '';
+                        
+                        html += `
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" name="warenangebot[]" value="${subkat.id}" ${isChecked} 
+                                       class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 warenangebot-checkbox">
+                                <span class="ml-2">${subkat.name}</span>
+                            </label>
+                        `;
+                    });
+                    
+                    warenangebotContainer.innerHTML = html;
+                    
+                    // Event Listener für neue Checkboxen hinzufügen
+                    addWarenangebotEventListeners();
+                }
+                
+                function addWarenangebotEventListeners() {
+                    const warenangebotCheckboxes = document.querySelectorAll('.warenangebot-checkbox');
+                    const warenangebotError = document.getElementById('warenangebot_error');
+                    
+                    warenangebotCheckboxes.forEach(checkbox => {
+                        checkbox.addEventListener('change', function() {
+                            const checkedBoxes = document.querySelectorAll('.warenangebot-checkbox:checked');
+                            if (checkedBoxes.length > 0) {
+                                warenangebotError.classList.add('hidden');
+                            }
+                        });
+                    });
+                }
 
                 // Detailfotos Validierung
                 const detailfotosInput = document.getElementById('detailfotos_warenangebot');
@@ -427,11 +438,10 @@
 
                 // Warenangebot Validierung
                 const form = document.querySelector('form');
-                const warenangebotCheckboxes = document.querySelectorAll('input[name="warenangebot[]"]');
                 const warenangebotError = document.getElementById('warenangebot_error');
 
                 form.addEventListener('submit', function(e) {
-                    const checkedBoxes = document.querySelectorAll('input[name="warenangebot[]"]:checked');
+                    const checkedBoxes = document.querySelectorAll('.warenangebot-checkbox:checked');
                     if (checkedBoxes.length === 0) {
                         e.preventDefault();
                         warenangebotError.classList.remove('hidden');
@@ -443,16 +453,6 @@
                     } else {
                         warenangebotError.classList.add('hidden');
                     }
-                });
-
-                // Verstecke Fehler wenn Checkbox ausgewählt wird
-                warenangebotCheckboxes.forEach(checkbox => {
-                    checkbox.addEventListener('change', function() {
-                        const checkedBoxes = document.querySelectorAll('input[name="warenangebot[]"]:checked');
-                        if (checkedBoxes.length > 0) {
-                            warenangebotError.classList.add('hidden');
-                        }
-                    });
                 });
             });
         </script>

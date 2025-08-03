@@ -25,7 +25,7 @@
                     <dt class="font-semibold">Stand</dt>
                     <dd>
                         @if(is_array($a->stand))
-                        Art: {{ $a->stand['art'] ?? '-' }}, Länge: {{ $a->stand['laenge'] ?? '-' }}, Fläche: {{ $a->stand['flaeche'] ?? '-' }}
+                        Länge: {{ $a->stand['laenge'] ?? '-' }}m, Tiefe: {{ $a->stand['tiefe'] ?? '-' }}m, Fläche: {{ $a->stand['flaeche'] ?? '-' }}m²
                         @else
                         {{ $a->stand }}
                         @endif
@@ -34,7 +34,7 @@
                     <dt class="font-semibold">Warenangebot</dt>
                     <dd>
                         @if(is_array($a->warenangebot))
-                        {{ implode(', ', $a->warenangebot) }}
+                        {{ implode(', ', \App\Models\Subkategorie::whereIn('id', $a->warenangebot)->pluck('name')->toArray()) }}
                         @else
                         {{ $a->warenangebot }}
                         @endif
@@ -65,8 +65,8 @@
                 <div class="mt-8 border-t pt-6">
                     <h3 class="text-lg font-semibold mb-4 text-gray-900">📎 Medien</h3>
                     @include('filament.components.medien-manager', [
-                        'getRecord' => function() use ($a) { return $a; },
-                        'uploadEnabled' => false
+                    'getRecord' => function() use ($a) { return $a; },
+                    'uploadEnabled' => false
                     ])
                 </div>
                 @endif
