@@ -2,24 +2,19 @@
     <div class="max-w-4xl mx-auto py-12 px-6">
         <h1 class="text-3xl font-bold mb-3">Buchungsformular</h1>
 
-        <p class="mb-6 text-sm text-gray-600">Felder mit <span class="text-red-600">*</span> sind Pflichtfelder.</p>
+        <p class="mb-6 text-sm text-gray-600">Felder mit <span class="text-red-600 font-bold">*</span> sind Pflichtfelder.</p>
 
-        <!-- Markt Auswahl -->
+        <!-- Vorausgewählter Termin -->
+        @if($selectedTerminId)
         @php
-        $marktSlug = request('markt');
-        $marktVorwahl = $marktSlug ? $maerkte->firstWhere('slug', $marktSlug) : null;
+        $selectedTermin = $termine->firstWhere('id', $selectedTerminId);
         @endphp
-
-        @if($marktVorwahl)
+        @if($selectedTermin)
         <h2 class="text-2xl font-bold mb-3">
-            {{ $marktVorwahl->name }} (
-            @php
-            $termine = $marktVorwahl->termine()->where('start', '>', now())->orderBy('start')->get();
-            echo $termine->map(fn($t) => \Carbon\Carbon::parse($t->start)->format('d.m.Y'))->join(', ');
-            @endphp
-            )
+            {{ $selectedTermin->markt->name }} 
+            ({{ \Carbon\Carbon::parse($selectedTermin->start)->format('d.m.Y') }})
         </h2>
-
+        @endif
         @endif
 
         @if ($errors->any())
@@ -32,7 +27,7 @@
         </div>
         @endif
 
-        <form action="{{ route('anfrage.store') }}" method="POST" class="space-y-8">
+        <form action="{{ route('anfrage.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
             @csrf
             <div class="bg-white p-6 rounded-lg shadow">
                 <h2 class="text-xl font-semibold mb-4">Termin Auswahl</h2>
@@ -201,10 +196,13 @@
 
             <!-- Warenangebot -->
             <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Warenangebot</h2>
+                <h2 class="text-xl font-semibold mb-4">Warenangebot <span class="text-red-600">*</span></h2>
                 <div class="space-y-4">
                     <div>
-                        <label class="block font-medium text-sm text-gray-700 mb-2">Warenangebot (Mehrfachauswahl möglich)</label>
+                        <label class="block font-medium text-sm text-gray-700 mb-2">
+                            Warenangebot (Mehrfachauswahl möglich) <span class="text-red-600">*</span>
+                        </label>
+                        <div id="warenangebot_error" class="text-red-600 text-sm mb-2 hidden">Bitte wählen Sie mindestens eine Kategorie aus.</div>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                             <label class="inline-flex items-center">
                                 <input type="checkbox" name="warenangebot[]" value="kleidung" {{ is_array(old('warenangebot')) && in_array('kleidung', old('warenangebot')) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
@@ -258,7 +256,7 @@
 
             <!-- Herkunft der Waren -->
             <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Herkunft der Waren</h2>
+                <h2 class="text-xl font-semibold mb-4">Herkunft der Waren <span class="text-red-600">*</span></h2>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="flex flex-col">
                         <label for="herkunft_eigenfertigung" class="block font-medium text-sm text-gray-700 h-12 flex items-end">Eigenfertigung (%) <span class="text-red-600">*</span></label>
@@ -279,6 +277,58 @@
                         <input type="number" name="herkunft[industrieware_entwicklungslaender]" id="herkunft_industrieware_entwicklungslaender" min="0" max="100"
                             value="{{ old('herkunft.industrieware_entwicklungslaender') }}"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bilder und Dateien -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Bilder und Dateien</h2>
+                <div class="space-y-6">
+                    <!-- Detailfotos Warenangebot -->
+                    <div>
+                        <label for="detailfotos_warenangebot" class="block font-medium text-sm text-gray-700 mb-2">
+                            Detailfotos aus dem Warenangebot (bis zu 4 Bilder)
+                        </label>
+                        <input type="file" name="detailfotos_warenangebot[]" id="detailfotos_warenangebot" 
+                            accept="image/*" multiple
+                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF bis 5MB pro Bild</p>
+                        <div id="detailfotos_error" class="text-red-600 text-sm mt-1 hidden"></div>
+                        <div id="detailfotos_preview" class="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2"></div>
+                    </div>
+
+                    <!-- Foto Verkaufsstand -->
+                    <div>
+                        <label for="foto_verkaufsstand" class="block font-medium text-sm text-gray-700 mb-2">
+                            Foto Ihres Verkaufsstandes (1 Bild)
+                        </label>
+                        <input type="file" name="foto_verkaufsstand" id="foto_verkaufsstand" 
+                            accept="image/*"
+                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF bis 5MB</p>
+                    </div>
+
+                    <!-- Foto Werkstatt -->
+                    <div>
+                        <label for="foto_werkstatt" class="block font-medium text-sm text-gray-700 mb-2">
+                            Foto, das Sie in Ihrer Werkstatt zeigt (1 Bild)
+                        </label>
+                        <input type="file" name="foto_werkstatt" id="foto_werkstatt" 
+                            accept="image/*"
+                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF bis 5MB</p>
+                    </div>
+
+                    <!-- Lebenslauf/Vita -->
+                    <div>
+                        <label for="lebenslauf_vita" class="block font-medium text-sm text-gray-700 mb-2">
+                            Lebenslauf/Vita (PDF)
+                        </label>
+                        <input type="file" name="lebenslauf_vita" id="lebenslauf_vita" 
+                            accept=".pdf"
+                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <p class="text-xs text-gray-500 mt-1">Nur PDF-Dateien bis 10MB</p>
                     </div>
                 </div>
             </div>
@@ -314,6 +364,92 @@
                         sonstigesTextarea.removeAttribute('required');
                         sonstigesTextarea.value = '';
                     }
+                });
+
+                // Detailfotos Validierung
+                const detailfotosInput = document.getElementById('detailfotos_warenangebot');
+                const detailfotosError = document.getElementById('detailfotos_error');
+                const detailfotosPreview = document.getElementById('detailfotos_preview');
+
+                detailfotosInput.addEventListener('change', function() {
+                    const files = Array.from(this.files);
+                    detailfotosError.classList.add('hidden');
+                    detailfotosPreview.innerHTML = '';
+
+                    // Prüfe Anzahl der Dateien
+                    if (files.length > 4) {
+                        detailfotosError.textContent = 'Maximal 4 Bilder erlaubt. Bitte wählen Sie weniger Dateien aus.';
+                        detailfotosError.classList.remove('hidden');
+                        this.value = ''; // Auswahl zurücksetzen
+                        return;
+                    }
+
+                    // Prüfe Dateigröße und zeige Vorschau
+                    let hasError = false;
+                    files.forEach((file, index) => {
+                        // Dateigröße prüfen (5MB = 5242880 Bytes)
+                        if (file.size > 5242880) {
+                            detailfotosError.textContent = `Die Datei "${file.name}" ist zu groß. Maximal 5MB pro Bild erlaubt.`;
+                            detailfotosError.classList.remove('hidden');
+                            hasError = true;
+                            return;
+                        }
+
+                        // Dateityp prüfen
+                        if (!file.type.startsWith('image/')) {
+                            detailfotosError.textContent = `Die Datei "${file.name}" ist kein gültiges Bild.`;
+                            detailfotosError.classList.remove('hidden');
+                            hasError = true;
+                            return;
+                        }
+
+                        // Vorschau erstellen
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const preview = document.createElement('div');
+                            preview.className = 'relative';
+                            preview.innerHTML = `
+                                <img src="${e.target.result}" class="w-full h-20 object-cover rounded border">
+                                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 truncate">
+                                    ${file.name}
+                                </div>
+                            `;
+                            detailfotosPreview.appendChild(preview);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+
+                    if (hasError) {
+                        this.value = ''; // Auswahl zurücksetzen
+                        detailfotosPreview.innerHTML = '';
+                    }
+                });
+
+                // Warenangebot Validierung
+                const form = document.querySelector('form');
+                const warenangebotCheckboxes = document.querySelectorAll('input[name="warenangebot[]"]');
+                const warenangebotError = document.getElementById('warenangebot_error');
+
+                form.addEventListener('submit', function(e) {
+                    const checkedBoxes = document.querySelectorAll('input[name="warenangebot[]"]:checked');
+                    if (checkedBoxes.length === 0) {
+                        e.preventDefault();
+                        warenangebotError.classList.remove('hidden');
+                        warenangebotError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        return false;
+                    } else {
+                        warenangebotError.classList.add('hidden');
+                    }
+                });
+
+                // Verstecke Fehler wenn Checkbox ausgewählt wird
+                warenangebotCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        const checkedBoxes = document.querySelectorAll('input[name="warenangebot[]"]:checked');
+                        if (checkedBoxes.length > 0) {
+                            warenangebotError.classList.add('hidden');
+                        }
+                    });
                 });
             });
         </script>

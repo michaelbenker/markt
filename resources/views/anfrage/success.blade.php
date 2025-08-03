@@ -1,4 +1,4 @@
-<x-layout>
+<x-layouts.app>
     <div class="max-w-2xl mx-auto py-12 px-6">
         <div class="bg-white p-8 rounded-lg shadow text-center">
             <div class="mb-6">
@@ -26,4 +26,4 @@
             </div>
         </div>
     </div>
-</x-layout>
+</x-layouts.app>

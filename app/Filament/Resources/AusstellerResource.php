@@ -14,14 +14,13 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Forms\Components\{TextInput, Textarea, Select, KeyValue, FileUpload, Grid, Section};
+use Filament\Forms\Components\{TextInput, Textarea, Select, KeyValue, Grid, Section};
 use Filament\Tables\Columns\{TextColumn, IconColumn};
 use Filament\Forms\Components\MultiSelect;
 use Filament\Forms\Components\Repeater;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Collection;
@@ -179,30 +178,10 @@ class AusstellerResource extends Resource
                             ]),
                         Tab::make('Medien')
                             ->schema([
-                                FileUpload::make('bilder')
-                                    ->label('Bilder')
-                                    ->image()
-                                    ->multiple()
-                                    ->reorderable()
-                                    ->directory('aussteller/bilder')
-                                    ->preserveFilenames()
-                                    ->visibility('public')
-                                    ->disk('public')
-                                    ->columnSpanFull()
-                                    ->deleteUploadedFileUsing(function ($file) {
-                                        Storage::disk('public')->delete($file);
-                                    }),
-                                FileUpload::make('files')
-                                    ->label('Dateien')
-                                    ->multiple()
-                                    ->directory('aussteller/files')
-                                    ->preserveFilenames()
-                                    ->visibility('public')
-                                    ->disk('public')
-                                    ->columnSpanFull()
-                                    ->deleteUploadedFileUsing(function ($file) {
-                                        Storage::disk('public')->delete($file);
-                                    }),
+                                Forms\Components\ViewField::make('medien_manager')
+                                    ->label('Medien verwalten')
+                                    ->view('filament.components.medien-manager')
+                                    ->columnSpanFull(),
                             ]),
                     ]),
             ]);

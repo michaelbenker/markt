@@ -50,4 +50,35 @@ class Anfrage extends Model
     {
         return $this->hasOneThrough(Markt::class, Termin::class, 'id', 'id', 'termin_id', 'markt_id');
     }
+
+    /**
+     * Polymorphic Relation zu Medien
+     */
+    public function medien()
+    {
+        return $this->morphMany(Medien::class, 'mediable')->orderBy('sort_order');
+    }
+
+    /**
+     * Hilfsmethoden für spezifische Medien-Kategorien
+     */
+    public function detailfotos()
+    {
+        return $this->medien()->category('angebot');
+    }
+
+    public function standfotos()
+    {
+        return $this->medien()->category('stand');
+    }
+
+    public function werkstattfotos()
+    {
+        return $this->medien()->category('werkstatt');
+    }
+
+    public function vitaDokumente()
+    {
+        return $this->medien()->category('vita');
+    }
 }

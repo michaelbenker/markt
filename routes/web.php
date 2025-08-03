@@ -5,6 +5,7 @@ use App\Http\Controllers\BuchungPublicController;
 use App\Http\Controllers\BuchungController;
 use App\Http\Controllers\AnfrageController;
 use App\Http\Controllers\RechnungController;
+use App\Http\Controllers\MedienController;
 
 Route::get('/buchung/{uuid}', [BuchungPublicController::class, 'show']);
 
@@ -15,6 +16,13 @@ Route::get('/anfrage/success', [AnfrageController::class, 'success'])->name('anf
 // Rechnungsrouten (öffentlich mit Token)
 Route::get('/rechnung/{rechnungsnummer}/pdf', [RechnungController::class, 'showPdf'])->name('rechnung.pdf');
 Route::get('/rechnung/{rechnungsnummer}/download', [RechnungController::class, 'downloadPdf'])->name('rechnung.download');
+
+// Medien-Management Routen (nur für authentifizierte Admin-Benutzer)
+Route::middleware('auth')->prefix('admin')->group(function () {
+    Route::post('/medien/upload', [MedienController::class, 'upload'])->name('medien.upload');
+    Route::delete('/medien/{id}', [MedienController::class, 'destroy'])->name('medien.destroy');
+    Route::put('/medien/order', [MedienController::class, 'updateOrder'])->name('medien.order');
+});
 
 Route::get('/', function () {
     return view('home');

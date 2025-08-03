@@ -60,6 +60,16 @@
                     <dt class="font-semibold text-gray-500 text-sm">Erstellt am</dt>
                     <dd class="text-gray-500 text-sm">{{ $a->created_at?->format('d.m.Y H:i') }}</dd>
                 </dl>
+
+                @if($a->medien->count() > 0)
+                <div class="mt-8 border-t pt-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900">📎 Medien</h3>
+                    @include('filament.components.medien-manager', [
+                        'getRecord' => function() use ($a) { return $a; },
+                        'uploadEnabled' => false
+                    ])
+                </div>
+                @endif
             </div>
             <div>
                 @if(count($this->matchingAussteller))

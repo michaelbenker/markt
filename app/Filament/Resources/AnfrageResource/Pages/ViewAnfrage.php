@@ -6,11 +6,13 @@ use App\Filament\Resources\AnfrageResource;
 use Filament\Resources\Pages\Page;
 use App\Models\Anfrage;
 use App\Models\Aussteller;
+use App\Models\Medien;
 use Filament\Notifications\Notification;
 use App\Models\Buchung;
 use App\Models\BuchungProtokoll;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ViewAnfrage extends Page
 {
@@ -227,6 +229,7 @@ class ViewAnfrage extends Page
     public function ausstellerNeuUndBuchung()
     {
         $a = $this->getCurrentAnfrage();
+        
         $aus = Aussteller::create([
             'firma' => $a->firma,
             'anrede' => $a->anrede,
@@ -244,6 +247,10 @@ class ViewAnfrage extends Page
             'warenangebot' => $a->warenangebot,
             'herkunft' => $a->herkunft,
         ]);
+        
+        // Medien von Anfrage zu Aussteller verschieben
+        $this->moveMedienFromAnfrageToAussteller($a, $aus);
+        
         return $this->createBuchung($aus->id);
     }
 
@@ -253,6 +260,7 @@ class ViewAnfrage extends Page
     public function ausstellerNeuOhneBuchung()
     {
         $a = $this->getCurrentAnfrage();
+        
         $aus = Aussteller::create([
             'firma' => $a->firma,
             'anrede' => $a->anrede,
@@ -270,6 +278,9 @@ class ViewAnfrage extends Page
             'warenangebot' => $a->warenangebot,
             'herkunft' => $a->herkunft,
         ]);
+
+        // Medien von Anfrage zu Aussteller verschieben
+        $this->moveMedienFromAnfrageToAussteller($a, $aus);
 
         // Anfrage als importiert markieren
         $a->importiert = true;
@@ -371,10 +382,25 @@ class ViewAnfrage extends Page
     }
 
     /**
+     * Hilfsmethode: Verschiebt Medien von Anfrage zu Aussteller
+     */
+    private function moveMedienFromAnfrageToAussteller(Anfrage $anfrage, Aussteller $aussteller): void
+    {
+        // Alle Medien der Anfrage einfach auf den Aussteller umschreiben
+        foreach ($anfrage->medien as $anfragesMedium) {
+            $anfragesMedium->update([
+                'mediable_type' => Aussteller::class,
+                'mediable_id' => $aussteller->id,
+            ]);
+        }
+    }
+
+    /**
      * Hilfsmethode: Aktualisiert Aussteller-Daten aus Anfrage
      */
     private function updateAusstellerFromAnfrage(Aussteller $aussteller, Anfrage $anfrage): void
     {
+        // Aussteller-Daten aktualisieren
         $aussteller->update([
             'firma' => $anfrage->firma,
             'anrede' => $anfrage->anrede,
@@ -392,5 +418,8 @@ class ViewAnfrage extends Page
             'warenangebot' => $anfrage->warenangebot,
             'herkunft' => $anfrage->herkunft,
         ]);
+
+        // Medien von Anfrage zu Aussteller verschieben
+        $this->moveMedienFromAnfrageToAussteller($anfrage, $aussteller);
     }
 }

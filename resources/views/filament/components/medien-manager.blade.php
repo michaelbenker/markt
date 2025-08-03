@@ -7,6 +7,9 @@ $medien = $aussteller ? $aussteller->medien()
 
 // Gruppiere Medien nach Kategorie
 $medienGrouped = $medien->groupBy('category');
+
+// Upload-Funktionalität aktiviert/deaktiviert (Standard: aktiviert)
+$uploadEnabled = $uploadEnabled ?? true;
 @endphp
 
 <style>
@@ -37,6 +40,7 @@ $medienGrouped = $medien->groupBy('category');
 </style>
 
 <div x-data="medienManager({{ $aussteller?->id ?? 'null' }})" class="space-y-6">
+    @if($uploadEnabled)
     <!-- Upload Bereich -->
     <div
         class="upload-area"
@@ -81,6 +85,7 @@ $medienGrouped = $medien->groupBy('category');
             <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" :style="`width: ${uploadProgress}%`"></div>
         </div>
     </div>
+    @endif
 
     <!-- Bestehende Medien -->
     @if($medien->count() > 0)
@@ -127,6 +132,7 @@ $medienGrouped = $medien->groupBy('category');
                             <span class="text-xs text-gray-600">
                                 {{ $medium->getFormattedSizeAttribute() ?? 'Unbekannt' }}
                             </span>
+                            @if($uploadEnabled)
                             <button
                                 type="button"
                                 @click="deleteMedium({{ $medium->id }})"
@@ -136,6 +142,7 @@ $medienGrouped = $medien->groupBy('category');
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>
                             </button>
+                            @endif
                         </div>
 
                         <h4 class="font-medium text-gray-900 text-xs truncate" title="{{ $medium->title }}">

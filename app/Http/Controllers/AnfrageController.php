@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Anfrage;
 use App\Models\Markt;
 use App\Models\Termin;
+use App\Models\Medien;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Notifications\NeueAnfrageNotification;
@@ -65,6 +66,12 @@ class AnfrageController extends Controller
             'herkunft.industrieware_entwicklungslaender' => 'required|integer|min:0|max:100',
             'bereits_ausgestellt' => 'nullable|boolean',
             'bemerkung' => 'nullable|string',
+            // File Uploads
+            'detailfotos_warenangebot' => 'nullable|array|max:4',
+            'detailfotos_warenangebot.*' => 'image|mimes:jpeg,jpg,png,gif|max:5120', // 5MB
+            'foto_verkaufsstand' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:5120', // 5MB
+            'foto_werkstatt' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:5120', // 5MB
+            'lebenslauf_vita' => 'nullable|file|mimes:pdf|max:10240', // 10MB
         ], [], [
             'herkunft.eigenfertigung' => 'Eigenfertigung',
             'herkunft.industrieware_nicht_entwicklungslaender' => 'Industrieware (nicht Entwicklungsland)',
@@ -91,6 +98,86 @@ class AnfrageController extends Controller
             'importiert' => false,
             'bemerkung' => $validated['bemerkung'] ?? null,
         ]);
+
+        // File Uploads in Medien-Tabelle speichern
+        $sortOrder = 1;
+
+        // Detailfotos Warenangebot (bis zu 4 Bilder)
+        if ($request->hasFile('detailfotos_warenangebot')) {
+            foreach ($request->file('detailfotos_warenangebot') as $file) {
+                $filename = time() . '_detailfoto_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('anfragen/detailfotos', $filename, 'public');
+                
+                Medien::create([
+                    'mediable_type' => Anfrage::class,
+                    'mediable_id' => $anfrage->id,
+                    'category' => 'angebot',
+                    'title' => 'Detailfoto Warenangebot',
+                    'mime_type' => $file->getMimeType(),
+                    'file_extension' => $file->getClientOriginalExtension(),
+                    'path' => $path,
+                    'size' => $file->getSize(),
+                    'sort_order' => $sortOrder++,
+                ]);
+            }
+        }
+
+        // Foto Verkaufsstand
+        if ($request->hasFile('foto_verkaufsstand')) {
+            $file = $request->file('foto_verkaufsstand');
+            $filename = time() . '_verkaufsstand_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('anfragen/verkaufsstand', $filename, 'public');
+            
+            Medien::create([
+                'mediable_type' => Anfrage::class,
+                'mediable_id' => $anfrage->id,
+                'category' => 'stand',
+                'title' => 'Foto Verkaufsstand',
+                'mime_type' => $file->getMimeType(),
+                'file_extension' => $file->getClientOriginalExtension(),
+                'path' => $path,
+                'size' => $file->getSize(),
+                'sort_order' => $sortOrder++,
+            ]);
+        }
+
+        // Foto Werkstatt
+        if ($request->hasFile('foto_werkstatt')) {
+            $file = $request->file('foto_werkstatt');
+            $filename = time() . '_werkstatt_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('anfragen/werkstatt', $filename, 'public');
+            
+            Medien::create([
+                'mediable_type' => Anfrage::class,
+                'mediable_id' => $anfrage->id,
+                'category' => 'werkstatt',
+                'title' => 'Foto Werkstatt',
+                'mime_type' => $file->getMimeType(),
+                'file_extension' => $file->getClientOriginalExtension(),
+                'path' => $path,
+                'size' => $file->getSize(),
+                'sort_order' => $sortOrder++,
+            ]);
+        }
+
+        // Lebenslauf/Vita PDF
+        if ($request->hasFile('lebenslauf_vita')) {
+            $file = $request->file('lebenslauf_vita');
+            $filename = time() . '_lebenslauf_' . uniqid() . '.pdf';
+            $path = $file->storeAs('anfragen/lebenslaeufe', $filename, 'public');
+            
+            Medien::create([
+                'mediable_type' => Anfrage::class,
+                'mediable_id' => $anfrage->id,
+                'category' => 'vita',
+                'title' => 'Lebenslauf/Vita',
+                'mime_type' => $file->getMimeType(),
+                'file_extension' => $file->getClientOriginalExtension(),
+                'path' => $path,
+                'size' => $file->getSize(),
+                'sort_order' => $sortOrder++,
+            ]);
+        }
 
         // Bestätigungsmail an den Anfragesteller über MailService
         try {
