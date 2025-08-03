@@ -27,15 +27,11 @@ class Aussteller extends Model
         'briefanrede',
         'bemerkung',
         'soziale_medien',
-        'bilder',
-        'files',
         'stand',
     ];
 
     protected $casts = [
         'soziale_medien' => 'array',
-        'bilder' => 'array',
-        'files' => 'array',
         'stand' => 'array',
     ];
 
@@ -57,6 +53,37 @@ class Aussteller extends Model
     public function rechnungen()
     {
         return $this->hasMany(Rechnung::class);
+    }
+
+    /**
+     * Polymorphic Relation zu Medien
+     */
+    public function medien()
+    {
+        return $this->morphMany(Medien::class, 'mediable')->orderBy('sort_order');
+    }
+
+    /**
+     * Hilfsmethoden für spezifische Medien-Kategorien
+     */
+    public function detailfotos()
+    {
+        return $this->medien()->category('angebot');
+    }
+
+    public function standfotos()
+    {
+        return $this->medien()->category('stand');
+    }
+
+    public function werkstattfotos()
+    {
+        return $this->medien()->category('werkstatt');
+    }
+
+    public function vitaDokumente()
+    {
+        return $this->medien()->category('vita');
     }
 
     /**

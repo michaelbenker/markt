@@ -27,6 +27,8 @@ return new class extends Migration {
             $table->boolean('bereits_ausgestellt')->default(false);
             $table->boolean('importiert')->default(false);
             $table->text('bemerkung')->nullable();
+            $table->json('bilder')->nullable();
+            $table->json('files')->nullable();
             $table->timestamps();
 
             $table->foreign('termin_id')->references('id')->on('termin')->onDelete('cascade');
