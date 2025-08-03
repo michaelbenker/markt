@@ -14,6 +14,11 @@ class Markt extends Model
         'name',
         'bemerkung',
         'url',
+        'subkategorien',
+    ];
+
+    protected $casts = [
+        'subkategorien' => 'array',
     ];
 
     public function getRouteKeyName(): string
@@ -29,5 +34,14 @@ class Markt extends Model
     public function termine()
     {
         return $this->hasMany(Termin::class);
+    }
+
+    public function getSubkategorienObjectsAttribute()
+    {
+        if (!$this->subkategorien) {
+            return collect();
+        }
+        
+        return Subkategorie::whereIn('id', $this->subkategorien)->get();
     }
 }

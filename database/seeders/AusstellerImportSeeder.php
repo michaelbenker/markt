@@ -36,9 +36,23 @@ class AusstellerImportSeeder extends Seeder
 
         foreach ($rows as $index => $row) {
             try {
-                // 1. Überspringe nur, wenn weder 'firma' noch 'name' vorhanden ist
-                if (empty($row['firma']) && empty($row['name'])) {
-                    Log::info("Zeile {$index}: Übersprungen - Weder Firma noch Name vorhanden", [
+                // 1. Überspringe komplett leere Zeilen (alle Werte null/leer)
+                $hasData = false;
+                foreach ($row as $value) {
+                    if (!empty(trim($value ?? ''))) {
+                        $hasData = true;
+                        break;
+                    }
+                }
+                
+                if (!$hasData) {
+                    $stats['skipped']++;
+                    continue; // Keine Log-Ausgabe für komplett leere Zeilen
+                }
+                
+                // 2. Überspringe nur, wenn weder 'firma' noch 'name' vorhanden ist
+                if (empty(trim($row['firma'] ?? '')) && empty(trim($row['name'] ?? ''))) {
+                    Log::info("Zeile " . ($index + 2) . ": Übersprungen - Weder Firma noch Name vorhanden", [
                         'firma' => $row['firma'] ?? 'Unbekannt',
                         'name' => $row['name'] ?? 'Unbekannt'
                     ]);
@@ -76,13 +90,13 @@ class AusstellerImportSeeder extends Seeder
                     'bemerkung' => $row['bemerkung'] ?? null,
                 ]);
 
-                Log::info("Zeile {$index}: Erfolgreich importiert", [
+                Log::info("Zeile " . ($index + 2) . ": Erfolgreich importiert", [
                     'firma' => $row['firma'] ?? 'Unbekannt',
                     'email' => $row['email']
                 ]);
                 $stats['imported']++;
             } catch (\Exception $e) {
-                Log::error("Zeile {$index}: Fehler beim Import", [
+                Log::error("Zeile " . ($index + 2) . ": Fehler beim Import", [
                     'firma' => $row['firma'] ?? 'Unbekannt',
                     'error' => $e->getMessage()
                 ]);

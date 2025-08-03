@@ -5,6 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\MarktResource\Pages;
 use App\Filament\Resources\MarktResource\RelationManagers;
 use App\Models\Markt;
+use App\Models\Subkategorie;
+use App\Models\Kategorie;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -52,6 +54,26 @@ class MarktResource extends Resource
                     ->label('URL')
                     ->url()
                     ->nullable(),
+
+                Forms\Components\CheckboxList::make('subkategorien')
+                    ->label('Zugelassene Subkategorien')
+                    ->options(function () {
+                        $kategorien = Kategorie::with('subkategorien')->get();
+                        $options = [];
+                        
+                        foreach ($kategorien as $kategorie) {
+                            foreach ($kategorie->subkategorien as $subkategorie) {
+                                $options[$subkategorie->id] = $kategorie->name . ' → ' . $subkategorie->name;
+                            }
+                        }
+                        
+                        return $options;
+                    })
+                    ->columns(2)
+                    ->searchable()
+                    ->bulkToggleable()
+                    ->gridDirection('row')
+                    ->helperText('Wählen Sie die Subkategorien aus, die für diesen Markt zugelassen sind.'),
             ]);
     }
 
@@ -62,6 +84,31 @@ class MarktResource extends Resource
                 TextColumn::make('name')->label('Name'),
                 TextColumn::make('bemerkung')->label('Bemerkung')->limit(100),
                 TextColumn::make('url')->label('URL'),
+                TextColumn::make('subkategorien')
+                    ->label('Subkategorien')
+                    ->formatStateUsing(function ($record) {
+                        if (!$record->subkategorien) {
+                            return 'Keine';
+                        }
+                        
+                        $subkategorien = Subkategorie::whereIn('id', $record->subkategorien)
+                            ->with('kategorie')
+                            ->get();
+                        
+                        return $subkategorien->count() . ' Subkategorien';
+                    })
+                    ->tooltip(function ($record) {
+                        if (!$record->subkategorien) {
+                            return 'Keine Subkategorien zugewiesen';
+                        }
+                        
+                        $subkategorien = Subkategorie::whereIn('id', $record->subkategorien)
+                            ->with('kategorie')
+                            ->get()
+                            ->map(fn($sub) => $sub->kategorie->name . ' → ' . $sub->name);
+                        
+                        return $subkategorien->join(', ');
+                    }),
             ])
             ->filters([
                 //

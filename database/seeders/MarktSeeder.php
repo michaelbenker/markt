@@ -17,8 +17,9 @@ class MarktSeeder extends Seeder
         Markt::create([
             'slug' => 'adventsmarkt',
             'name' => 'Adventsmarkt',
-            'bemerkung' => 'Beim “Advent in Fürstenfeld” präsentiert sich das Klosterareal an zwei Wochenenden von seiner schönsten Seite - Lichterglanz, Leckereien, Markt, Kunst & Musik stimmen hier auf die Weihnachtszeit ein.',
+            'bemerkung' => 'Beim "Advent in Fürstenfeld" präsentiert sich das Klosterareal an zwei Wochenenden von seiner schönsten Seite - Lichterglanz, Leckereien, Markt, Kunst & Musik stimmen hier auf die Weihnachtszeit ein.',
             'url' => 'https://adventinfuerstenfeld.de/',
+            'subkategorien' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 22, 23, 24, 25], // Gastro + Kunsthandwerk + Textilien + Sonstiges
         ]);
 
         Markt::create([
@@ -26,6 +27,7 @@ class MarktSeeder extends Seeder
             'name' => 'Töpfermarkt',
             'bemerkung' => 'Seit über 30 Jahren zählt der Töpfer- und Kunsthandwerkermarkt im Veranstaltungsforum Fürstenfeld zu den schönsten Märkten Bayerns. Getreu dem Motto „Qualität vor Quantität" präsentieren im ehemaligen Klosterareal rund 100 sorgfältig ausgewählte nationale und internationale Ausstellende handgefertigte Waren.',
             'url' => 'https://www.toepfermarkt-fuerstenfeld.de/',
+            'subkategorien' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], // Alle Subkategorien
         ]);
 
         Markt::create([
@@ -33,6 +35,7 @@ class MarktSeeder extends Seeder
             'name' => 'Kirta',
             'bemerkung' => 'Der Fürstenfelder Kirta ist das größte Kirchweihfest im Landkreis. Hier gibt es alles, was Bayern lebens- und liebenswert macht und eine Stimmung wie auf der Oidn Wiesn! Besonders eignet sich der Kirta im Veranstaltungsforum für einen schönen Familienausflug, zum gemütlichen Beisammensein bei zünftiger Musik und herzhafter Brotzeit.',
             'url' => 'https://www.kirta-fuerstenfeld.de/',
+            'subkategorien' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 25], // Gastro + Kunsthandwerk + Sonstiges
         ]);
     }
 }

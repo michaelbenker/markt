@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('bemerkung')->nullable();
             $table->string('url')->nullable();
+            $table->json('subkategorien')->nullable(); // JSON Array für zugewiesene Subkategorie-IDs
             $table->timestamps();
         });
     }
