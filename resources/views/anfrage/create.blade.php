@@ -11,7 +11,7 @@
         @endphp
         @if($selectedTermin)
         <h2 class="text-2xl font-bold mb-3">
-            {{ $selectedTermin->markt->name }} 
+            {{ $selectedTermin->markt->name }}
             ({{ \Carbon\Carbon::parse($selectedTermin->start)->format('d.m.Y') }})
         </h2>
         @endif
@@ -129,16 +129,16 @@
                     </div>
 
                     <div>
-                        <label for="mobil" class="block font-medium text-sm text-gray-700">Mobil</label>
-                        <input type="tel" name="mobil" id="mobil"
-                            value="{{ old('mobil') }}"
+                        <label for="email" class="block font-medium text-sm text-gray-700">E-Mail <span class="text-red-600">*</span></label>
+                        <input type="email" name="email" id="email" required autocomplete="email"
+                            value="{{ old('email') }}"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
 
                     <div>
-                        <label for="email" class="block font-medium text-sm text-gray-700">E-Mail <span class="text-red-600">*</span></label>
-                        <input type="email" name="email" id="email" required autocomplete="email"
-                            value="{{ old('email') }}"
+                        <label for="mobil" class="block font-medium text-sm text-gray-700">Mobil <span class="text-red-600">*</span></label>
+                        <input type="tel" name="mobil" required id="mobil"
+                            value="{{ old('mobil') }}"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
 
@@ -290,7 +290,7 @@
                         <label for="detailfotos_warenangebot" class="block font-medium text-sm text-gray-700 mb-2">
                             Detailfotos aus dem Warenangebot (bis zu 4 Bilder)
                         </label>
-                        <input type="file" name="detailfotos_warenangebot[]" id="detailfotos_warenangebot" 
+                        <input type="file" name="detailfotos_warenangebot[]" id="detailfotos_warenangebot"
                             accept="image/*" multiple
                             class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                         <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF bis 5MB pro Bild</p>
@@ -303,7 +303,7 @@
                         <label for="foto_verkaufsstand" class="block font-medium text-sm text-gray-700 mb-2">
                             Foto Ihres Verkaufsstandes (1 Bild)
                         </label>
-                        <input type="file" name="foto_verkaufsstand" id="foto_verkaufsstand" 
+                        <input type="file" name="foto_verkaufsstand" id="foto_verkaufsstand"
                             accept="image/*"
                             class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                         <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF bis 5MB</p>
@@ -314,7 +314,7 @@
                         <label for="foto_werkstatt" class="block font-medium text-sm text-gray-700 mb-2">
                             Foto, das Sie in Ihrer Werkstatt zeigt (1 Bild)
                         </label>
-                        <input type="file" name="foto_werkstatt" id="foto_werkstatt" 
+                        <input type="file" name="foto_werkstatt" id="foto_werkstatt"
                             accept="image/*"
                             class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                         <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF bis 5MB</p>
@@ -325,7 +325,7 @@
                         <label for="lebenslauf_vita" class="block font-medium text-sm text-gray-700 mb-2">
                             Lebenslauf/Vita (PDF)
                         </label>
-                        <input type="file" name="lebenslauf_vita" id="lebenslauf_vita" 
+                        <input type="file" name="lebenslauf_vita" id="lebenslauf_vita"
                             accept=".pdf"
                             class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                         <p class="text-xs text-gray-500 mt-1">Nur PDF-Dateien bis 10MB</p>
@@ -435,7 +435,10 @@
                     if (checkedBoxes.length === 0) {
                         e.preventDefault();
                         warenangebotError.classList.remove('hidden');
-                        warenangebotError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        warenangebotError.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
                         return false;
                     } else {
                         warenangebotError.classList.add('hidden');
