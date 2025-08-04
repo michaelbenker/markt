@@ -36,6 +36,11 @@ class Markt extends Model
         return $this->hasMany(Termin::class);
     }
 
+    public function leistungen()
+    {
+        return $this->belongsToMany(Leistung::class, 'markt_leistung');
+    }
+
     public function getSubkategorienObjectsAttribute()
     {
         if (!$this->subkategorien) {

@@ -28,24 +28,7 @@ class StandortSeeder extends Seeder
             Standort::create($standortData);
         }
 
-        // Märkte laden und Standorte zuweisen
-        $adventsmarkt = Markt::where('name', 'Adventsmarkt')->first();
-        $toepfermarkt = Markt::where('name', 'Töpfermarkt')->first();
-
-        if ($adventsmarkt) {
-            $standorteAdventsmarkt = Standort::whereIn('name', ['Tenne OG', 'Tenne EG', 'Stadtsaalhof'])->get();
-            $adventsmarkt->standorte()->attach($standorteAdventsmarkt->pluck('id'));
-        }
-
-        if ($toepfermarkt) {
-            $standorteToepfermarkt = Standort::whereIn('name', ['Arkadengang', 'Waaghäuslwiese', 'Kirchvorplatz', 'Fachhochschule'])->get();
-            $toepfermarkt->standorte()->attach($standorteToepfermarkt->pluck('id'));
-        }
-
-        // Beispiel: Ein Standort kann mehreren Märkten zugewiesen werden
-        $gemeinsamerStandort = Standort::where('name', 'Stadtsaalhof')->first();
-        if ($gemeinsamerStandort && $toepfermarkt) {
-            $toepfermarkt->standorte()->attach($gemeinsamerStandort->id);
-        }
+        // Standort-Zuordnungen werden jetzt im MarktSeeder gemacht,
+        // da dort die Märkte bereits existieren
     }
 }

@@ -166,7 +166,6 @@ class ViewAnfrage extends Page
             'stand' => $a->stand,
             'warenangebot' => $a->warenangebot,
             'herkunft' => $a->herkunft,
-            'soziale_medien' => $a->soziale_medien,
             'werbematerial' => $a->werbematerial,
         ]);
         // 'created'-Protokoll löschen, falls direkt importiert

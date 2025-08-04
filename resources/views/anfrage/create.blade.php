@@ -37,7 +37,7 @@
                         class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="">Bitte wählen Sie einen Termin</option>
                         @foreach($termine as $termin)
-                        <option value="{{ $termin->id }}" data-markt-id="{{ $termin->markt->id }}" {{ $selectedTerminId == $termin->id ? 'selected' : '' }}>
+                        <option value="{{ $termin->id }}" data-markt-id="{{ $termin->markt->id }}" data-markt-slug="{{ $termin->markt->slug }}" {{ $selectedTerminId == $termin->id ? 'selected' : '' }}>
                             {{ $termin->markt->name }} - {{ \Carbon\Carbon::parse($termin->start)->format('d.m.Y') }} bis {{ \Carbon\Carbon::parse($termin->ende)->format('d.m.Y') }}
                         </option>
                         @endforeach
@@ -333,136 +333,48 @@
             </div>
 
             <!-- Wünsche für Zusatzleistungen -->
-            <div class="bg-white p-6 rounded-lg shadow">
+            <div class="bg-white p-6 rounded-lg shadow" id="zusatzleistungen-section">
                 <h2 class="text-xl font-semibold mb-4">Wünsche für Zusatzleistungen</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" name="wuensche_zusatzleistungen[]" value="strom" {{ in_array('strom', old('wuensche_zusatzleistungen', [])) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <span class="ml-2">Stromanschluss</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" name="wuensche_zusatzleistungen[]" value="wasser" {{ in_array('wasser', old('wuensche_zusatzleistungen', [])) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <span class="ml-2">Wasseranschluss</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" name="wuensche_zusatzleistungen[]" value="tisch" {{ in_array('tisch', old('wuensche_zusatzleistungen', [])) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <span class="ml-2">Tisch</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" name="wuensche_zusatzleistungen[]" value="stuehle" {{ in_array('stuehle', old('wuensche_zusatzleistungen', [])) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <span class="ml-2">Stühle</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" name="wuensche_zusatzleistungen[]" value="pavillon" {{ in_array('pavillon', old('wuensche_zusatzleistungen', [])) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <span class="ml-2">Pavillon</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" name="wuensche_zusatzleistungen[]" value="beleuchtung" {{ in_array('beleuchtung', old('wuensche_zusatzleistungen', [])) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <span class="ml-2">Zusätzliche Beleuchtung</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" name="wuensche_zusatzleistungen[]" value="lagermoeglichkeit" {{ in_array('lagermoeglichkeit', old('wuensche_zusatzleistungen', [])) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <span class="ml-2">Lagermöglichkeit</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" name="wuensche_zusatzleistungen[]" value="parkplatz" {{ in_array('parkplatz', old('wuensche_zusatzleistungen', [])) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <span class="ml-2">Reservierter Parkplatz</span>
-                    </label>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" id="zusatzleistungen-container">
+                    <p class="text-gray-500 col-span-3">Bitte wählen Sie zunächst einen Termin aus.</p>
                 </div>
             </div>
 
             <!-- Werbematerial -->
             <div class="bg-white p-6 rounded-lg shadow">
                 <h2 class="text-xl font-semibold mb-4">Gewünschtes Werbematerial</h2>
-                <div id="werbematerial-container" class="space-y-4">
-                    <!-- Werbematerial wird dynamisch hinzugefügt -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <label for="werbematerial_plakate_a3" class="block font-medium text-sm text-gray-700">Plakate A3</label>
+                        <input type="number" name="werbematerial[plakate_a3]" id="werbematerial_plakate_a3" min="0" max="100"
+                            value="{{ old('werbematerial.plakate_a3', 0) }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="werbematerial_plakate_a1" class="block font-medium text-sm text-gray-700">Plakate A1</label>
+                        <input type="number" name="werbematerial[plakate_a1]" id="werbematerial_plakate_a1" min="0" max="100"
+                            value="{{ old('werbematerial.plakate_a1', 0) }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="werbematerial_flyer" class="block font-medium text-sm text-gray-700">Flyer</label>
+                        <input type="number" name="werbematerial[flyer]" id="werbematerial_flyer" min="0" max="1000"
+                            value="{{ old('werbematerial.flyer', 0) }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <div class="flex items-center">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="werbematerial[social_media_post]" value="1"
+                                {{ old('werbematerial.social_media_post') ? 'checked' : '' }}
+                                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <span class="ml-2">Social Media Post</span>
+                        </label>
+                    </div>
                 </div>
-                <button type="button" id="add-werbematerial" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
-                    Werbematerial hinzufügen
-                </button>
             </div>
-
-            <script>
-                let werbematerialCount = 0;
-                const werbematerialTypes = {
-                    'flyer': 'Flyer',
-                    'brochure': 'Broschüre', 
-                    'plakat_a3': 'Plakat A3',
-                    'plakat_a1': 'Plakat A1',
-                    'social_media': 'Social Media Post'
-                };
-
-                function addWerbematerialRow(data = {}) {
-                    const container = document.getElementById('werbematerial-container');
-                    const index = werbematerialCount++;
-                    
-                    const row = document.createElement('div');
-                    row.className = 'border rounded p-4 space-y-3';
-                    row.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <h4 class="font-medium">Werbematerial ${index + 1}</h4>
-                            <button type="button" onclick="this.parentElement.parentElement.remove()" class="text-red-600 hover:text-red-800">
-                                Entfernen
-                            </button>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div>
-                                <label class="block font-medium text-sm text-gray-700 mb-1">Typ</label>
-                                <select name="werbematerial[${index}][typ]" class="w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                                    <option value="">Bitte wählen</option>
-                                    ${Object.entries(werbematerialTypes).map(([key, label]) => 
-                                        `<option value="${key}" ${data.typ === key ? 'selected' : ''}>${label}</option>`
-                                    ).join('')}
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block font-medium text-sm text-gray-700 mb-1">Anzahl</label>
-                                <input type="number" name="werbematerial[${index}][anzahl]" min="0" max="1000" 
-                                    value="${data.anzahl || 0}" 
-                                    class="w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                            </div>
-                            <div>
-                                <label class="inline-flex items-center mt-6">
-                                    <input type="checkbox" name="werbematerial[${index}][physisch]" value="1" 
-                                        ${data.physisch ? 'checked' : ''} 
-                                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <span class="ml-2 text-sm">Physisch</span>
-                                </label>
-                            </div>
-                            <div>
-                                <label class="inline-flex items-center mt-6">
-                                    <input type="checkbox" name="werbematerial[${index}][digital]" value="1" 
-                                        ${data.digital ? 'checked' : ''} 
-                                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <span class="ml-2 text-sm">Digital</span>
-                                </label>
-                            </div>
-                        </div>
-                        <input type="hidden" name="werbematerial[${index}][physisch]" value="0">
-                        <input type="hidden" name="werbematerial[${index}][digital]" value="0">
-                    `;
-                    
-                    container.appendChild(row);
-                }
-
-                document.getElementById('add-werbematerial').addEventListener('click', function() {
-                    addWerbematerialRow();
-                });
-
-                // Beim Laden der Seite initial ein Feld hinzufügen
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Prüfen ob alte Werte existieren
-                    const oldWerbematerial = @json(old('werbematerial', []));
-                    
-                    if (oldWerbematerial && oldWerbematerial.length > 0) {
-                        oldWerbematerial.forEach(function(item) {
-                            addWerbematerialRow(item);
-                        });
-                    } else {
-                        addWerbematerialRow({typ: 'flyer', anzahl: 0, physisch: true, digital: false});
-                    }
-                });
-            </script>
 
             <!-- Bemerkung -->
             <div class="bg-white p-6 rounded-lg shadow">
@@ -484,24 +396,29 @@
             // Subkategorien-Daten von PHP
             const subkategorienByMarkt = @json($subkategorienByMarkt);
             const standorteByMarkt = @json($standorteByMarkt);
+            const maerkteBySlug = @json($maerkteBySlug);
             const oldWarenangebotValues = @json(old('warenangebot', []));
             const oldWunschStandortId = @json(old('wunsch_standort_id'));
+            const oldZusatzleistungen = @json(old('wuensche_zusatzleistungen', []));
 
             document.addEventListener('DOMContentLoaded', function() {
                 const terminSelect = document.getElementById('termin');
                 const warenangebotContainer = document.getElementById('warenangebot_container');
                 const wunschStandortSelect = document.getElementById('wunsch_standort_id');
+                const zusatzleistungenContainer = document.getElementById('zusatzleistungen-container');
 
                 // Event Listener für Termin-Auswahl
                 terminSelect.addEventListener('change', function() {
                     updateWarenangebot();
                     updateWunschStandorte();
+                    updateZusatzleistungen();
                 });
 
                 // Initial laden, falls ein Termin vorausgewählt ist
                 if (terminSelect.value) {
                     updateWarenangebot();
                     updateWunschStandorte();
+                    updateZusatzleistungen();
                 }
 
                 function updateWarenangebot() {
@@ -572,6 +489,54 @@
 
                         wunschStandortSelect.appendChild(option);
                     });
+                }
+
+                function updateZusatzleistungen() {
+                    const selectedTerminId = terminSelect.value;
+                    if (!selectedTerminId) {
+                        zusatzleistungenContainer.innerHTML = '<p class="text-gray-500 col-span-3">Bitte wählen Sie zunächst einen Termin aus.</p>';
+                        return;
+                    }
+
+                    // Markt-Slug aus dem ausgewählten Termin ermitteln
+                    const selectedOption = terminSelect.options[terminSelect.selectedIndex];
+                    const marktSlug = selectedOption.dataset.marktSlug;
+
+                    if (!marktSlug || !maerkteBySlug[marktSlug]) {
+                        zusatzleistungenContainer.innerHTML = '<p class="text-gray-500 col-span-3">Für diesen Markt sind keine Zusatzleistungen konfiguriert.</p>';
+                        return;
+                    }
+
+                    const markt = maerkteBySlug[marktSlug];
+                    const leistungen = markt.leistungen;
+
+                    if (!leistungen || leistungen.length === 0) {
+                        zusatzleistungenContainer.innerHTML = '<p class="text-gray-500 col-span-3">Für diesen Markt sind keine Zusatzleistungen konfiguriert.</p>';
+                        return;
+                    }
+
+                    let html = '';
+                    leistungen.forEach(function(leistung) {
+                        const isChecked = oldZusatzleistungen.includes(leistung.id.toString()) ? 'checked' : '';
+                        const preis = (leistung.preis / 100).toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        
+                        html += `
+                            <label class="inline-flex items-start">
+                                <input type="checkbox" 
+                                       name="wuensche_zusatzleistungen[]" 
+                                       value="${leistung.id}" 
+                                       ${isChecked}
+                                       class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 mt-1">
+                                <div class="ml-2">
+                                    <span class="block font-medium">${leistung.name}</span>
+                                    <span class="text-sm text-gray-600">${preis} € / ${leistung.einheit}</span>
+                                    ${leistung.beschreibung ? `<span class="text-xs text-gray-500 block">${leistung.beschreibung}</span>` : ''}
+                                </div>
+                            </label>
+                        `;
+                    });
+
+                    zusatzleistungenContainer.innerHTML = html;
                 }
 
                 function addWarenangebotEventListeners() {

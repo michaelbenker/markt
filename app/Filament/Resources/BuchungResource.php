@@ -178,6 +178,7 @@ class BuchungResource extends Resource
                                             ->label('Anzahl')
                                             ->numeric()
                                             ->minValue(0)
+                                            ->default(1)
                                             ->required(),
                                         Forms\Components\Toggle::make('physisch')
                                             ->label('Physisch')
@@ -194,27 +195,6 @@ class BuchungResource extends Resource
                                     ->reorderable(false)
                                     ->helperText('Füge verschiedene Werbematerialien hinzu.'),
                             ]),
-                        Tab::make('Soziale Medien')
-                            ->schema([
-                                Section::make('Online-Präsenz')
-                                    ->schema([
-                                        TextInput::make('soziale_medien.website')
-                                            ->label('Website')
-                                            ->url()
-                                            ->placeholder('https://beispiel.de'),
-                                        TextInput::make('soziale_medien.facebook')
-                                            ->label('Facebook')
-                                            ->url()
-                                            ->placeholder('https://facebook.com/...'),
-                                        TextInput::make('soziale_medien.instagram')
-                                            ->label('Instagram')
-                                            ->placeholder('@benutzername'),
-                                        TextInput::make('soziale_medien.twitter')
-                                            ->label('Twitter')
-                                            ->placeholder('@benutzername'),
-                                    ])
-                                    ->columns(2),
-                            ]),
                         Tab::make('Gebuchte Leistungen')
                             ->schema([
                                 Forms\Components\Repeater::make('leistungen')
@@ -223,7 +203,16 @@ class BuchungResource extends Resource
                                     ->schema([
                                         Select::make('leistung_id')
                                             ->label('Leistung')
-                                            ->relationship('leistung', 'name')
+                                            ->options(function (callable $get) {
+                                                $record = $get('../../');
+                                                if ($record && isset($record['termin_id'])) {
+                                                    $termin = \App\Models\Termin::find($record['termin_id']);
+                                                    if ($termin && $termin->markt) {
+                                                        return $termin->markt->leistungen()->pluck('name', 'id');
+                                                    }
+                                                }
+                                                return \App\Models\Leistung::pluck('name', 'id');
+                                            })
                                             ->required()
                                             ->reactive()
                                             ->afterStateUpdated(function ($state, callable $set) {

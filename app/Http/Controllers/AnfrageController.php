@@ -37,9 +37,10 @@ class AnfrageController extends Controller
             }
         }
 
-        // Subkategorien für alle Märkte laden
+        // Subkategorien, Standorte und Leistungen für alle Märkte laden
         $subkategorienByMarkt = [];
         $standorteByMarkt = [];
+        $maerkteBySlug = [];
         foreach ($termine as $termin) {
             $markt = $termin->markt;
             if ($markt && $markt->subkategorien) {
@@ -55,10 +56,14 @@ class AnfrageController extends Controller
             if ($markt) {
                 $standorte = $markt->standorte()->orderBy('name')->get();
                 $standorteByMarkt[$markt->id] = $standorte;
+                
+                // Markt mit Leistungen für Template verfügbar machen
+                $markt->load('leistungen');
+                $maerkteBySlug[$markt->slug] = $markt;
             }
         }
 
-        return view('anfrage.create', compact('termine', 'selectedTerminId', 'subkategorienByMarkt', 'standorteByMarkt'));
+        return view('anfrage.create', compact('termine', 'selectedTerminId', 'subkategorienByMarkt', 'standorteByMarkt', 'maerkteBySlug'));
     }
 
     public function store(Request $request)

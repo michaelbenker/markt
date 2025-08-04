@@ -91,17 +91,22 @@
                     @if($a->werbematerial)
                     <dt class="font-semibold">Gewünschtes Werbematerial</dt>
                     <dd>
-                        @if(($a->werbematerial['plakate_a3'] ?? 0) > 0)
-                        <div>Plakate A3: {{ $a->werbematerial['plakate_a3'] }} Stück</div>
+                        @if(is_array($a->werbematerial) && count($a->werbematerial) > 0)
+                        @foreach($a->werbematerial as $item)
+                        @if(is_array($item) && isset($item['typ']))
+                        <div class="mb-1">
+                            {{ ucfirst(str_replace('_', ' ', $item['typ'])) }}: {{ $item['anzahl'] }} Stück
+                            @if($item['physisch'] ?? false)
+                            <span class="text-sm text-gray-600">(physisch)</span>
+                            @endif
+                            @if($item['digital'] ?? false)
+                            <span class="text-sm text-gray-600">(digital)</span>
+                            @endif
+                        </div>
                         @endif
-                        @if(($a->werbematerial['plakate_a1'] ?? 0) > 0)
-                        <div>Plakate A1: {{ $a->werbematerial['plakate_a1'] }} Stück</div>
-                        @endif
-                        @if(($a->werbematerial['flyer'] ?? 0) > 0)
-                        <div>Flyer: {{ $a->werbematerial['flyer'] }} Stück</div>
-                        @endif
-                        @if($a->werbematerial['social_media_post'] ?? false)
-                        <div>Social Media Post: Ja</div>
+                        @endforeach
+                        @else
+                        <div class="text-gray-500">Kein Werbematerial im erwarteten Format gefunden</div>
                         @endif
                     </dd>
                     @endif

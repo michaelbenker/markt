@@ -32,12 +32,12 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->call([
-            MarktSeeder::class,
-            AusstellerImportSeeder::class,
             StandortSeeder::class,
             KategorieSeeder::class,
             SubkategorieSeeder::class,
-            LeistungSeeder::class,
+            LeistungSeeder::class,  // Muss vor MarktSeeder stehen
+            MarktSeeder::class,
+            AusstellerImportSeeder::class,
             TerminSeeder::class,
             BuchungSeeder::class,
             AnfrageSeeder::class,

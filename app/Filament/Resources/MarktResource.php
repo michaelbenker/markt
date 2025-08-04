@@ -36,55 +36,99 @@ class MarktResource extends Resource
         return $form
             ->columns(1)
             ->schema([
-                // View::make('components.markt.subnav')
-                //     ->viewData(fn(\Livewire\Component $livewire): array => [
-                //         'markt' => $livewire->record,
-                //     ]),
+                Forms\Components\Tabs::make('Markt')
+                    ->columnSpan('full')
+                    ->persistTabInQueryString()
+                    ->tabs([
+                        Forms\Components\Tabs\Tab::make('Allgemein')
+                            ->schema([
+                                Forms\Components\TextInput::make('slug')
+                                    ->label('Slug')
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->regex('/^[a-zA-Z0-9_-]+$/')
+                                    ->helperText('Nur Buchstaben, Zahlen, Unterstriche und Bindestriche erlaubt. Wird für die URL verwendet.'),
 
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Name')
+                                    ->required(),
 
-                Forms\Components\TextInput::make('name')
-                    ->label('Name')
-                    ->required(),
+                                Forms\Components\Textarea::make('bemerkung')
+                                    ->label('Bemerkung')
+                                    ->rows(4)
+                                    ->nullable(),
 
-                Forms\Components\Textarea::make('bemerkung')
-                    ->label('Bemerkung')
-                    ->rows(4)
-                    ->nullable(),
+                                Forms\Components\TextInput::make('url')
+                                    ->label('URL')
+                                    ->url()
+                                    ->nullable(),
 
-                Forms\Components\TextInput::make('url')
-                    ->label('URL')
-                    ->url()
-                    ->nullable(),
+                                Forms\Components\View::make('filament.resources.markt.termine-liste')
+                                    ->viewData(function ($record) {
+                                        return ['markt' => $record];
+                                    }),
+                            ]),
 
-                Forms\Components\CheckboxList::make('subkategorien')
-                    ->label('Zugelassene Subkategorien')
-                    ->options(function () {
-                        $kategorien = Kategorie::with('subkategorien')->get();
-                        $options = [];
-                        
-                        foreach ($kategorien as $kategorie) {
-                            foreach ($kategorie->subkategorien as $subkategorie) {
-                                $options[$subkategorie->id] = $kategorie->name . ' → ' . $subkategorie->name;
-                            }
-                        }
-                        
-                        return $options;
-                    })
-                    ->columns(2)
-                    ->searchable()
-                    ->bulkToggleable()
-                    ->gridDirection('row')
-                    ->helperText('Wählen Sie die Subkategorien aus, die für diesen Markt zugelassen sind.'),
+                        Forms\Components\Tabs\Tab::make('Kategorien')
+                            ->schema([
+                                Forms\Components\CheckboxList::make('subkategorien')
+                                    ->label('Zugelassene Subkategorien')
+                                    ->options(function () {
+                                        $kategorien = Kategorie::with('subkategorien')->get();
+                                        $options = [];
 
-                Forms\Components\CheckboxList::make('standorte')
-                    ->label('Zugewiesene Standorte')
-                    ->relationship('standorte', 'name')
-                    ->options(Standort::all()->pluck('name', 'id'))
-                    ->columns(2)
-                    ->searchable()
-                    ->bulkToggleable()
-                    ->gridDirection('row')
-                    ->helperText('Wählen Sie die Standorte aus, die für diesen Markt verfügbar sind.'),
+                                        foreach ($kategorien as $kategorie) {
+                                            foreach ($kategorie->subkategorien as $subkategorie) {
+                                                $options[$subkategorie->id] = $kategorie->name . ' → ' . $subkategorie->name;
+                                            }
+                                        }
+
+                                        return $options;
+                                    })
+                                    ->columns(2)
+                                    ->searchable()
+                                    ->bulkToggleable()
+                                    ->gridDirection('row')
+                                    ->helperText('Wählen Sie die Subkategorien aus, die für diesen Markt zugelassen sind.'),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('Standorte')
+                            ->schema([
+                                Forms\Components\CheckboxList::make('standorte')
+                                    ->label('Zugewiesene Standorte')
+                                    ->relationship('standorte', 'name')
+                                    ->options(Standort::all()->pluck('name', 'id'))
+                                    ->columns(2)
+                                    ->searchable()
+                                    ->bulkToggleable()
+                                    ->gridDirection('row')
+                                    ->helperText('Wählen Sie die Standorte aus, die für diesen Markt verfügbar sind.'),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('Leistungen')
+                            ->schema([
+                                Forms\Components\CheckboxList::make('leistungen')
+                                    ->label('Verfügbare Leistungen')
+                                    ->relationship('leistungen', 'name')
+                                    ->options(function () {
+                                        $leistungen = \App\Models\Leistung::all();
+                                        $options = [];
+
+                                        foreach ($leistungen as $leistung) {
+                                            $preis = number_format($leistung->preis / 100, 2, ',', '.') . ' €';
+                                            $options[$leistung->id] = $leistung->name . ' (' . $preis . ' / ' . $leistung->einheit . ')';
+                                        }
+
+                                        return $options;
+                                    })
+                                    ->columns(2)
+                                    ->searchable()
+                                    ->bulkToggleable()
+                                    ->gridDirection('row')
+                                    ->helperText('Wählen Sie die Leistungen aus, die für diesen Markt verfügbar sind.'),
+                            ]),
+
+                    ])
             ]);
     }
 
@@ -95,46 +139,23 @@ class MarktResource extends Resource
                 TextColumn::make('name')->label('Name'),
                 TextColumn::make('bemerkung')->label('Bemerkung')->limit(100),
                 TextColumn::make('url')->label('URL'),
-                TextColumn::make('subkategorien')
-                    ->label('Subkategorien')
+                TextColumn::make('termine')
+                    ->label('Termine')
                     ->formatStateUsing(function ($record) {
-                        if (!$record->subkategorien) {
+                        $termine = $record->termine;
+                        if ($termine->isEmpty()) {
                             return 'Keine';
                         }
-                        
-                        $subkategorien = Subkategorie::whereIn('id', $record->subkategorien)
-                            ->with('kategorie')
-                            ->get();
-                        
-                        return $subkategorien->count() . ' Subkategorien';
+                        return $termine->count() . ' Termine';
                     })
                     ->tooltip(function ($record) {
-                        if (!$record->subkategorien) {
-                            return 'Keine Subkategorien zugewiesen';
+                        $termine = $record->termine;
+                        if ($termine->isEmpty()) {
+                            return 'Keine Termine geplant';
                         }
-                        
-                        $subkategorien = Subkategorie::whereIn('id', $record->subkategorien)
-                            ->with('kategorie')
-                            ->get()
-                            ->map(fn($sub) => $sub->kategorie->name . ' → ' . $sub->name);
-                        
-                        return $subkategorien->join(', ');
-                    }),
-                TextColumn::make('standorte')
-                    ->label('Standorte')
-                    ->formatStateUsing(function ($record) {
-                        $standorte = $record->standorte;
-                        if ($standorte->isEmpty()) {
-                            return 'Keine';
-                        }
-                        return $standorte->count() . ' Standorte';
-                    })
-                    ->tooltip(function ($record) {
-                        $standorte = $record->standorte;
-                        if ($standorte->isEmpty()) {
-                            return 'Keine Standorte zugewiesen';
-                        }
-                        return $standorte->pluck('name')->join(', ');
+                        return $termine->map(function ($termin) {
+                            return $termin->start->format('d.m.Y') . ' - ' . $termin->ende->format('d.m.Y');
+                        })->join(', ');
                     }),
             ])
             ->filters([
@@ -150,7 +171,7 @@ class MarktResource extends Resource
     public static function getRelations(): array
     {
         return [
-            \App\Filament\Resources\MarktResource\RelationManagers\TermineRelationManager::class,
+            // Termine sind jetzt eine separate Resource
         ];
     }
 
