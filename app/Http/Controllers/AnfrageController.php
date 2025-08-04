@@ -137,7 +137,7 @@ class AnfrageController extends Controller
             'bemerkung' => $validated['bemerkung'] ?? null,
             'soziale_medien' => $validated['soziale_medien'] ?? null,
             'wuensche_zusatzleistungen' => $validated['wuensche_zusatzleistungen'] ?? null,
-            'werbematerial' => $validated['werbematerial'] ?? null,
+            'werbematerial' => $this->transformWerbematerial($validated['werbematerial'] ?? []),
             'wunsch_standort_id' => $validated['wunsch_standort_id'] ?? null,
         ]);
 
@@ -244,5 +244,55 @@ class AnfrageController extends Controller
     public function success()
     {
         return view('anfrage.success');
+    }
+
+    /**
+     * Transformiert Werbematerial von Formular-Format zu strukturiertem Array
+     */
+    private function transformWerbematerial(array $werbematerial): array
+    {
+        $result = [];
+
+        // Plakate A3
+        if (!empty($werbematerial['plakate_a3']) && $werbematerial['plakate_a3'] > 0) {
+            $result[] = [
+                'typ' => 'plakat_a3',
+                'anzahl' => (int) $werbematerial['plakate_a3'],
+                'digital' => false,
+                'physisch' => true,
+            ];
+        }
+
+        // Plakate A1
+        if (!empty($werbematerial['plakate_a1']) && $werbematerial['plakate_a1'] > 0) {
+            $result[] = [
+                'typ' => 'plakat_a1', 
+                'anzahl' => (int) $werbematerial['plakate_a1'],
+                'digital' => false,
+                'physisch' => true,
+            ];
+        }
+
+        // Flyer
+        if (!empty($werbematerial['flyer']) && $werbematerial['flyer'] > 0) {
+            $result[] = [
+                'typ' => 'flyer',
+                'anzahl' => (int) $werbematerial['flyer'],
+                'digital' => false,
+                'physisch' => true,
+            ];
+        }
+
+        // Social Media Post
+        if (!empty($werbematerial['social_media_post'])) {
+            $result[] = [
+                'typ' => 'social_media_post',
+                'anzahl' => 1,
+                'digital' => true,
+                'physisch' => false,
+            ];
+        }
+
+        return $result;
     }
 }

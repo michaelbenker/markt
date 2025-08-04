@@ -8,7 +8,7 @@ class BuchungLeistung extends Model
 {
     protected $table = 'buchung_leistung';
 
-    protected $fillable = ['leistung_id', 'preis', 'menge', 'sort'];
+    protected $fillable = ['buchung_id', 'leistung_id', 'preis', 'menge', 'sort'];
 
     public function buildSortQuery(): \Illuminate\Database\Eloquent\Builder
     {

@@ -55,7 +55,7 @@
                     </dd>
 
                     <dt class="font-semibold">Bereits ausgestellt?</dt>
-                    <dd>{{ $a->bereits_ausgestellt ? 'Ja' : 'Nein' }}</dd>
+                    <dd>{{ $a->bereits_ausgestellt ? $a->bereits_ausgestellt : 'Nein' }}</dd>
 
                     <dt class="font-semibold">Vorführung des Handwerkes am eigenen Stand?</dt>
                     <dd>{{ $a->vorfuehrung_am_stand ? 'Ja' : 'Nein' }}</dd>
@@ -85,7 +85,14 @@
 
                     @if($a->wuensche_zusatzleistungen && count($a->wuensche_zusatzleistungen) > 0)
                     <dt class="font-semibold">Wünsche für Zusatzleistungen</dt>
-                    <dd>{{ implode(', ', $a->wuensche_zusatzleistungen) }}</dd>
+                    <dd>
+                        @foreach($a->gewuenschteLeistungen() as $leistung)
+                            <span class="inline-block bg-gray-100 rounded px-2 py-1 text-sm mr-2 mb-1">
+                                {{ $leistung->name }} 
+                                <span class="text-gray-600">({{ number_format($leistung->preis / 100, 2, ',', '.') }} € / {{ $leistung->einheit }})</span>
+                            </span>
+                        @endforeach
+                    </dd>
                     @endif
 
                     @if($a->werbematerial)

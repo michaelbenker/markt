@@ -93,4 +93,16 @@ class Anfrage extends Model
     {
         return $this->belongsTo(Standort::class, 'wunsch_standort_id');
     }
+
+    /**
+     * Beziehung zu den gewünschten Leistungen
+     */
+    public function gewuenschteLeistungen()
+    {
+        if (!$this->wuensche_zusatzleistungen) {
+            return collect();
+        }
+        
+        return \App\Models\Leistung::whereIn('id', $this->wuensche_zusatzleistungen)->get();
+    }
 }

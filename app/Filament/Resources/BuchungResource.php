@@ -208,7 +208,7 @@ class BuchungResource extends Resource
                                                 if ($record && isset($record['termin_id'])) {
                                                     $termin = \App\Models\Termin::find($record['termin_id']);
                                                     if ($termin && $termin->markt) {
-                                                        return $termin->markt->leistungen()->pluck('name', 'id');
+                                                        return $termin->markt->leistungen()->pluck('leistung.name', 'leistung.id');
                                                     }
                                                 }
                                                 return \App\Models\Leistung::pluck('name', 'id');

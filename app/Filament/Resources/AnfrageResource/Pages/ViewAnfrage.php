@@ -10,6 +10,8 @@ use App\Models\Medien;
 use Filament\Notifications\Notification;
 use App\Models\Buchung;
 use App\Models\BuchungProtokoll;
+use App\Models\BuchungLeistung;
+use App\Models\Leistung;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -168,6 +170,9 @@ class ViewAnfrage extends Page
             'herkunft' => $a->herkunft,
             'werbematerial' => $a->werbematerial,
         ]);
+
+        // Gewünschte Zusatzleistungen aus Anfrage importieren
+        $this->importLeistungenFromAnfrage($a, $buchung);
         // 'created'-Protokoll löschen, falls direkt importiert
         BuchungProtokoll::where('buchung_id', $buchung->id)
             ->where('aktion', 'created')
@@ -459,5 +464,39 @@ class ViewAnfrage extends Page
 
         // Medien von Anfrage zu Aussteller verschieben
         $this->moveMedienFromAnfrageToAussteller($anfrage, $aussteller);
+    }
+
+    /**
+     * Importiert gewünschte Zusatzleistungen aus der Anfrage in die Buchung
+     */
+    private function importLeistungenFromAnfrage(Anfrage $anfrage, Buchung $buchung): void
+    {
+        // Prüfen ob gewünschte Zusatzleistungen vorhanden sind
+        if (!$anfrage->wuensche_zusatzleistungen || !is_array($anfrage->wuensche_zusatzleistungen)) {
+            return;
+        }
+
+        $sortOrder = 1;
+
+        foreach ($anfrage->wuensche_zusatzleistungen as $leistungId) {
+            // Leistung aus Datenbank laden um aktuellen Preis zu bekommen
+            $leistung = Leistung::find($leistungId);
+            
+            if (!$leistung) {
+                Log::warning("Leistung mit ID {$leistungId} nicht gefunden beim Import von Anfrage #{$anfrage->id}");
+                continue;
+            }
+
+            // BuchungLeistung erstellen
+            BuchungLeistung::create([
+                'buchung_id' => $buchung->id,
+                'leistung_id' => $leistung->id,
+                'preis' => $leistung->preis, // Aktueller Preis der Leistung
+                'menge' => 1, // Standard-Menge
+                'sort' => $sortOrder++,
+            ]);
+
+            Log::info("Leistung '{$leistung->name}' (ID: {$leistung->id}) importiert für Buchung #{$buchung->id} aus Anfrage #{$anfrage->id}");
+        }
     }
 }
