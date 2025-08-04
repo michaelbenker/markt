@@ -7,6 +7,7 @@ use App\Filament\Resources\MarktResource\RelationManagers;
 use App\Models\Markt;
 use App\Models\Subkategorie;
 use App\Models\Kategorie;
+use App\Models\Standort;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -74,6 +75,16 @@ class MarktResource extends Resource
                     ->bulkToggleable()
                     ->gridDirection('row')
                     ->helperText('Wählen Sie die Subkategorien aus, die für diesen Markt zugelassen sind.'),
+
+                Forms\Components\CheckboxList::make('standorte')
+                    ->label('Zugewiesene Standorte')
+                    ->relationship('standorte', 'name')
+                    ->options(Standort::all()->pluck('name', 'id'))
+                    ->columns(2)
+                    ->searchable()
+                    ->bulkToggleable()
+                    ->gridDirection('row')
+                    ->helperText('Wählen Sie die Standorte aus, die für diesen Markt verfügbar sind.'),
             ]);
     }
 
@@ -108,6 +119,22 @@ class MarktResource extends Resource
                             ->map(fn($sub) => $sub->kategorie->name . ' → ' . $sub->name);
                         
                         return $subkategorien->join(', ');
+                    }),
+                TextColumn::make('standorte')
+                    ->label('Standorte')
+                    ->formatStateUsing(function ($record) {
+                        $standorte = $record->standorte;
+                        if ($standorte->isEmpty()) {
+                            return 'Keine';
+                        }
+                        return $standorte->count() . ' Standorte';
+                    })
+                    ->tooltip(function ($record) {
+                        $standorte = $record->standorte;
+                        if ($standorte->isEmpty()) {
+                            return 'Keine Standorte zugewiesen';
+                        }
+                        return $standorte->pluck('name')->join(', ');
                     }),
             ])
             ->filters([

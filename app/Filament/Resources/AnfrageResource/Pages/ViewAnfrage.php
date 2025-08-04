@@ -114,6 +114,10 @@ class ViewAnfrage extends Page
 
     public function getTitle(): string
     {
+        if (!isset($this->record)) {
+            return 'Anfrage-Details';
+        }
+        
         $markt = $this->record->markt;
         if (!$markt) {
             return 'Anfrage-Details';
@@ -146,11 +150,13 @@ class ViewAnfrage extends Page
 
         $markt = $a->markt;
         $termin = $markt?->termine?->sortBy('start')->first();
-        $standort = $markt?->standorte?->first();
+        // Wunschstandort verwenden, falls angegeben, sonst ersten verfügbaren Standort
+        $standort = $a->wunschStandort ?? $markt?->standorte?->first();
         $maxStandplatz = Buchung::where('termin_id', $termin?->id)
             ->where('standort_id', $standort?->id)
             ->max('standplatz');
         $nextStandplatz = $maxStandplatz ? ((int)$maxStandplatz + 1) : 1;
+        
         $buchung = Buchung::create([
             'status' => 'bearbeitung',
             'termin_id' => $termin?->id,
@@ -160,6 +166,8 @@ class ViewAnfrage extends Page
             'stand' => $a->stand,
             'warenangebot' => $a->warenangebot,
             'herkunft' => $a->herkunft,
+            'soziale_medien' => $a->soziale_medien,
+            'werbematerial' => $a->werbematerial,
         ]);
         // 'created'-Protokoll löschen, falls direkt importiert
         BuchungProtokoll::where('buchung_id', $buchung->id)
@@ -183,13 +191,14 @@ class ViewAnfrage extends Page
             ->title('Buchung erfolgreich erstellt')
             ->success()
             ->send();
-        return redirect()->route('filament.admin.resources.buchung.edit', ['record' => $buchung->id]);
+        
+        return $this->redirect(\App\Filament\Resources\BuchungResource::getUrl('edit', ['record' => $buchung->id]));
     }
 
     /**
      * Nur Aussteller-Daten aktualisieren, keine Buchung
      */
-    public function updateAusstellerOnly(int $ausstellerId): void
+    public function updateAusstellerOnly(int $ausstellerId)
     {
         try {
             $aussteller = Aussteller::findOrFail($ausstellerId);
@@ -207,7 +216,7 @@ class ViewAnfrage extends Page
                 ->send();
 
             // Zur Anfragen-Liste zurück
-            $this->redirect(AnfrageResource::getUrl('index'));
+            return $this->redirect(AnfrageResource::getUrl('index'));
         } catch (\Exception $e) {
             Log::error('Fehler beim Aktualisieren des Ausstellers', [
                 'aussteller_id' => $ausstellerId,
@@ -230,6 +239,20 @@ class ViewAnfrage extends Page
     {
         $a = $this->getCurrentAnfrage();
         
+        // Wenn es gefundene Aussteller gibt, nutze den besten Match
+        if (count($this->matchingAussteller) > 0) {
+            $bestMatch = $this->matchingAussteller[0]; // Erster ist der beste Match
+            $ausstellerId = $bestMatch['aussteller']->id;
+            return $this->createBuchung($ausstellerId);
+        }
+        
+        // Prüfen ob bereits ein Aussteller mit dieser E-Mail existiert (Fallback)
+        $existingAussteller = Aussteller::where('email', $a->email)->first();
+        
+        if ($existingAussteller) {
+            return $this->createBuchung($existingAussteller->id);
+        }
+        
         $aus = Aussteller::create([
             'firma' => $a->firma,
             'anrede' => $a->anrede,
@@ -246,6 +269,7 @@ class ViewAnfrage extends Page
             'stand' => $a->stand,
             'warenangebot' => $a->warenangebot,
             'herkunft' => $a->herkunft,
+            'soziale_medien' => $a->soziale_medien,
         ]);
         
         // Medien von Anfrage zu Aussteller verschieben
@@ -261,6 +285,19 @@ class ViewAnfrage extends Page
     {
         $a = $this->getCurrentAnfrage();
         
+        // Prüfen ob bereits ein Aussteller mit dieser E-Mail existiert
+        $existingAussteller = Aussteller::where('email', $a->email)->first();
+        
+        if ($existingAussteller) {
+            Notification::make()
+                ->title('Aussteller bereits vorhanden')
+                ->body("Ein Aussteller mit der E-Mail {$a->email} existiert bereits. Die Daten wurden nicht überschrieben.")
+                ->warning()
+                ->send();
+            
+            return $this->redirect(\App\Filament\Resources\AusstellerResource::getUrl('edit', ['record' => $existingAussteller->id]));
+        }
+        
         $aus = Aussteller::create([
             'firma' => $a->firma,
             'anrede' => $a->anrede,
@@ -277,6 +314,7 @@ class ViewAnfrage extends Page
             'stand' => $a->stand,
             'warenangebot' => $a->warenangebot,
             'herkunft' => $a->herkunft,
+            'soziale_medien' => $a->soziale_medien,
         ]);
 
         // Medien von Anfrage zu Aussteller verschieben
@@ -292,7 +330,7 @@ class ViewAnfrage extends Page
             ->success()
             ->send();
 
-        return redirect()->route('filament.admin.resources.aussteller.edit', ['record' => $aus->id]);
+        return $this->redirect(\App\Filament\Resources\AusstellerResource::getUrl('edit', ['record' => $aus->id]));
     }
 
     /**
@@ -343,7 +381,7 @@ class ViewAnfrage extends Page
                 ->send();
 
             // Zurück zur Anfragen-Liste
-            return redirect()->route('filament.admin.resources.anfrage.index');
+            return $this->redirect(AnfrageResource::getUrl('index'));
         } catch (\Exception $e) {
             Log::error('Fehler beim Versenden der Absage: ' . $e->getMessage());
 
@@ -417,6 +455,7 @@ class ViewAnfrage extends Page
             'stand' => $anfrage->stand,
             'warenangebot' => $anfrage->warenangebot,
             'herkunft' => $anfrage->herkunft,
+            'soziale_medien' => $anfrage->soziale_medien,
         ]);
 
         // Medien von Anfrage zu Aussteller verschieben

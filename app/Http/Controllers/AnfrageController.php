@@ -7,6 +7,7 @@ use App\Models\Markt;
 use App\Models\Termin;
 use App\Models\Medien;
 use App\Models\Subkategorie;
+use App\Models\Standort;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Notifications\NeueAnfrageNotification;
@@ -38,6 +39,7 @@ class AnfrageController extends Controller
 
         // Subkategorien für alle Märkte laden
         $subkategorienByMarkt = [];
+        $standorteByMarkt = [];
         foreach ($termine as $termin) {
             $markt = $termin->markt;
             if ($markt && $markt->subkategorien) {
@@ -48,9 +50,15 @@ class AnfrageController extends Controller
                     ->get();
                 $subkategorienByMarkt[$markt->id] = $subkategorien;
             }
+            
+            // Standorte für jeden Markt laden
+            if ($markt) {
+                $standorte = $markt->standorte()->orderBy('name')->get();
+                $standorteByMarkt[$markt->id] = $standorte;
+            }
         }
 
-        return view('anfrage.create', compact('termine', 'selectedTerminId', 'subkategorienByMarkt'));
+        return view('anfrage.create', compact('termine', 'selectedTerminId', 'subkategorienByMarkt', 'standorteByMarkt'));
     }
 
     public function store(Request $request)
@@ -73,14 +81,23 @@ class AnfrageController extends Controller
             'stand.laenge' => 'nullable|numeric|min:0',
             'stand.tiefe' => 'nullable|numeric|min:0',
             'stand.flaeche' => 'nullable|numeric|min:0',
+            'wunsch_standort_id' => 'nullable|exists:standort,id',
             'warenangebot' => 'required|array',
             'warenangebot.*' => 'integer|exists:subkategorie,id',
             'herkunft' => 'required|array',
             'herkunft.eigenfertigung' => 'required|integer|min:0|max:100',
             'herkunft.industrieware_nicht_entwicklungslaender' => 'required|integer|min:0|max:100',
             'herkunft.industrieware_entwicklungslaender' => 'required|integer|min:0|max:100',
-            'bereits_ausgestellt' => 'nullable|boolean',
+            'bereits_ausgestellt' => 'nullable|string',
+            'vorfuehrung_am_stand' => 'nullable|in:0,1',
             'bemerkung' => 'nullable|string',
+            'soziale_medien' => 'nullable|array',
+            'wuensche_zusatzleistungen' => 'nullable|array',
+            'werbematerial' => 'nullable|array',
+            'werbematerial.plakate_a3' => 'nullable|integer|min:0|max:100',
+            'werbematerial.plakate_a1' => 'nullable|integer|min:0|max:100',
+            'werbematerial.flyer' => 'nullable|integer|min:0|max:1000',
+            'werbematerial.social_media_post' => 'nullable|boolean',
             // File Uploads
             'detailfotos_warenangebot' => 'nullable|array|max:4',
             'detailfotos_warenangebot.*' => 'image|mimes:jpeg,jpg,png,gif|max:5120', // 5MB
@@ -109,9 +126,14 @@ class AnfrageController extends Controller
             'stand' => $validated['stand'],
             'warenangebot' => $validated['warenangebot'],
             'herkunft' => $validated['herkunft'],
-            'bereits_ausgestellt' => $validated['bereits_ausgestellt'] ?? false,
+            'bereits_ausgestellt' => $validated['bereits_ausgestellt'] ?? null,
+            'vorfuehrung_am_stand' => (bool) ($validated['vorfuehrung_am_stand'] ?? false),
             'importiert' => false,
             'bemerkung' => $validated['bemerkung'] ?? null,
+            'soziale_medien' => $validated['soziale_medien'] ?? null,
+            'wuensche_zusatzleistungen' => $validated['wuensche_zusatzleistungen'] ?? null,
+            'werbematerial' => $validated['werbematerial'] ?? null,
+            'wunsch_standort_id' => $validated['wunsch_standort_id'] ?? null,
         ]);
 
         // File Uploads in Medien-Tabelle speichern
@@ -122,7 +144,7 @@ class AnfrageController extends Controller
             foreach ($request->file('detailfotos_warenangebot') as $file) {
                 $filename = time() . '_detailfoto_' . uniqid() . '.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs('anfragen/detailfotos', $filename, 'public');
-                
+
                 Medien::create([
                     'mediable_type' => Anfrage::class,
                     'mediable_id' => $anfrage->id,
@@ -142,7 +164,7 @@ class AnfrageController extends Controller
             $file = $request->file('foto_verkaufsstand');
             $filename = time() . '_verkaufsstand_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('anfragen/verkaufsstand', $filename, 'public');
-            
+
             Medien::create([
                 'mediable_type' => Anfrage::class,
                 'mediable_id' => $anfrage->id,
@@ -161,7 +183,7 @@ class AnfrageController extends Controller
             $file = $request->file('foto_werkstatt');
             $filename = time() . '_werkstatt_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('anfragen/werkstatt', $filename, 'public');
-            
+
             Medien::create([
                 'mediable_type' => Anfrage::class,
                 'mediable_id' => $anfrage->id,
@@ -180,7 +202,7 @@ class AnfrageController extends Controller
             $file = $request->file('lebenslauf_vita');
             $filename = time() . '_lebenslauf_' . uniqid() . '.pdf';
             $path = $file->storeAs('anfragen/lebenslaeufe', $filename, 'public');
-            
+
             Medien::create([
                 'mediable_type' => Anfrage::class,
                 'mediable_id' => $anfrage->id,

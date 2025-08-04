@@ -28,7 +28,7 @@ class Markt extends Model
 
     public function standorte()
     {
-        return $this->hasMany(Standort::class);
+        return $this->belongsToMany(Standort::class, 'markt_standort');
     }
 
     public function termine()

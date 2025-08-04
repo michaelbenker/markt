@@ -48,6 +48,7 @@ class AnfrageFactory extends Factory
                 'industrieware_entwicklungslaender' => $this->faker->numberBetween(0, 100),
             ],
             'bereits_ausgestellt' => $this->faker->boolean,
+            'vorfuehrung_am_stand' => $this->faker->boolean,
             'importiert' => false,
             'bemerkung' => $this->faker->optional()->sentence,
         ];

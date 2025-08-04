@@ -6,9 +6,10 @@ use App\Filament\Resources\StandortResource\Pages;
 use App\Filament\Resources\StandortResource\RelationManagers;
 use App\Models\Standort;
 use Filament\Forms;
-use Filament\Forms\Components\Select;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use App\Models\Markt;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -35,10 +36,11 @@ class StandortResource extends Resource
             ->schema([
                 Forms\Components\Grid::make()
                     ->schema([
-                        Select::make('markt_id')
-                            ->label('Markt')
-                            ->relationship('markt', 'name')
-                            ->required(),
+                        CheckboxList::make('maerkte')
+                            ->label('Märkte')
+                            ->relationship('maerkte', 'name')
+                            ->options(Markt::all()->pluck('name', 'id'))
+                            ->columns(2),
                         TextInput::make('name')->label('Name')->required(),
                         Textarea::make('beschreibung')->label('Beschreibung'),
                         TextInput::make('flaeche')
@@ -54,7 +56,11 @@ class StandortResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')->label('Standort'),
-                TextColumn::make('markt.name')->label('Markt'),
+                TextColumn::make('maerkte_names')
+                    ->label('Märkte')
+                    ->getStateUsing(function ($record) {
+                        return $record->maerkte->pluck('name')->implode(', ');
+                    }),
                 TextColumn::make('flaeche')->label('Fläche'),
             ])
             ->filters([

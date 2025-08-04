@@ -28,16 +28,23 @@ class Anfrage extends Model
         'warenangebot',
         'herkunft',
         'bereits_ausgestellt',
+        'vorfuehrung_am_stand',
         'importiert',
         'bemerkung',
+        'soziale_medien',
+        'wuensche_zusatzleistungen',
+        'werbematerial',
+        'wunsch_standort_id',
     ];
 
     protected $casts = [
         'stand' => 'array',
         'warenangebot' => 'array',
         'herkunft' => 'array',
-        'bereits_ausgestellt' => 'boolean',
         'importiert' => 'boolean',
+        'soziale_medien' => 'array',
+        'wuensche_zusatzleistungen' => 'array',
+        'werbematerial' => 'array',
     ];
 
     public function termin()
@@ -80,5 +87,10 @@ class Anfrage extends Model
     public function vitaDokumente()
     {
         return $this->medien()->category('vita');
+    }
+
+    public function wunschStandort()
+    {
+        return $this->belongsTo(Standort::class, 'wunsch_standort_id');
     }
 }

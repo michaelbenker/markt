@@ -20,6 +20,7 @@ class Buchung extends Model
         'warenangebot',
         'herkunft',
         'werbematerial',
+        'soziale_medien',
     ];
 
     protected $casts = [
@@ -27,6 +28,7 @@ class Buchung extends Model
         'warenangebot' => 'array',
         'herkunft' => 'array',
         'werbematerial' => 'array',
+        'soziale_medien' => 'array',
     ];
 
     protected static function boot()

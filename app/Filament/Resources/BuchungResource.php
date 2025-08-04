@@ -6,6 +6,8 @@ use App\Filament\Resources\BuchungResource\Pages;
 use App\Filament\Resources\BuchungResource\RelationManagers;
 use App\Models\Buchung;
 use App\Models\Leistung;
+use App\Models\Subkategorie;
+use App\Models\Kategorie;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -120,18 +122,18 @@ class BuchungResource extends Resource
                                 Select::make('warenangebot')
                                     ->label('Warenangebot')
                                     ->multiple()
-                                    ->options([
-                                        'kleidung' => 'Kleidung',
-                                        'schmuck' => 'Schmuck',
-                                        'kunst' => 'Kunst',
-                                        'accessoires' => 'Accessoires',
-                                        'dekoration' => 'Dekoration',
-                                        'lebensmittel' => 'Lebensmittel',
-                                        'getraenke' => 'Getränke',
-                                        'handwerk' => 'Handwerk',
-                                        'antiquitäten' => 'Antiquitäten',
-                                        'sonstiges' => 'Sonstiges',
-                                    ])
+                                    ->options(function () {
+                                        $kategorien = Kategorie::with('subkategorien')->get();
+                                        $options = [];
+                                        
+                                        foreach ($kategorien as $kategorie) {
+                                            foreach ($kategorie->subkategorien as $subkategorie) {
+                                                $options[$subkategorie->id] = $kategorie->name . ' → ' . $subkategorie->name;
+                                            }
+                                        }
+                                        
+                                        return $options;
+                                    })
                                     ->searchable()
                                     ->preload(),
                                 Section::make('Herkunft der Waren')
@@ -167,8 +169,9 @@ class BuchungResource extends Resource
                                             ->options([
                                                 'flyer' => 'Flyer',
                                                 'brochure' => 'Broschüre',
-                                                'plakat' => 'Plakat',
-                                                // Hier kannst du weitere Typen ergänzen
+                                                'plakat_a3' => 'Plakat A3',
+                                                'plakat_a1' => 'Plakat A1',
+                                                'social_media' => 'Social Media Post',
                                             ])
                                             ->required(),
                                         TextInput::make('anzahl')
@@ -178,16 +181,39 @@ class BuchungResource extends Resource
                                             ->required(),
                                         Forms\Components\Toggle::make('physisch')
                                             ->label('Physisch')
-                                            ->inline(false),
+                                            ->inline(false)
+                                            ->default(true),
                                         Forms\Components\Toggle::make('digital')
                                             ->label('Digital')
-                                            ->inline(false),
+                                            ->inline(false)
+                                            ->default(false),
                                     ])
                                     ->columns(4)
                                     ->addActionLabel('Werbematerial hinzufügen')
                                     ->defaultItems(0)
                                     ->reorderable(false)
                                     ->helperText('Füge verschiedene Werbematerialien hinzu.'),
+                            ]),
+                        Tab::make('Soziale Medien')
+                            ->schema([
+                                Section::make('Online-Präsenz')
+                                    ->schema([
+                                        TextInput::make('soziale_medien.website')
+                                            ->label('Website')
+                                            ->url()
+                                            ->placeholder('https://beispiel.de'),
+                                        TextInput::make('soziale_medien.facebook')
+                                            ->label('Facebook')
+                                            ->url()
+                                            ->placeholder('https://facebook.com/...'),
+                                        TextInput::make('soziale_medien.instagram')
+                                            ->label('Instagram')
+                                            ->placeholder('@benutzername'),
+                                        TextInput::make('soziale_medien.twitter')
+                                            ->label('Twitter')
+                                            ->placeholder('@benutzername'),
+                                    ])
+                                    ->columns(2),
                             ]),
                         Tab::make('Gebuchte Leistungen')
                             ->schema([

@@ -22,16 +22,20 @@ return new class extends Migration {
             $table->string('telefon')->nullable();
             $table->string('email');
             $table->json('stand');
+            $table->unsignedBigInteger('wunsch_standort_id')->nullable();
             $table->json('warenangebot');
             $table->json('herkunft');
-            $table->boolean('bereits_ausgestellt')->default(false);
+            $table->text('bereits_ausgestellt')->nullable();
+            $table->boolean('vorfuehrung_am_stand')->default(false);
             $table->boolean('importiert')->default(false);
             $table->text('bemerkung')->nullable();
-            $table->json('bilder')->nullable();
-            $table->json('files')->nullable();
+            $table->json('soziale_medien')->nullable();
+            $table->json('wuensche_zusatzleistungen')->nullable();
+            $table->json('werbematerial')->nullable();
             $table->timestamps();
 
             $table->foreign('termin_id')->references('id')->on('termin')->onDelete('cascade');
+            $table->foreign('wunsch_standort_id')->references('id')->on('standort')->onDelete('set null');
         });
     }
 

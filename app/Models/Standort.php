@@ -13,8 +13,8 @@ class Standort extends Model
         'flaeche',
     ];
 
-    public function markt()
+    public function maerkte()
     {
-        return $this->belongsTo(Markt::class);
+        return $this->belongsToMany(Markt::class, 'markt_standort');
     }
 }

@@ -40,6 +40,7 @@ class AnfrageFormularTest extends TestCase
                 'industrieware_entwicklungslaender' => 20
             ],
             'bereits_ausgestellt' => true,
+            'vorfuehrung_am_stand' => true,
             'bemerkung' => 'Test-Bemerkung',
         ];
 

@@ -56,7 +56,12 @@ class AnfrageResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('warenangebot')
                     ->label('Warenangebot')
-                    ->formatStateUsing(fn($state) => is_array($state) ? implode(', ', $state) : $state),
+                    ->getStateUsing(function ($record) {
+                        if (!is_array($record->warenangebot) || empty($record->warenangebot)) {
+                            return '';
+                        }
+                        return \App\Models\Subkategorie::whereIn('id', $record->warenangebot)->pluck('name')->implode(', ');
+                    }),
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([

@@ -1,5 +1,8 @@
-@php($a = $this->record)
+@php($a = $this->record ?? null)
 <x-filament::page>
+    @if(!$a)
+    <div class="text-center text-gray-500">Anfrage nicht gefunden</div>
+    @else
     <x-filament::card>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
             <div>
@@ -54,6 +57,55 @@
                     <dt class="font-semibold">Bereits ausgestellt?</dt>
                     <dd>{{ $a->bereits_ausgestellt ? 'Ja' : 'Nein' }}</dd>
 
+                    <dt class="font-semibold">Vorführung des Handwerkes am eigenen Stand?</dt>
+                    <dd>{{ $a->vorfuehrung_am_stand ? 'Ja' : 'Nein' }}</dd>
+
+                    @if($a->wunschStandort)
+                    <dt class="font-semibold">Wunschstandort</dt>
+                    <dd>{{ $a->wunschStandort->name }}</dd>
+                    @endif
+
+                    @if($a->soziale_medien)
+                    <dt class="font-semibold">Soziale Medien</dt>
+                    <dd>
+                        @if($a->soziale_medien['website'] ?? null)
+                        <div>Website: <a href="{{ $a->soziale_medien['website'] }}" target="_blank" class="text-blue-600 hover:underline">{{ $a->soziale_medien['website'] }}</a></div>
+                        @endif
+                        @if($a->soziale_medien['facebook'] ?? null)
+                        <div>Facebook: <a href="{{ $a->soziale_medien['facebook'] }}" target="_blank" class="text-blue-600 hover:underline">{{ $a->soziale_medien['facebook'] }}</a></div>
+                        @endif
+                        @if($a->soziale_medien['instagram'] ?? null)
+                        <div>Instagram: {{ $a->soziale_medien['instagram'] }}</div>
+                        @endif
+                        @if($a->soziale_medien['twitter'] ?? null)
+                        <div>Twitter: {{ $a->soziale_medien['twitter'] }}</div>
+                        @endif
+                    </dd>
+                    @endif
+
+                    @if($a->wuensche_zusatzleistungen && count($a->wuensche_zusatzleistungen) > 0)
+                    <dt class="font-semibold">Wünsche für Zusatzleistungen</dt>
+                    <dd>{{ implode(', ', $a->wuensche_zusatzleistungen) }}</dd>
+                    @endif
+
+                    @if($a->werbematerial)
+                    <dt class="font-semibold">Gewünschtes Werbematerial</dt>
+                    <dd>
+                        @if(($a->werbematerial['plakate_a3'] ?? 0) > 0)
+                        <div>Plakate A3: {{ $a->werbematerial['plakate_a3'] }} Stück</div>
+                        @endif
+                        @if(($a->werbematerial['plakate_a1'] ?? 0) > 0)
+                        <div>Plakate A1: {{ $a->werbematerial['plakate_a1'] }} Stück</div>
+                        @endif
+                        @if(($a->werbematerial['flyer'] ?? 0) > 0)
+                        <div>Flyer: {{ $a->werbematerial['flyer'] }} Stück</div>
+                        @endif
+                        @if($a->werbematerial['social_media_post'] ?? false)
+                        <div>Social Media Post: Ja</div>
+                        @endif
+                    </dd>
+                    @endif
+
                     <dt class="font-semibold">Bemerkung</dt>
                     <dd>{{ $a->bemerkung }}</dd>
 
@@ -97,15 +149,19 @@
                             @endif
 
                             <div class="flex gap-2 items-center">
-                                @if(count($differences) > 0)
                                 <label class="flex items-center gap-2 text-sm">
                                     <input type="checkbox"
                                         wire:model.defer="updateData.{{ $aus->id }}"
-                                        checked
-                                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                    <span class="text-gray-700">Geänderte Daten übernehmen</span>
+                                        @if(count($differences)> 0) checked @endif
+                                    class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                    <span class="text-gray-700">
+                                        @if(count($differences) > 0)
+                                        Geänderte Daten übernehmen
+                                        @else
+                                        Aussteller-Daten aus Anfrage aktualisieren
+                                        @endif
+                                    </span>
                                 </label>
-                                @endif
                             </div>
                         </div>
                         @endforeach
@@ -136,4 +192,5 @@
             </div>
         </div>
     </x-filament::card>
+    @endif
 </x-filament::page>

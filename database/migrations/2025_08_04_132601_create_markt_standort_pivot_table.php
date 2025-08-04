@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('standort', function (Blueprint $table) {
+        Schema::create('markt_standort', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->text('beschreibung')->nullable();
-            $table->string('flaeche')->nullable();
+            $table->foreignId('markt_id')->constrained('markt')->onDelete('cascade');
+            $table->foreignId('standort_id')->constrained('standort')->onDelete('cascade');
             $table->timestamps();
+            
+            $table->unique(['markt_id', 'standort_id']);
         });
     }
 
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('standort');
+        Schema::dropIfExists('markt_standort');
     }
 };
