@@ -5,22 +5,25 @@ namespace App\Filament\Widgets;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use App\Models\Anfrage;
-use App\Models\Termin;
+use App\Models\Markt;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class StatsOverview extends BaseWidget
 {
     protected function getStats(): array
     {
-        // Alle Märkte mit aktiven Terminen
-        $aktiveMaerkte = DB::table('termin')
-            ->join('markt', 'termin.markt_id', '=', 'markt.id')
-            ->where('termin.start', '>', now())
-            ->select('markt.name', 'termin.start', 'markt.slug')
-            ->orderBy('termin.start')
-            ->get();
+        // Märkte mit aktiven Terminen laden und nach Terminen gruppieren
+        $aktiveMaerkte = Markt::whereHas('termine', function ($query) {
+                $query->where('start', '>', now());
+            })
+            ->with(['termine' => function ($query) {
+                $query->where('start', '>', now())->orderBy('start');
+            }])
+            ->get()
+            ->sortBy(function ($markt) {
+                return $markt->termine->first()?->start;
+            });
 
         $stats = [
             Stat::make('Neue Anfragen', Anfrage::where('created_at', '>=', now()->subDays(7))->count())
@@ -30,20 +33,23 @@ class StatsOverview extends BaseWidget
                 ->url(route('filament.admin.resources.anfrage.index')),
         ];
 
-        // Weitere aktive Märkte (maximal 3 zusätzliche)
-        foreach ($aktiveMaerkte->skip(1)->take(3) as $markt) {
-            $startDate = Carbon::parse($markt->start);
+        // Aktive Märkte anzeigen (maximal 3)
+        foreach ($aktiveMaerkte->take(3) as $markt) {
+            $termine = $markt->termine;
+            $termineText = $termine->map(function ($termin) {
+                return Carbon::parse($termin->start)->format('d.m.Y');
+            })->join(', ');
 
             $stats[] = Stat::make('Markt', $markt->name)
-                ->description($startDate->format('d.m.Y'))
+                ->description($termineText)
                 ->descriptionIcon('heroicon-m-calendar-days')
                 ->color('info')
                 ->url(route('filament.admin.resources.markt.edit', ['record' => $markt->slug]));
         }
 
-        // Falls mehr als 4 aktive Märkte vorhanden sind, Übersicht anzeigen
-        if ($aktiveMaerkte->count() > 4) {
-            $stats[] = Stat::make('Weitere Märkte', $aktiveMaerkte->count() - 4 . ' weitere')
+        // Falls mehr als 3 aktive Märkte vorhanden sind, Übersicht anzeigen
+        if ($aktiveMaerkte->count() > 3) {
+            $stats[] = Stat::make('Weitere Märkte', ($aktiveMaerkte->count() - 3) . ' weitere')
                 ->description('Märkte mit Terminen')
                 ->descriptionIcon('heroicon-m-ellipsis-horizontal')
                 ->color('gray')
