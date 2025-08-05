@@ -7,7 +7,6 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 use App\Models\Anfrage;
 use App\Models\Markt;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class StatsOverview extends BaseWidget
 {

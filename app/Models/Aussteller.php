@@ -31,7 +31,6 @@ class Aussteller extends Model
     ];
 
     protected $casts = [
-        'soziale_medien' => 'array',
         'stand' => 'array',
     ];
 
@@ -92,5 +91,79 @@ class Aussteller extends Model
     public function getFullName(): string
     {
         return trim($this->vorname . ' ' . $this->name);
+    }
+
+    /**
+     * Konvertiert soziale Medien für Filament Repeater
+     */
+    public function getSozialeMedienAttribute($value)
+    {
+        if (!$value) {
+            return [];
+        }
+
+        $data = is_string($value) ? json_decode($value, true) : $value;
+        
+        if (!is_array($data)) {
+            return [];
+        }
+
+        $result = [];
+        $platformMap = [
+            'facebook' => 'facebook',
+            'instagram' => 'instagram', 
+            'twitter' => 'x',
+            'x' => 'x',
+            'linkedin' => 'linkedin',
+            'youtube' => 'youtube',
+            'tiktok' => 'tiktok',
+            'pinterest' => 'pinterest',
+            'xing' => 'xing',
+            'website' => 'other',
+        ];
+
+        foreach ($data as $key => $url) {
+            if (!empty($url)) {
+                $result[] = [
+                    'plattform' => $platformMap[$key] ?? 'other',
+                    'url' => $url,
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Konvertiert Filament Repeater zurück zu flachem Format
+     */
+    public function setSozialeMedienAttribute($value)
+    {
+        if (!is_array($value)) {
+            $this->attributes['soziale_medien'] = null;
+            return;
+        }
+
+        $result = [];
+        $reverseMap = [
+            'facebook' => 'facebook',
+            'instagram' => 'instagram',
+            'x' => 'twitter',
+            'linkedin' => 'linkedin', 
+            'youtube' => 'youtube',
+            'tiktok' => 'tiktok',
+            'pinterest' => 'pinterest',
+            'xing' => 'xing',
+            'other' => 'website',
+        ];
+
+        foreach ($value as $item) {
+            if (!empty($item['plattform']) && !empty($item['url'])) {
+                $key = $reverseMap[$item['plattform']] ?? $item['plattform'];
+                $result[$key] = $item['url'];
+            }
+        }
+
+        $this->attributes['soziale_medien'] = json_encode($result);
     }
 }

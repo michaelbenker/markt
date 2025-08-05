@@ -119,7 +119,7 @@ class ViewAnfrage extends Page
         if (!isset($this->record)) {
             return 'Anfrage-Details';
         }
-        
+
         $markt = $this->record->markt;
         if (!$markt) {
             return 'Anfrage-Details';
@@ -158,7 +158,7 @@ class ViewAnfrage extends Page
             ->where('standort_id', $standort?->id)
             ->max('standplatz');
         $nextStandplatz = $maxStandplatz ? ((int)$maxStandplatz + 1) : 1;
-        
+
         $buchung = Buchung::create([
             'status' => 'bearbeitung',
             'termin_id' => $termin?->id,
@@ -195,7 +195,7 @@ class ViewAnfrage extends Page
             ->title('Buchung erfolgreich erstellt')
             ->success()
             ->send();
-        
+
         return $this->redirect(\App\Filament\Resources\BuchungResource::getUrl('edit', ['record' => $buchung->id]));
     }
 
@@ -242,21 +242,21 @@ class ViewAnfrage extends Page
     public function ausstellerNeuUndBuchung()
     {
         $a = $this->getCurrentAnfrage();
-        
+
         // Wenn es gefundene Aussteller gibt, nutze den besten Match
         if (count($this->matchingAussteller) > 0) {
             $bestMatch = $this->matchingAussteller[0]; // Erster ist der beste Match
             $ausstellerId = $bestMatch['aussteller']->id;
             return $this->createBuchung($ausstellerId);
         }
-        
+
         // Prüfen ob bereits ein Aussteller mit dieser E-Mail existiert (Fallback)
         $existingAussteller = Aussteller::where('email', $a->email)->first();
-        
+
         if ($existingAussteller) {
             return $this->createBuchung($existingAussteller->id);
         }
-        
+
         $aus = Aussteller::create([
             'firma' => $a->firma,
             'anrede' => $a->anrede,
@@ -269,16 +269,18 @@ class ViewAnfrage extends Page
             'land' => $a->land,
             'telefon' => $a->telefon,
             'email' => $a->email,
-            'bemerkung' => $a->bemerkung,
             'stand' => $a->stand,
             'warenangebot' => $a->warenangebot,
             'herkunft' => $a->herkunft,
             'soziale_medien' => $a->soziale_medien,
         ]);
-        
+
         // Medien von Anfrage zu Aussteller verschieben
         $this->moveMedienFromAnfrageToAussteller($a, $aus);
         
+        // Subkategorien aus Anfrage importieren
+        $this->importSubkategorienFromAnfrage($a, $aus);
+
         return $this->createBuchung($aus->id);
     }
 
@@ -288,20 +290,20 @@ class ViewAnfrage extends Page
     public function ausstellerNeuOhneBuchung()
     {
         $a = $this->getCurrentAnfrage();
-        
+
         // Prüfen ob bereits ein Aussteller mit dieser E-Mail existiert
         $existingAussteller = Aussteller::where('email', $a->email)->first();
-        
+
         if ($existingAussteller) {
             Notification::make()
                 ->title('Aussteller bereits vorhanden')
                 ->body("Ein Aussteller mit der E-Mail {$a->email} existiert bereits. Die Daten wurden nicht überschrieben.")
                 ->warning()
                 ->send();
-            
+
             return $this->redirect(\App\Filament\Resources\AusstellerResource::getUrl('edit', ['record' => $existingAussteller->id]));
         }
-        
+
         $aus = Aussteller::create([
             'firma' => $a->firma,
             'anrede' => $a->anrede,
@@ -323,6 +325,9 @@ class ViewAnfrage extends Page
 
         // Medien von Anfrage zu Aussteller verschieben
         $this->moveMedienFromAnfrageToAussteller($a, $aus);
+        
+        // Subkategorien aus Anfrage importieren
+        $this->importSubkategorienFromAnfrage($a, $aus);
 
         // Anfrage als importiert markieren
         $a->importiert = true;
@@ -358,7 +363,7 @@ class ViewAnfrage extends Page
             // Termin-Daten korrekt ermitteln
             $markt = $a->markt;
             $termin = $markt?->termine?->sortBy('start')->first();
-            
+
             $success = $mailService->sendAusstellerAbsage($aussteller, [
                 'markt_name' => $markt->name ?? 'Unbekannter Markt',
                 'termin' => $termin && $termin->start ? $termin->start->format('d.m.Y') : 'Unbekanntes Datum',
@@ -464,6 +469,9 @@ class ViewAnfrage extends Page
 
         // Medien von Anfrage zu Aussteller verschieben
         $this->moveMedienFromAnfrageToAussteller($anfrage, $aussteller);
+        
+        // Subkategorien aus Anfrage importieren
+        $this->importSubkategorienFromAnfrage($anfrage, $aussteller);
     }
 
     /**
@@ -481,7 +489,7 @@ class ViewAnfrage extends Page
         foreach ($anfrage->wuensche_zusatzleistungen as $leistungId) {
             // Leistung aus Datenbank laden um aktuellen Preis zu bekommen
             $leistung = Leistung::find($leistungId);
-            
+
             if (!$leistung) {
                 Log::warning("Leistung mit ID {$leistungId} nicht gefunden beim Import von Anfrage #{$anfrage->id}");
                 continue;
@@ -497,6 +505,35 @@ class ViewAnfrage extends Page
             ]);
 
             Log::info("Leistung '{$leistung->name}' (ID: {$leistung->id}) importiert für Buchung #{$buchung->id} aus Anfrage #{$anfrage->id}");
+        }
+    }
+
+    /**
+     * Importiert Subkategorien aus der Anfrage zum Aussteller
+     */
+    private function importSubkategorienFromAnfrage(Anfrage $anfrage, Aussteller $aussteller): void
+    {
+        // Prüfen ob Warenangebot (Subkategorien) vorhanden sind
+        if (!$anfrage->warenangebot || !is_array($anfrage->warenangebot)) {
+            return;
+        }
+
+        $validSubkategorieIds = [];
+
+        foreach ($anfrage->warenangebot as $subkategorieId) {
+            // Prüfen ob Subkategorie existiert
+            if (\App\Models\Subkategorie::find($subkategorieId)) {
+                $validSubkategorieIds[] = $subkategorieId;
+            } else {
+                Log::warning("Subkategorie mit ID {$subkategorieId} nicht gefunden beim Import von Anfrage #{$anfrage->id}");
+            }
+        }
+
+        if (!empty($validSubkategorieIds)) {
+            // Subkategorien dem Aussteller zuordnen
+            $aussteller->subkategorien()->sync($validSubkategorieIds);
+            
+            Log::info("Subkategorien [" . implode(', ', $validSubkategorieIds) . "] importiert für Aussteller #{$aussteller->id} aus Anfrage #{$anfrage->id}");
         }
     }
 }

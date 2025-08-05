@@ -53,15 +53,18 @@ class AusstellerResource extends Resource
                         Tab::make('Allgemein')
                             ->schema([
                                 Grid::make(2)->schema([
-                                    TextInput::make('firma')->label('Firma'),
-                                    Select::make('anrede')
-                                        ->label('Anrede')
-                                        ->options([
-                                            'Herr' => 'Herr',
-                                            'Frau' => 'Frau',
-                                            'Divers' => 'Divers',
-                                        ])
-                                        ->nullable(),
+                                    TextInput::make('firma')->label('Firma')->columnSpan(2),
+                                    Grid::make(2)->schema([
+                                        Select::make('anrede')
+                                            ->label('Anrede')
+                                            ->options([
+                                                'Herr' => 'Herr',
+                                                'Frau' => 'Frau',
+                                                'Divers' => 'Divers',
+                                            ])
+                                            ->nullable(),
+                                        TextInput::make('briefanrede')->label('Briefanrede'),
+                                    ])->columnSpan(2),
                                     TextInput::make('vorname')->label('Vorname')->required(),
                                     TextInput::make('name')->label('Name')->required(),
                                     TextInput::make('strasse')->label('Straße')->required(),
@@ -86,13 +89,11 @@ class AusstellerResource extends Resource
                                         TextInput::make('mobil')->label('Mobil')->tel(),
                                     ])->columnSpan(2),
                                     Grid::make(2)->schema([
-                                        TextInput::make('homepage')->label('Homepage')->url(),
                                         TextInput::make('email')
                                             ->label('E-Mail')
                                             ->email()
                                             ->required(),
                                     ])->columnSpan(2),
-                                    TextInput::make('briefanrede')->label('Briefanrede'),
                                 ]),
                                 Textarea::make('bemerkung')->label('Bemerkung')->rows(4)->columnSpan(2),
                             ]),
@@ -115,28 +116,16 @@ class AusstellerResource extends Resource
                                 Select::make('subkategorien')
                                     ->label('Subkategorien')
                                     ->multiple()
+                                    ->relationship('subkategorien', 'name')
                                     ->preload()
                                     ->options(function (callable $get) {
                                         $kategorieId = $get('filterKategorie');
                                         return \App\Models\Subkategorie::query()
                                             ->when($kategorieId, fn($query) => $query->where('kategorie_id', $kategorieId))
                                             ->pluck('name', 'id');
-                                    })
-                                    ->saveRelationshipsUsing(function ($record, $state) {
-                                        $record->subkategorien()->sync($state);
-                                    })
-                                    ->afterStateHydrated(function (callable $set, $state, $record) {
-                                        $set('subkategorien', $record?->subkategorien()->pluck('id')->toArray());
                                     }),
                                 Section::make('Stand')
                                     ->schema([
-                                        // Select::make('stand.art')
-                                        //     ->label('Art')
-                                        //     ->options([
-                                        //         'klein' => 'Klein',
-                                        //         'mittel' => 'Mittel',
-                                        //         'groß' => 'Groß',
-                                        //     ]),
                                         TextInput::make('stand.laenge')
                                             ->label('Länge (m)')
                                             ->numeric(),
@@ -159,13 +148,13 @@ class AusstellerResource extends Resource
                                             ->options([
                                                 'facebook' => 'Facebook',
                                                 'instagram' => 'Instagram',
-                                                'x' => 'X',
+                                                'x' => 'X (Twitter)',
                                                 'linkedin' => 'LinkedIn',
                                                 'youtube' => 'YouTube',
                                                 'tiktok' => 'TikTok',
                                                 'pinterest' => 'Pinterest',
                                                 'xing' => 'Xing',
-                                                'other' => 'Andere',
+                                                'other' => 'Website/Andere',
                                             ]),
                                         TextInput::make('url')
                                             ->label('URL')

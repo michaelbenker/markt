@@ -280,4 +280,84 @@ class LeistungsImportTest extends TestCase
         $this->assertCount(1, $buchungsLeistungen);
         $this->assertEquals($this->leistung1->id, $buchungsLeistungen->first()->leistung_id);
     }
+
+    /** @test */
+    public function subkategorien_werden_beim_aussteller_import_korrekt_übertragen()
+    {
+        // Anfrage mit Warenangebot (Subkategorien) erstellen
+        $anfrage = Anfrage::create([
+            'termin_id' => $this->termin->id,
+            'vorname' => 'Max',
+            'nachname' => 'Mustermann',
+            'strasse' => 'Teststraße',
+            'plz' => '12345',
+            'ort' => 'Teststadt',
+            'land' => 'Deutschland',
+            'email' => 'test@example.com',
+            'stand' => ['laenge' => 3, 'tiefe' => 2, 'flaeche' => 6],
+            'warenangebot' => $this->subkategorieIds, // Subkategorien-IDs
+            'herkunft' => [
+                'eigenfertigung' => 100,
+                'industrieware_nicht_entwicklungslaender' => 0,
+                'industrieware_entwicklungslaender' => 0,
+            ],
+            'importiert' => false,
+        ]);
+
+        $viewAnfrage = new ViewAnfrage();
+        $viewAnfrage->anfrageId = $anfrage->id;
+        
+        $reflection = new \ReflectionClass($viewAnfrage);
+        $method = $reflection->getMethod('importSubkategorienFromAnfrage');
+        $method->setAccessible(true);
+
+        // Import-Methode aufrufen
+        $method->invoke($viewAnfrage, $anfrage, $this->aussteller);
+
+        // Prüfen ob Subkategorien korrekt importiert wurden
+        $ausstellerSubkategorien = $this->aussteller->subkategorien()->pluck('id')->toArray();
+        
+        $this->assertCount(2, $ausstellerSubkategorien);
+        $this->assertContains($this->subkategorieIds[0], $ausstellerSubkategorien);
+        $this->assertContains($this->subkategorieIds[1], $ausstellerSubkategorien);
+    }
+
+    /** @test */
+    public function subkategorien_import_ignoriert_nicht_existierende_ids()
+    {
+        // Anfrage mit nicht-existierenden Subkategorie-IDs erstellen
+        $anfrage = Anfrage::create([
+            'termin_id' => $this->termin->id,
+            'vorname' => 'Max',
+            'nachname' => 'Mustermann',
+            'strasse' => 'Teststraße',
+            'plz' => '12345',
+            'ort' => 'Teststadt',
+            'land' => 'Deutschland',
+            'email' => 'test@example.com',
+            'stand' => ['laenge' => 3, 'tiefe' => 2, 'flaeche' => 6],
+            'warenangebot' => [$this->subkategorieIds[0], 999], // ID 999 existiert nicht
+            'herkunft' => [
+                'eigenfertigung' => 100,
+                'industrieware_nicht_entwicklungslaender' => 0,
+                'industrieware_entwicklungslaender' => 0,
+            ],
+            'importiert' => false,
+        ]);
+
+        $viewAnfrage = new ViewAnfrage();
+        $viewAnfrage->anfrageId = $anfrage->id;
+        
+        $reflection = new \ReflectionClass($viewAnfrage);
+        $method = $reflection->getMethod('importSubkategorienFromAnfrage');
+        $method->setAccessible(true);
+
+        // Import-Methode aufrufen
+        $method->invoke($viewAnfrage, $anfrage, $this->aussteller);
+
+        // Prüfen dass nur die existierende Subkategorie importiert wurde
+        $ausstellerSubkategorien = $this->aussteller->subkategorien()->pluck('id')->toArray();
+        $this->assertCount(1, $ausstellerSubkategorien);
+        $this->assertEquals($this->subkategorieIds[0], $ausstellerSubkategorien[0]);
+    }
 }

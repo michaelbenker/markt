@@ -110,7 +110,18 @@
     <table>
         <tr>
             <th>Angebotene Waren</th>
-            <td>{{ implode(', ', array_map('ucfirst', $buchung->warenangebot)) }}</td>
+            <td>
+                @if(is_array($buchung->warenangebot))
+                    @php
+                        $subkategorieNames = \App\Models\Subkategorie::whereIn('id', $buchung->warenangebot)
+                            ->pluck('name')
+                            ->toArray();
+                    @endphp
+                    {{ implode(', ', $subkategorieNames) }}
+                @else
+                    {{ $buchung->warenangebot }}
+                @endif
+            </td>
         </tr>
     </table>
 </div>

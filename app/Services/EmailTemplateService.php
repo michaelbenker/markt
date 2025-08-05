@@ -129,7 +129,7 @@ Ihr Markt-Team';
     {
         return '# Bestätigung Ihrer Anmeldung
 
-Sehr geehrte{{aussteller_name}},
+Sehr geehrte/r {{aussteller_name}},
 
 wir freuen uns, Ihnen mitteilen zu können, dass Ihre Anmeldung für den Markt **{{markt_name}}** erfolgreich war!
 
@@ -151,7 +151,7 @@ Ihr Markt-Team';
     {
         return '# Ihre Rechnung {{rechnung_nummer}}
 
-Sehr geehrte{{aussteller_name}},
+Sehr geehrte/r {{aussteller_name}},
 
 anbei erhalten Sie Ihre Rechnung für den Markt **{{markt_name}}**.
 
