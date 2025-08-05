@@ -234,7 +234,7 @@ class BuchungSeeder extends Seeder
                 'rechnungsdatum' => $rechnungsDatum->toDateString(),
                 'lieferdatum' => $rechnungsDatum->toDateString(),
                 'faelligkeitsdatum' => $faelligkeitsDatum->toDateString(),
-                'betreff' => 'Sonderrechnung - ' . implode(' ', \Faker\Factory::create('de_DE')->words(3)),
+                'betreff' => 'Sonderrechnung - Zusätzliche Leistungen',
                 'anschreiben' => 'Vielen Dank für Ihre Anfrage. Hiermit stellen wir Ihnen folgende Leistungen in Rechnung.',
                 'schlussschreiben' => 'Bei Fragen stehen wir Ihnen gerne zur Verfügung.',
                 'zahlungsziel' => rand(0, 1) ? '14 Tage netto' : '30 Tage netto',
@@ -290,7 +290,7 @@ class BuchungSeeder extends Seeder
                     'buchung_leistung_id' => null, // Manuelle Position
                     'position' => $p,
                     'bezeichnung' => $bezeichnungen[array_rand($bezeichnungen)],
-                    'beschreibung' => \Faker\Factory::create('de_DE')->sentence(),
+                    'beschreibung' => 'Detailbeschreibung für ' . $bezeichnungen[array_rand($bezeichnungen)],
                     'menge' => $menge,
                     'einheit' => 'Stück',
                     'einzelpreis' => $einzelpreis, // Cent

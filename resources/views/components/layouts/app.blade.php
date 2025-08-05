@@ -17,7 +17,12 @@
     </style>
 
     @filamentStyles
-    <link rel="stylesheet" href="{{ asset('build/assets/app-DFjq3drY.css') }}" />
+    @if (app()->environment('local'))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @else
+        <link rel="stylesheet" href="{{ asset('build/assets/app-D7wxcnN1.css') }}">
+        <script type="module" src="{{ asset('build/assets/app-T1DpEqax.js') }}"></script>
+    @endif
 </head>
 
 <body class="antialiased bg-gray-50 text-gray-900 h-screen grid m-0" style="grid-template-rows: 70px auto 60px;">
@@ -41,7 +46,6 @@
     @livewire('notifications')
 
     @filamentScripts
-    <script src="{{ asset('build/assets/app-T1DpEqax.js') }}"></script>
 </body>
 
 </html>
