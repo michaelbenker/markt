@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\AnfrageResource\Pages;
 
 use App\Filament\Resources\AnfrageResource;
-use Filament\Resources\Pages\Page;
+use Filament\Resources\Pages\ViewRecord;
+use Filament\Actions;
+use Parallax\FilamentComments\Actions\CommentsAction;
 use App\Models\Anfrage;
 use App\Models\Aussteller;
 use App\Models\Medien;
@@ -16,19 +18,19 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-class ViewAnfrage extends Page
+class ViewAnfrage extends ViewRecord
 {
     protected static string $resource = AnfrageResource::class;
     protected static string $view = 'filament.resources.anfrage-resource.pages.view-anfrage';
-    protected Anfrage $record;
     public array $matchingAussteller = [];
     public int $anfrageId;
     public array $updateData = [];
 
     public function mount($record): void
     {
-        $this->anfrageId = is_object($record) ? $record->id : $record;
-        $this->record = Anfrage::findOrFail($this->anfrageId);
+        parent::mount($record);
+        
+        $this->anfrageId = $this->record->id;
         $this->matchingAussteller = $this->getMatchingAussteller();
 
         // Checkbox für alle Aussteller mit Unterschied standardmäßig anhaken
@@ -39,6 +41,14 @@ class ViewAnfrage extends Page
                 $this->updateData[$aus->id] = true;
             }
         }
+    }
+    
+    protected function getHeaderActions(): array
+    {
+        return [
+            CommentsAction::make()
+                ->label('Kommentare')
+        ];
     }
 
     public function getMatchingAussteller(): array
@@ -134,7 +144,7 @@ class ViewAnfrage extends Page
 
     protected function getCurrentAnfrage()
     {
-        return Anfrage::findOrFail($this->anfrageId);
+        return $this->record;
     }
 
     /**

@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use App\Models\BuchungProtokoll;
 use Illuminate\Support\Facades\Auth;
+use Parallax\FilamentComments\Models\Traits\HasFilamentComments;
 
 class Buchung extends Model
 {
+    use HasFilamentComments;
     protected $table = 'buchung';
     protected $fillable = [
         'status',

@@ -11,6 +11,7 @@ use App\Models\BuchungProtokoll;
 use Illuminate\Support\Facades\Auth;
 use App\Filament\Actions\EmailSendAction;
 use App\Filament\Actions\EmailAbsageAction;
+use Parallax\FilamentComments\Actions\CommentsAction;
 
 class EditBuchung extends EditRecord
 {
@@ -67,6 +68,9 @@ class EditBuchung extends EditRecord
                 ->label('Bestätigung senden'),
 
             EmailAbsageAction::make('send_absage_email'),
+            
+            CommentsAction::make()
+                ->label('Kommentare'),
 
             Actions\ActionGroup::make([
                 Actions\DeleteAction::make(),

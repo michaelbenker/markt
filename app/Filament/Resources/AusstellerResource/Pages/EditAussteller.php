@@ -5,6 +5,7 @@ namespace App\Filament\Resources\AusstellerResource\Pages;
 use App\Filament\Resources\AusstellerResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Parallax\FilamentComments\Actions\CommentsAction;
 
 class EditAussteller extends EditRecord
 {
@@ -39,6 +40,9 @@ class EditAussteller extends EditRecord
                 ->url($returnUrl);
         }
 
+        $actions[] = CommentsAction::make()
+            ->label('Kommentare');
+            
         $actions[] =
             Actions\ActionGroup::make([
                 Actions\DeleteAction::make(),
