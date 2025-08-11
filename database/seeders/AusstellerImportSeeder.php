@@ -88,6 +88,8 @@ class AusstellerImportSeeder extends Seeder
                     'email' => $row['email'] ?? null,
                     'briefanrede' => $row['briefanrede'] ?? null,
                     'bemerkung' => $row['bemerkung'] ?? null,
+                    'rating' => 0,
+                    'rating_bemerkung' => null,
                 ]);
 
                 Log::info("Zeile " . ($index + 2) . ": Erfolgreich importiert", [

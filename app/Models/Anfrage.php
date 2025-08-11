@@ -26,6 +26,8 @@ class Anfrage extends Model
         'land',
         'telefon',
         'email',
+        'steuer_id',
+        'handelsregisternummer',
         'stand',
         'warenangebot',
         'herkunft',
@@ -104,7 +106,7 @@ class Anfrage extends Model
         if (!$this->wuensche_zusatzleistungen) {
             return collect();
         }
-        
+
         return \App\Models\Leistung::whereIn('id', $this->wuensche_zusatzleistungen)->get();
     }
 }

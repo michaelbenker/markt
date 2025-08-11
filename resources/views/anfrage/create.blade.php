@@ -142,6 +142,20 @@
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
 
+                    <div>
+                        <label for="steuer_id" class="block font-medium text-sm text-gray-700">Steuer-ID</label>
+                        <input type="text" name="steuer_id" id="steuer_id"
+                            value="{{ old('steuer_id') }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="handelsregisternummer" class="block font-medium text-sm text-gray-700">Handelsregisternummer</label>
+                        <input type="text" name="handelsregisternummer" id="handelsregisternummer"
+                            value="{{ old('handelsregisternummer') }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
                     <!-- <div>
                         <label for="homepage" class="block font-medium text-sm text-gray-700">Homepage</label>
                         <input type="url" name="homepage" id="homepage"
@@ -150,10 +164,10 @@
                     </div> -->
                 </div>
                 <div class="mt-6">
-                    <label for="bereits_ausgestellt" class="block font-medium text-sm text-gray-700">Haben Sie bereits an Märkten teilgenommen?</label>
+                    <label for="bereits_ausgestellt" class="block font-medium text-sm text-gray-700">Haben Sie bereits an Märkten in Fürstenfeld teilgenommen?</label>
                     <textarea name="bereits_ausgestellt" id="bereits_ausgestellt" rows="3"
                         class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="Bitte beschreiben Sie Ihre bisherigen Erfahrungen mit Märkten/Ausstellungen...">{{ old('bereits_ausgestellt') }}</textarea>
+                        placeholder="Bitte geben Sie an, wann und bei welchen Veranstaltungen.">{{ old('bereits_ausgestellt') }}</textarea>
                 </div>
             </div>
 
@@ -518,8 +532,11 @@
                     let html = '';
                     leistungen.forEach(function(leistung) {
                         const isChecked = oldZusatzleistungen.includes(leistung.id.toString()) ? 'checked' : '';
-                        const preis = (leistung.preis / 100).toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                        
+                        const preis = (leistung.preis / 100).toLocaleString('de-DE', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+
                         html += `
                             <label class="inline-flex items-start">
                                 <input type="checkbox" 

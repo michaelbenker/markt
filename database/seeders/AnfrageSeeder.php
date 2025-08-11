@@ -22,6 +22,16 @@ class AnfrageSeeder extends Seeder
         $now = Carbon::now();
         $twoDaysAgo = $now->copy()->subDays(2);
 
+        // Helper function to generate German tax IDs and trade register numbers
+        $generateSteuerID = function($index) {
+            return $index % 3 == 0 ? null : 'DE' . str_pad($index * 111111111, 9, '0', STR_PAD_LEFT);
+        };
+        
+        $generateHandelsregister = function($index) {
+            $types = ['HRB', 'HRA', 'GnR', 'VR'];
+            return $index % 4 == 0 ? null : $types[$index % 4] . ' ' . ($index * 1000 + rand(100, 999));
+        };
+
         // Create 15 records
         $records = [
             [
@@ -436,7 +446,11 @@ class AnfrageSeeder extends Seeder
             ],
         ];
 
-        foreach ($records as $record) {
+        foreach ($records as $index => $record) {
+            // Add tax ID and trade register number to each record
+            $record['steuer_id'] = $generateSteuerID($index + 1);
+            $record['handelsregisternummer'] = $generateHandelsregister($index + 1);
+            
             Anfrage::create($record);
         }
     }

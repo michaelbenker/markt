@@ -28,6 +28,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('briefanrede')->nullable();
             $table->text('bemerkung')->nullable();
+            $table->string('steuer_id')->nullable();
+            $table->string('handelsregisternummer')->nullable();
+            $table->integer('rating')->default(0);
+            $table->text('rating_bemerkung')->nullable();
             $table->json('soziale_medien')->nullable();
             $table->json('bilder')->nullable();
             $table->json('files')->nullable();

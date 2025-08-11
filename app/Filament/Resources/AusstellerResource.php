@@ -31,6 +31,8 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use App\Exports\AusstellerExport;
+use Mokhosh\FilamentRating\Components\Rating;
+use Mokhosh\FilamentRating\Columns\RatingColumn;
 
 class AusstellerResource extends Resource
 {
@@ -93,6 +95,12 @@ class AusstellerResource extends Resource
                                             ->label('E-Mail')
                                             ->email()
                                             ->required(),
+                                    ])->columnSpan(2),
+                                    Grid::make(2)->schema([
+                                        TextInput::make('steuer_id')
+                                            ->label('Steuer-ID'),
+                                        TextInput::make('handelsregisternummer')
+                                            ->label('Handelsregisternummer'),
                                     ])->columnSpan(2),
                                 ]),
                                 Textarea::make('bemerkung')->label('Bemerkung')->rows(4)->columnSpan(2),
@@ -172,6 +180,24 @@ class AusstellerResource extends Resource
                                     ->view('filament.components.medien-manager')
                                     ->columnSpanFull(),
                             ]),
+                        Tab::make('Bewertung')
+                            ->schema([
+                                Section::make()
+                                    ->schema([
+                                        Rating::make('rating')
+                                            ->label('Bewertung')
+                                            ->stars(5)
+                                            ->size('lg')
+                                            ->allowZero()
+                                            ->helperText('Klicke auf die Sterne für eine Bewertung (1-5 Sterne). Aktuell: {{ $state ?? 0 }} Sterne'),
+                                        Textarea::make('rating_bemerkung')
+                                            ->label('Bemerkung zur Bewertung')
+                                            ->rows(4)
+                                            ->placeholder('Notizen zur Bewertung des Ausstellers...')
+                                            ->columnSpan('full'),
+                                    ])
+                                    ->columns(1),
+                            ]),
                     ]),
             ]);
     }
@@ -191,6 +217,9 @@ class AusstellerResource extends Resource
                 TextColumn::make('telefon')->label('Telefon'),
                 TextColumn::make('ort')->label('Ort'),
                 TextColumn::make('land')->label('Land'),
+                RatingColumn::make('rating')
+                    ->label('Bewertung')
+                    ->sortable(),
                 TextColumn::make('hauptkategorie')
                     ->label('Hauptkategorie')
                     ->getStateUsing(function ($record) {

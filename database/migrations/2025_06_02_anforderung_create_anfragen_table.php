@@ -21,6 +21,8 @@ return new class extends Migration {
             $table->string('land');
             $table->string('telefon')->nullable();
             $table->string('email');
+            $table->string('steuer_id')->nullable();
+            $table->string('handelsregisternummer')->nullable();
             $table->json('stand');
             $table->unsignedBigInteger('wunsch_standort_id')->nullable();
             $table->json('warenangebot');

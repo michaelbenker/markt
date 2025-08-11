@@ -28,12 +28,21 @@ class Aussteller extends Model
         'email',
         'briefanrede',
         'bemerkung',
+        'steuer_id',
+        'handelsregisternummer',
+        'rating',
+        'rating_bemerkung',
         'soziale_medien',
         'stand',
     ];
 
     protected $casts = [
         'stand' => 'array',
+        'rating' => 'integer',
+    ];
+
+    protected $attributes = [
+        'rating' => 0,
     ];
 
     public function kategorien()
@@ -105,7 +114,7 @@ class Aussteller extends Model
         }
 
         $data = is_string($value) ? json_decode($value, true) : $value;
-        
+
         if (!is_array($data)) {
             return [];
         }
@@ -113,7 +122,7 @@ class Aussteller extends Model
         $result = [];
         $platformMap = [
             'facebook' => 'facebook',
-            'instagram' => 'instagram', 
+            'instagram' => 'instagram',
             'twitter' => 'x',
             'x' => 'x',
             'linkedin' => 'linkedin',
@@ -151,7 +160,7 @@ class Aussteller extends Model
             'facebook' => 'facebook',
             'instagram' => 'instagram',
             'x' => 'twitter',
-            'linkedin' => 'linkedin', 
+            'linkedin' => 'linkedin',
             'youtube' => 'youtube',
             'tiktok' => 'tiktok',
             'pinterest' => 'pinterest',
