@@ -44,12 +44,12 @@ class AusstellerImportSeeder extends Seeder
                         break;
                     }
                 }
-                
+
                 if (!$hasData) {
                     $stats['skipped']++;
                     continue; // Keine Log-Ausgabe für komplett leere Zeilen
                 }
-                
+
                 // 2. Überspringe nur, wenn weder 'firma' noch 'name' vorhanden ist
                 if (empty(trim($row['firma'] ?? '')) && empty(trim($row['name'] ?? ''))) {
                     Log::info("Zeile " . ($index + 2) . ": Übersprungen - Weder Firma noch Name vorhanden", [
@@ -80,7 +80,22 @@ class AusstellerImportSeeder extends Seeder
                     5 => 'Hervorragender Aussteller, sehr empfehlenswert'
                 ];
 
-                Aussteller::create([
+                $herkunft = [
+                    'eigenfertigung' => 100,
+                    'industrieware' => 0
+                ];
+
+                $sozialeMedien = [
+                    'website' => $homepage
+                ];
+
+                $stand = [
+                    'flaeche' => 6,
+                    'tiefe' => 2,
+                    'laenge' => 3
+                ];
+
+                $aussteller = Aussteller::create([
                     'firma' => $row['firma'] ?? null,
                     'anrede' => $row['anrede'] ?? null,
                     'vorname' => $row['vorname'] ?? null,
@@ -92,13 +107,29 @@ class AusstellerImportSeeder extends Seeder
                     'land' => 'Deutschland',
                     'telefon' => $row['telefon'] ?? null,
                     'mobil' => $row['mobile'] ?? null,
-                    'homepage' => $homepage,
                     'email' => $row['email'] ?? null,
                     'briefanrede' => $row['briefanrede'] ?? null,
                     'bemerkung' => $row['bemerkung'] ?? null,
+                    'herkunft' => $herkunft,
+                    'stand' => $stand,
+                    'soziale_medien' => $sozialeMedien,
                     'rating' => $rating,
                     'rating_bemerkung' => $ratingBemerkungen[$rating],
                 ]);
+
+                // Zufällig 1-3 Subkategorien zuweisen
+                $allSubkategorien = \App\Models\Subkategorie::pluck('id')->toArray();
+                if (count($allSubkategorien) > 0) {
+                    $anzahlSubkategorien = rand(1, min(3, count($allSubkategorien)));
+                    $zufaelligeSubkategorien = array_rand(array_flip($allSubkategorien), $anzahlSubkategorien);
+
+                    // array_rand gibt bei $anzahl = 1 nur einen Wert zurück, kein Array
+                    if (!is_array($zufaelligeSubkategorien)) {
+                        $zufaelligeSubkategorien = [$zufaelligeSubkategorien];
+                    }
+
+                    $aussteller->subkategorien()->attach($zufaelligeSubkategorien);
+                }
 
                 Log::info("Zeile " . ($index + 2) . ": Erfolgreich importiert", [
                     'firma' => $row['firma'] ?? 'Unbekannt',

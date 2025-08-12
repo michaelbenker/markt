@@ -32,6 +32,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use App\Exports\AusstellerExport;
 use Mokhosh\FilamentRating\Components\Rating;
 use Mokhosh\FilamentRating\Columns\RatingColumn;
+use Filament\Forms\Components\CheckboxList;
 
 class AusstellerResource extends Resource
 {
@@ -213,7 +214,7 @@ class AusstellerResource extends Resource
                             ]),
                         Tab::make('Bewertung')
                             ->schema([
-                                Section::make()
+                                Section::make('Bewertung')
                                     ->schema([
                                         Rating::make('rating')
                                             ->label('Bewertung')
@@ -228,6 +229,24 @@ class AusstellerResource extends Resource
                                             ->columnSpan('full'),
                                     ])
                                     ->columns(1),
+                                // Tags nur beim Bearbeiten anzeigen, nicht beim Erstellen
+                                Forms\Components\Group::make([
+                                    Select::make('tags')
+                                        ->label('Tags')
+                                        ->multiple()
+                                        ->relationship('tags', 'name')
+                                        ->getOptionLabelFromRecordUsing(function (\App\Models\Tag $record) {
+                                            $icon = match($record->type) {
+                                                'positiv' => '✅',
+                                                'negativ' => '❌',
+                                                default => '➖'
+                                            };
+                                            return $icon . ' ' . $record->name;
+                                        })
+                                        ->preload()
+                                        ->searchable()
+                                        ->helperText('Wähle passende Tags für diesen Aussteller'),
+                                ])->visible(fn ($livewire) => !($livewire instanceof Pages\CreateAussteller)),
                             ]),
                     ]),
             ]);
@@ -269,24 +288,36 @@ class AusstellerResource extends Resource
                     })
                     ->searchable(false)
                     ->sortable(false),
-                TextColumn::make('buchungen.termin.markt.name')
+                TextColumn::make('maerkte')
                     ->label('Märkte')
                     ->formatStateUsing(function ($record) {
-                        return $record->buchungen
-                            ->pluck('termin.markt.name')
-                            ->unique()
-                            ->filter()
-                            ->implode(', ') ?: 'Keine Buchungen';
+                        $maerkte = [];
+                        foreach ($record->buchungen as $buchung) {
+                            if ($buchung->markt) {
+                                $maerkte[] = $buchung->markt->name;
+                            }
+                        }
+                        return !empty($maerkte) ? implode(', ', array_unique($maerkte)) : 'Keine Buchungen';
                     })
-                    ->searchable()
+                    ->searchable(false)
                     ->sortable(false),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('markt')
                     ->label('Markt')
-                    ->relationship('buchungen.termin.markt', 'name')
+                    ->options(function () {
+                        return \App\Models\Markt::pluck('name', 'id');
+                    })
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['values'] ?? null,
+                            fn(Builder $query, $marktIds) => $query->whereHas(
+                                'buchungen',
+                                fn(Builder $query) => $query->whereIn('markt_id', $marktIds)
+                            )
+                        );
+                    })
                     ->searchable()
-                    ->preload()
                     ->multiple(),
 
                 Tables\Filters\SelectFilter::make('hauptkategorie')

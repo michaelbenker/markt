@@ -20,9 +20,6 @@ return new class extends Migration
             $table->foreignId('standort_id')->constrained('standort')->cascadeOnDelete();
             $table->string('standplatz');
             $table->foreignId('aussteller_id')->constrained('aussteller')->cascadeOnDelete();
-            $table->json('stand')->nullable();
-            $table->json('warenangebot')->nullable();
-            $table->json('herkunft')->nullable();
             $table->json('werbematerial')->nullable();
             $table->string('bemerkung')->nullable();
             $table->timestamps();

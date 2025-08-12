@@ -95,7 +95,7 @@ class MailService
         }
 
         // Sicherstellen, dass alle Relationen geladen sind
-        $buchung->load(['termin.markt']);
+        $buchung->load(['markt', 'standort']);
 
         $data = [
             'buchung' => $buchung,
@@ -169,25 +169,23 @@ class MailService
      */
     public function sendAnfrageBestaetigung(\App\Models\Anfrage $anfrage): bool
     {
-        try {
-            $mailable = new \App\Mail\AnfrageBestaetigung($anfrage);
-            $this->sendMail($anfrage->email, null, $mailable);
-            
-            Log::info("Anfrage-Bestätigung versendet", [
-                'anfrage_id' => $anfrage->id,
-                'email' => $anfrage->email
-            ]);
-            
-            return true;
-        } catch (\Exception $e) {
-            Log::error("Fehler beim Anfrage-Bestätigung Versand", [
-                'anfrage_id' => $anfrage->id,
-                'email' => $anfrage->email,
-                'error' => $e->getMessage()
-            ]);
-            
+        if (!$anfrage->email) {
             return false;
         }
+
+        // Lade benötigte Relationen
+        $anfrage->load(['markt']);
+
+        $data = [
+            'anfrage' => $anfrage,
+        ];
+
+        return $this->send(
+            'anfrage_bestaetigung',
+            $anfrage->email,
+            $data,
+            trim($anfrage->vorname . ' ' . $anfrage->nachname)
+        );
     }
 
     /**
@@ -314,11 +312,8 @@ class MailService
                         : ($aussteller->vorname . ' ' . $aussteller->name);
 
                     $marktName = 'Unbekannter Markt';
-                    // NEU: Markt über Termin holen
-                    if (isset($rechnung->buchung) && is_object($rechnung->buchung) && isset($rechnung->buchung->termin) && is_object($rechnung->buchung->termin) && isset($rechnung->buchung->termin->markt) && is_object($rechnung->buchung->termin->markt)) {
-                        $marktName = $rechnung->buchung->termin->markt->name;
-                    } elseif (isset($rechnung->buchung) && is_object($rechnung->buchung) && isset($rechnung->buchung->markt)) {
-                        // Fallback: wie bisher
+                    // Markt direkt von Buchung holen
+                    if (isset($rechnung->buchung) && is_object($rechnung->buchung) && isset($rechnung->buchung->markt)) {
                         $marktName = $rechnung->buchung->markt->name;
                     }
 
@@ -340,25 +335,26 @@ class MailService
                         ? $aussteller->getFullName()
                         : ($aussteller->vorname . ' ' . $aussteller->name);
 
-                    // Termin-Logik: Nur $buchung->termin verwenden
-
+                    // Neue Termin-Logik: termine ist jetzt ein Array von Termin-IDs
                     $termine = 'Termin wird noch bekannt gegeben';
-                    if (isset($buchung->termin) && is_object($buchung->termin)) {
-                        if (isset($buchung->termin->start) && isset($buchung->termin->ende)) {
-                            // Wenn Start und Ende unterschiedlich sind, beide anzeigen
-                            $start = \Carbon\Carbon::parse($buchung->termin->start)->format('d.m.Y');
-                            $ende = \Carbon\Carbon::parse($buchung->termin->ende)->format('d.m.Y');
-
-                            if ($start === $ende) {
-                                $termine = $start;
-                            } else {
-                                $termine = $start . ' - ' . $ende;
+                    
+                    // Hole die tatsächlichen Termine über die Methode
+                    if (method_exists($buchung, 'termineObjekte')) {
+                        $terminObjekte = $buchung->termineObjekte();
+                        
+                        if ($terminObjekte->count() > 0) {
+                            $terminStrings = [];
+                            foreach ($terminObjekte as $termin) {
+                                $start = \Carbon\Carbon::parse($termin->start)->format('d.m.Y');
+                                $ende = \Carbon\Carbon::parse($termin->ende)->format('d.m.Y');
+                                
+                                if ($start === $ende) {
+                                    $terminStrings[] = $start;
+                                } else {
+                                    $terminStrings[] = $start . ' - ' . $ende;
+                                }
                             }
-                        } elseif (isset($buchung->termin->start)) {
-                            $termine = \Carbon\Carbon::parse($buchung->termin->start)->format('d.m.Y');
-                        } elseif (isset($buchung->termin->datum)) {
-                            // Fallback für alte Datenstruktur
-                            $termine = \Carbon\Carbon::parse($buchung->termin->datum)->format('d.m.Y');
+                            $termine = implode(', ', $terminStrings);
                         }
                     }
 
@@ -369,13 +365,71 @@ class MailService
                         $standplatz = $buchung->stand->bezeichnung;
                     }
 
-                    $marktName = isset($buchung->termin->markt->name) ? $buchung->termin->markt->name : 'Unbekannter Markt';
+                    // Markt direkt von Buchung holen
+                    $marktName = isset($buchung->markt->name) ? $buchung->markt->name : 'Unbekannter Markt';
 
                     $processedData = [
                         'aussteller_name' => $ausstellerName,
                         'markt_name' => $marktName,
                         'termine' => $termine,
                         'standplatz' => $standplatz,
+                    ];
+                }
+                break;
+
+            case 'anfrage_bestaetigung':
+                $anfrage = $data['anfrage'] ?? null;
+                
+                if ($anfrage) {
+                    // Name formatieren
+                    $name = trim(($anfrage->anrede ? $anfrage->anrede . ' ' : '') . $anfrage->vorname . ' ' . $anfrage->nachname);
+                    
+                    // Termine formatieren
+                    $termine = 'Keine Termine ausgewählt';
+                    if ($anfrage->termine && count($anfrage->termine) > 0) {
+                        $terminStrings = [];
+                        foreach ($anfrage->termine as $termin) {
+                            $start = \Carbon\Carbon::parse($termin->start)->format('d.m.Y');
+                            $ende = \Carbon\Carbon::parse($termin->ende)->format('d.m.Y');
+                            $terminStrings[] = $start . ' - ' . $ende;
+                        }
+                        $termine = implode(', ', $terminStrings);
+                    }
+                    
+                    // Warenangebot formatieren
+                    $warenangebot = '-';
+                    if (is_array($anfrage->warenangebot)) {
+                        if (isset($anfrage->warenangebot['subkategorien'])) {
+                            $subkategorienIds = $anfrage->warenangebot['subkategorien'];
+                            $sonstiges = $anfrage->warenangebot['sonstiges'] ?? null;
+                            $namen = [];
+                            if (!empty($subkategorienIds)) {
+                                $namen = \App\Models\Subkategorie::whereIn('id', $subkategorienIds)->pluck('name')->toArray();
+                                if ($sonstiges && in_array(24, $subkategorienIds)) {
+                                    $namen[] = "Sonstiges: " . $sonstiges;
+                                }
+                            } elseif ($sonstiges) {
+                                $namen[] = "Sonstiges: " . $sonstiges;
+                            }
+                            $warenangebot = implode(", ", $namen);
+                        }
+                    } else {
+                        $warenangebot = $anfrage->warenangebot;
+                    }
+                    
+                    // Bemerkung formatieren
+                    $bemerkung = '';
+                    if ($anfrage->bemerkung) {
+                        $bemerkung = "\n**Bemerkung:**\n" . $anfrage->bemerkung;
+                    }
+                    
+                    $processedData = [
+                        'markt_name' => $anfrage->markt->name ?? 'Unbekannter Markt',
+                        'termine' => $termine,
+                        'name' => $name,
+                        'email' => $anfrage->email,
+                        'warenangebot' => $warenangebot,
+                        'bemerkung' => $bemerkung,
                     ];
                 }
                 break;
@@ -551,6 +605,7 @@ class MailService
                 $dummyRechnung->lieferdatum = now()->subDays(2); // Lieferdatum
                 $dummyRechnung->faelligkeitsdatum = now()->addDays(14);
                 $dummyRechnung->status = 'draft';
+                $dummyRechnung->id = 1;  // Füge ID für die Rechnung hinzu
                 $dummyRechnung->buchung_id = 42;
                 $dummyRechnung->betreff = 'Rechnung für Standmiete ' . $baseDummyData['markt'];
                 $dummyRechnung->anschreiben = 'Vielen Dank für Ihre Teilnahme am ' . $baseDummyData['markt'] . '.';
@@ -607,19 +662,14 @@ class MailService
                 $dummyAussteller->vorname = $ausstellerDummyData['vorname'];
                 $dummyAussteller->name = $ausstellerDummyData['name'];
 
-                $dummyStand = new \stdClass();
-                $dummyStand->bezeichnung = $baseDummyData['standplatz'];
-
                 $dummyMarkt = new \stdClass();
                 $dummyMarkt->name = $baseDummyData['markt'];
-                $dummyMarkt->termine = collect([
-                    (object)['datum' => \Carbon\Carbon::parse('2024-12-07')],
-                    (object)['datum' => \Carbon\Carbon::parse('2024-12-08')]
-                ]);
 
                 $dummyBuchung = new \stdClass();
+                $dummyBuchung->id = 1;  // Füge ID hinzu
                 $dummyBuchung->markt = $dummyMarkt;
-                $dummyBuchung->stand = $dummyStand;
+                $dummyBuchung->standplatz = $baseDummyData['standplatz'];
+                $dummyBuchung->termine = [1, 2];  // Dummy Termin-IDs
 
                 return [
                     'buchung' => $dummyBuchung,

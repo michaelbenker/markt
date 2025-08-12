@@ -18,22 +18,36 @@
             <td>{{ $buchung->id }}</td>
         </tr>
         <tr>
-            <th>Markt & Termin</th>
+            <th>Markt</th>
+            <td>{{ $buchung->markt->name ?? 'Unbekannt' }}</td>
+        </tr>
+        <tr>
+            <th>Termine</th>
             <td>
-                {{ $buchung->termin->markt->name }}<br>
                 @php
-                $startDate = \Carbon\Carbon::parse($buchung->termin->start);
-                $endDate = \Carbon\Carbon::parse($buchung->termin->ende);
-
-                if ($startDate->format('m') === $endDate->format('m')) {
-                // Gleicher Monat
-                echo $startDate->format('d.') . '-' . $endDate->format('d.m.Y');
-                } elseif ($startDate->format('Y') === $endDate->format('Y')) {
-                // Gleiches Jahr, aber unterschiedlicher Monat
-                echo $startDate->format('d.m.') . '-' . $endDate->format('d.m.Y');
+                if ($buchung->termine && is_array($buchung->termine) && count($buchung->termine) > 0) {
+                    $terminObjekte = \App\Models\Termin::whereIn('id', $buchung->termine)->orderBy('start')->get();
+                    $terminStrings = [];
+                    
+                    foreach ($terminObjekte as $termin) {
+                        $startDate = \Carbon\Carbon::parse($termin->start);
+                        $endDate = \Carbon\Carbon::parse($termin->ende);
+                        
+                        if ($startDate->format('m') === $endDate->format('m')) {
+                            // Gleicher Monat
+                            $terminStrings[] = $startDate->format('d.') . '-' . $endDate->format('d.m.Y');
+                        } elseif ($startDate->format('Y') === $endDate->format('Y')) {
+                            // Gleiches Jahr, aber unterschiedlicher Monat
+                            $terminStrings[] = $startDate->format('d.m.') . '-' . $endDate->format('d.m.Y');
+                        } else {
+                            // Unterschiedliche Jahre
+                            $terminStrings[] = $startDate->format('d.m.Y') . ' - ' . $endDate->format('d.m.Y');
+                        }
+                    }
+                    
+                    echo implode('<br>', $terminStrings);
                 } else {
-                // Unterschiedliche Jahre
-                echo $startDate->format('d.m.Y') . ' - ' . $endDate->format('d.m.Y');
+                    echo 'Keine Termine ausgewählt';
                 }
                 @endphp
             </td>
@@ -84,21 +98,57 @@
     </table>
 </div>
 
-@if($buchung->stand)
+@if($buchung->aussteller->stand)
 <div class="section">
     <div class="section-title">Stand</div>
     <table>
         <tr>
-            <th>Art</th>
-            <td>{{ ucfirst($buchung->stand['tiefe'] ?? '') }}</td>
+            <th>Länge</th>
+            <td>{{ $buchung->aussteller->stand['laenge'] ?? '-' }} m</td>
         </tr>
         <tr>
-            <th>Länge</th>
-            <td>{{ $buchung->stand['laenge'] ?? '' }} m</td>
+            <th>Tiefe</th>
+            <td>{{ $buchung->aussteller->stand['tiefe'] ?? '-' }} m</td>
         </tr>
         <tr>
             <th>Fläche</th>
-            <td>{{ $buchung->stand['flaeche'] ?? '' }} m²</td>
+            <td>{{ $buchung->aussteller->stand['flaeche'] ?? '-' }} m²</td>
+        </tr>
+    </table>
+</div>
+@endif
+
+@if($buchung->aussteller->vorfuehrung_am_stand)
+<div class="section">
+    <div class="section-title">Vorführung</div>
+    <table>
+        <tr>
+            <th>Vorführung des Handwerks am Stand</th>
+            <td>{{ $buchung->aussteller->vorfuehrung_am_stand ? 'Ja' : 'Nein' }}</td>
+        </tr>
+    </table>
+</div>
+@endif
+
+@if($buchung->aussteller->subkategorien && $buchung->aussteller->subkategorien->count() > 0)
+<div class="section">
+    <div class="section-title">Warenangebot (Kategorien)</div>
+    <table>
+        <tr>
+            <th>Kategorien</th>
+            <td>
+                @php
+                    $kategorienText = [];
+                    foreach($buchung->aussteller->subkategorien as $subkategorie) {
+                        if($subkategorie->kategorie) {
+                            $kategorienText[] = $subkategorie->kategorie->name . ' → ' . $subkategorie->name;
+                        } else {
+                            $kategorienText[] = $subkategorie->name;
+                        }
+                    }
+                    echo implode('<br>', $kategorienText);
+                @endphp
+            </td>
         </tr>
     </table>
 </div>
@@ -127,21 +177,17 @@
 </div>
 @endif
 
-@if($buchung->herkunft)
+@if($buchung->aussteller->herkunft)
 <div class="section">
     <div class="section-title">Herkunft der Waren</div>
     <table>
         <tr>
             <th>Eigenfertigung</th>
-            <td>{{ $buchung->herkunft['eigenfertigung'] ?? '' }}%</td>
+            <td>{{ $buchung->aussteller->herkunft['eigenfertigung'] ?? 0 }}%</td>
         </tr>
         <tr>
-            <th>Industrieware (nicht Entwicklungsland)</th>
-            <td>{{ $buchung->herkunft['industrieware_nicht_entwicklungslaender'] ?? '' }}%</td>
-        </tr>
-        <tr>
-            <th>Industrieware (Entwicklungsland)</th>
-            <td>{{ $buchung->herkunft['industrieware_entwicklungslaender'] ?? '' }}%</td>
+            <th>Industrieware</th>
+            <td>{{ $buchung->aussteller->herkunft['industrieware'] ?? 0 }}%</td>
         </tr>
     </table>
 </div>

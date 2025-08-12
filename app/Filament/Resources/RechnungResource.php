@@ -568,7 +568,7 @@ class RechnungResource extends Resource
     {
         if (!$buchung) return '';
 
-        $markt = $buchung->termin?->markt?->name ?? 'Unbekannt';
+        $markt = $buchung->markt?->name ?? 'Unbekannt';
         $aussteller = self::formatAusstellerName($buchung->aussteller);
 
         return "#{$buchung->id} - {$markt} | {$aussteller}";

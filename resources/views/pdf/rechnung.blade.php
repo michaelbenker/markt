@@ -51,6 +51,36 @@
                 <div class="datum-info"><strong>Fällig bis:</strong> {{ $rechnung->faelligkeitsdatum->format('d.m.Y') }}</div>
                 @if($rechnung->buchung_id)
                 <div class="datum-info"><strong>Buchung:</strong> #{{ $rechnung->buchung_id }}</div>
+                @php
+                    $buchung = $rechnung->buchung;
+                    if ($buchung) {
+                        $buchung->load(['markt', 'standort']);
+                    }
+                @endphp
+                @if($buchung && $buchung->markt)
+                <div class="datum-info"><strong>Markt:</strong> {{ $buchung->markt->name }}</div>
+                @endif
+                @if($buchung && $buchung->termine && is_array($buchung->termine) && count($buchung->termine) > 0)
+                <div class="datum-info"><strong>Termine:</strong>
+                    @php
+                        $terminObjekte = \App\Models\Termin::whereIn('id', $buchung->termine)->orderBy('start')->get();
+                        $terminStrings = [];
+                        foreach ($terminObjekte as $termin) {
+                            $startDate = \Carbon\Carbon::parse($termin->start);
+                            $endDate = \Carbon\Carbon::parse($termin->ende);
+                            
+                            if ($startDate->format('m') === $endDate->format('m')) {
+                                $terminStrings[] = $startDate->format('d.') . '-' . $endDate->format('d.m.Y');
+                            } elseif ($startDate->format('Y') === $endDate->format('Y')) {
+                                $terminStrings[] = $startDate->format('d.m.') . '-' . $endDate->format('d.m.Y');
+                            } else {
+                                $terminStrings[] = $startDate->format('d.m.Y') . ' - ' . $endDate->format('d.m.Y');
+                            }
+                        }
+                        echo implode('<br>', $terminStrings);
+                    @endphp
+                </div>
+                @endif
                 @endif
             </div>
         </td>

@@ -4,11 +4,9 @@ namespace App\Filament\Resources\AnfrageResource\Pages;
 
 use App\Filament\Resources\AnfrageResource;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Actions;
 use Parallax\FilamentComments\Actions\CommentsAction;
 use App\Models\Anfrage;
 use App\Models\Aussteller;
-use App\Models\Medien;
 use Filament\Notifications\Notification;
 use App\Models\Buchung;
 use App\Models\BuchungProtokoll;
@@ -16,7 +14,6 @@ use App\Models\BuchungLeistung;
 use App\Models\Leistung;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class ViewAnfrage extends ViewRecord
 {
@@ -25,6 +22,9 @@ class ViewAnfrage extends ViewRecord
     public array $matchingAussteller = [];
     public int $anfrageId;
     public array $updateData = [];
+    public array $selectedTags = [];
+    public ?int $selectedRating = 0;
+    public string $tagsJson = '{}';
 
     public function mount($record): void
     {
@@ -41,6 +41,12 @@ class ViewAnfrage extends ViewRecord
                 $this->updateData[$aus->id] = true;
             }
         }
+        
+        // Tags als JSON für JavaScript vorbereiten (ohne Icons, nur Namen)
+        $tags = \App\Models\Tag::all()->mapWithKeys(function ($tag) {
+            return [$tag->id => $tag->name];
+        });
+        $this->tagsJson = json_encode($tags);
     }
 
     protected function getHeaderActions(): array
@@ -329,6 +335,7 @@ class ViewAnfrage extends ViewRecord
             'warenangebot' => $a->warenangebot,
             'herkunft' => $a->herkunft,
             'soziale_medien' => $a->soziale_medien,
+            'rating' => $this->selectedRating ?? 0,  // Rating übernehmen
         ]);
 
         // Medien von Anfrage zu Aussteller verschieben
@@ -336,6 +343,11 @@ class ViewAnfrage extends ViewRecord
 
         // Subkategorien aus Anfrage importieren
         $this->importSubkategorienFromAnfrage($a, $aus);
+
+        // Tags hinzufügen, wenn welche ausgewählt wurden
+        if (!empty($this->selectedTags)) {
+            $aus->tags()->attach($this->selectedTags);
+        }
 
         return $this->createBuchung($aus->id);
     }
@@ -385,6 +397,7 @@ class ViewAnfrage extends ViewRecord
             'warenangebot' => $a->warenangebot,
             'herkunft' => $a->herkunft,
             'soziale_medien' => $a->soziale_medien,
+            'rating' => $this->selectedRating ?? 0,  // Rating übernehmen
         ]);
 
         // Medien von Anfrage zu Aussteller verschieben
@@ -392,6 +405,11 @@ class ViewAnfrage extends ViewRecord
 
         // Subkategorien aus Anfrage importieren
         $this->importSubkategorienFromAnfrage($a, $aus);
+
+        // Tags hinzufügen, wenn welche ausgewählt wurden
+        if (!empty($this->selectedTags)) {
+            $aus->tags()->attach($this->selectedTags);
+        }
 
         // Anfrage Status auf gebucht setzen
         $a->status = 'gebucht';

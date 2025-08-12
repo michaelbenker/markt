@@ -31,6 +31,7 @@ class Aussteller extends Model
         'vorfuehrung_am_stand',
         'steuer_id',
         'handelsregisternummer',
+        'herkunft',
         'rating',
         'rating_bemerkung',
         'soziale_medien',
@@ -40,6 +41,7 @@ class Aussteller extends Model
     protected $casts = [
         'stand' => 'array',
         'rating' => 'integer',
+        'herkunft' => 'array',
     ];
 
     protected $attributes = [
@@ -95,6 +97,16 @@ class Aussteller extends Model
     public function vitaDokumente()
     {
         return $this->medien()->category('vita');
+    }
+
+    /**
+     * Tags des Ausstellers
+     */
+    public function tags()
+    {
+        return $this->belongsToMany(Tag::class, 'aussteller_tag')
+            ->withPivot('notiz')
+            ->withTimestamps();
     }
 
     /**
@@ -156,6 +168,14 @@ class Aussteller extends Model
             return;
         }
 
+        // Prüfen ob es bereits das flache Format ist (von Anfrage)
+        if (isset($value['facebook']) || isset($value['instagram']) || isset($value['twitter']) || isset($value['website'])) {
+            // Bereits im richtigen Format, einfach speichern
+            $this->attributes['soziale_medien'] = json_encode($value);
+            return;
+        }
+
+        // Filament Repeater Format konvertieren
         $result = [];
         $reverseMap = [
             'facebook' => 'facebook',

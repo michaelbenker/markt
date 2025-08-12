@@ -27,6 +27,21 @@ class EmailTemplateService
     {
         $templates = [
             [
+                'key' => 'anfrage_bestaetigung',
+                'name' => 'Anfrage-Bestätigung',
+                'subject' => 'Ihre Buchungsanfrage - {{markt_name}}',
+                'description' => 'Automatische Bestätigung nach Eingang einer Anfrage',
+                'content' => $this->getAnfrageBestaetigungTemplate(),
+                'available_variables' => [
+                    ['variable' => 'markt_name', 'description' => 'Name des Marktes'],
+                    ['variable' => 'termine', 'description' => 'Gewünschte Termine'],
+                    ['variable' => 'name', 'description' => 'Name des Anfragenden'],
+                    ['variable' => 'email', 'description' => 'E-Mail des Anfragenden'],
+                    ['variable' => 'warenangebot', 'description' => 'Beschreibung des Warenangebots'],
+                    ['variable' => 'bemerkung', 'description' => 'Bemerkung zur Anfrage'],
+                ],
+            ],
+            [
                 'key' => 'aussteller_absage',
                 'name' => 'Aussteller-Absage',
                 'subject' => 'Absage für Ihre Standanfrage - {{markt_name}}',
@@ -94,6 +109,29 @@ class EmailTemplateService
 
         // 3. Kein Template gefunden
         throw new \Exception("E-Mail-Template '{$key}' weder in Datenbank noch als Blade-Template gefunden");
+    }
+
+    private function getAnfrageBestaetigungTemplate(): string
+    {
+        return '# Ihre Buchungsanfrage
+
+Vielen Dank für Ihre Anfrage!
+
+Wir haben Ihre Buchungsanfrage erhalten und werden uns in Kürze bei Ihnen melden.
+
+> **Ihre Anfrage im Überblick:**  
+> **Markt:** {{markt_name}}  
+> **Termine:** {{termine}}  
+> **Name:** {{name}}  
+> **E-Mail:** {{email}}  
+> **Warenangebot:** {{warenangebot}}
+
+{{bemerkung}}
+
+Bei Rückfragen antworten Sie einfach auf diese E-Mail.
+
+Mit freundlichen Grüßen  
+Ihr Markt-Team';
     }
 
     private function getAusstellerAbsageTemplate(): string

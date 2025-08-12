@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
             SubkategorieSeeder::class,
             LeistungSeeder::class,  // Muss vor MarktSeeder stehen
             MarktSeeder::class,
+            TagSeeder::class,  // Tags für Aussteller
             AusstellerImportSeeder::class,
             TerminSeeder::class,
             BuchungSeeder::class,

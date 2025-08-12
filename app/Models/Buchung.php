@@ -19,18 +19,12 @@ class Buchung extends Model
         'standort_id',
         'standplatz',
         'aussteller_id',
-        'stand',
-        'warenangebot',
-        'herkunft',
         'werbematerial',
         'bemerkung',
     ];
 
     protected $casts = [
         'termine' => 'array',
-        'stand' => 'array',
-        'warenangebot' => 'array',
-        'herkunft' => 'array',
         'werbematerial' => 'array',
     ];
 
@@ -85,17 +79,13 @@ class Buchung extends Model
         return $this->belongsTo(Markt::class);
     }
 
-    // Neue Relation für mehrere Termine
-    public function getTermineAttribute($value)
+    // Relation für die Termin-Objekte
+    public function termineObjekte()
     {
-        // Wenn termine JSON vorhanden ist, diese verwenden
-        if ($value) {
-            $terminIds = is_array($value) ? $value : json_decode($value, true);
+        $terminIds = $this->getRawOriginal('termine');
+        if ($terminIds) {
+            $terminIds = is_array($terminIds) ? $terminIds : json_decode($terminIds, true);
             return Termin::whereIn('id', $terminIds)->get();
-        }
-        // Fallback auf termin_id für Rückwärtskompatibilität
-        if ($this->termin_id) {
-            return Termin::where('id', $this->termin_id)->get();
         }
         return collect();
     }

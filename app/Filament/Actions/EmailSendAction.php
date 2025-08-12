@@ -42,7 +42,7 @@ class EmailSendAction extends Action
 
                     // Template mit Buchungsdaten rendern
                     $buchung = $record;
-                    $buchung->load(['termin.markt', 'aussteller']);
+                    $buchung->load(['markt', 'standort', 'aussteller']);
                     $aussteller = $buchung->aussteller;
                     
                     if (!$aussteller) {

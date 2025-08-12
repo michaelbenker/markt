@@ -18,21 +18,6 @@ class BuchungSeeder extends Seeder
      */
     public function run(): void
     {
-        $stand = [
-            // 'art' => 'klein',
-            'flaeche' => 6,
-            'tiefe' => 3,
-            'laenge' => 4
-        ];
-
-        $warenangebot = ['kleidung', 'schmuck', 'kunst'];
-
-        $herkunft = [
-            'eigenfertigung' => 80,
-            'industrieware_nicht_entwicklungslaender' => 0,
-            'industrieware_entwicklungslaender' => 20
-        ];
-
         $werbematerial = [
             [
                 'typ' => 'flyer',
@@ -77,7 +62,7 @@ class BuchungSeeder extends Seeder
         for ($i = 1; $i <= 100; $i++) {
             $terminId = rand(1, 2);
             $marktId = $terminId == 1 ? 1 : 2; // Termin 1 gehört zu Markt 1, Termin 2 zu Markt 2
-            
+
             $buchung = Buchung::create([
                 'status' => $status[array_rand($status)],
                 'markt_id' => $marktId,
@@ -85,9 +70,6 @@ class BuchungSeeder extends Seeder
                 'standort_id' => 1,
                 'standplatz' => $i,
                 'aussteller_id' => $i,
-                'stand' => $stand,
-                'warenangebot' => $warenangebot,
-                'herkunft' => $herkunft,
                 'werbematerial' => $werbematerial,
                 'created_at' => now()->subDays(rand(0, 30))->setHour(rand(8, 20))->setMinute(rand(0, 59)),
             ]);

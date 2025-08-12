@@ -31,6 +31,7 @@ return new class extends Migration
             $table->boolean('vorfuehrung_am_stand')->default(false);
             $table->string('steuer_id')->nullable();
             $table->string('handelsregisternummer')->nullable();
+            $table->json('herkunft')->nullable();
             $table->integer('rating')->default(0);
             $table->text('rating_bemerkung')->nullable();
             $table->json('soziale_medien')->nullable();

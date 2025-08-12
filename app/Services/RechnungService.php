@@ -18,9 +18,9 @@ class RechnungService
             'buchung_id' => $buchung->id,
             'aussteller_id' => $buchung->aussteller_id,
             'rechnungsdatum' => now()->toDateString(),
-            'lieferdatum' => $buchung->termin->start ?? now()->toDateString(),
+            'lieferdatum' => now()->toDateString(),
             'faelligkeitsdatum' => now()->addDays(14)->toDateString(),
-            'betreff' => 'Rechnung für ' . ($buchung->termin->markt->name ?? 'Markt'),
+            'betreff' => 'Rechnung für ' . ($buchung->markt->name ?? 'Markt'),
             'zahlungsziel' => '14 Tage netto',
         ], $overrides));
 

@@ -97,15 +97,15 @@ class BuchungResource extends Resource
                                         if (!$marktId) {
                                             return [];
                                         }
-                                        
+
                                         // Bei bestehenden Records: Alle Termine des Marktes anzeigen (nicht nur zukünftige)
                                         $query = \App\Models\Termin::where('markt_id', $marktId);
-                                        
+
                                         // Bei neuen Records: Nur zukünftige Termine
                                         if (!$record) {
                                             $query->where('start', '>', now());
                                         }
-                                        
+
                                         return $query->orderBy('start')
                                             ->get()
                                             ->mapWithKeys(function ($termin) {
@@ -113,16 +113,13 @@ class BuchungResource extends Resource
                                                 return [$termin->id => $label];
                                             });
                                     })
-                                    ->default(function ($record) {
-                                        // Bei bestehenden Records: Gespeicherte Termine vorauswählen
-                                        if ($record && $record->termine) {
-                                            return is_array($record->termine) ? $record->termine : json_decode($record->termine, true);
-                                        }
-                                        return [];
-                                    })
-                                    ->columns(1)
+                                    ->columns([
+                                        'sm' => 1,  // Mobile: 1 Spalte
+                                        'md' => 3,  // Tablet: 2 Spalten
+                                        'lg' => 6,  // Desktop: 3 Spalten
+                                    ])
                                     ->required()
-                                    ->visible(fn (callable $get) => $get('markt_id') !== null),
+                                    ->visible(fn(callable $get) => $get('markt_id') !== null),
                                 Select::make('standort_id')->relationship('standort', 'name')->required(),
                                 TextInput::make('standplatz')->required(),
                                 Select::make('aussteller_id')
@@ -141,55 +138,6 @@ class BuchungResource extends Resource
                                             ->visible(fn($record) => $record?->aussteller_id !== null)
                                     ),
                                 Textarea::make('bemerkung')->label('Bemerkung')->rows(4),
-                            ]),
-                        Tab::make('Waren')
-                            ->schema([
-                                Section::make('Stand')
-                                    ->schema([
-                                        TextInput::make('stand.laenge')
-                                            ->label('Länge (m)')
-                                            ->numeric(),
-                                        TextInput::make('stand.tiefe')
-                                            ->label('Tiefe (m)')
-                                            ->numeric(),
-                                        TextInput::make('stand.flaeche')
-                                            ->label('Fläche (m²)')
-                                            ->numeric(),
-                                    ])
-                                    ->columns(3),
-                                Select::make('warenangebot')
-                                    ->label('Warenangebot')
-                                    ->multiple()
-                                    ->options(function () {
-                                        $kategorien = Kategorie::with('subkategorien')->get();
-                                        $options = [];
-
-                                        foreach ($kategorien as $kategorie) {
-                                            foreach ($kategorie->subkategorien as $subkategorie) {
-                                                $options[$subkategorie->id] = $kategorie->name . ' → ' . $subkategorie->name;
-                                            }
-                                        }
-
-                                        return $options;
-                                    })
-                                    ->searchable()
-                                    ->preload(),
-                                Section::make('Herkunft der Waren')
-                                    ->schema([
-                                        TextInput::make('herkunft.eigenfertigung')
-                                            ->label('Eigenfertigung (%)')
-                                            ->numeric()
-                                            ->minValue(0)
-                                            ->maxValue(100)
-                                            ->suffix('%'),
-                                        TextInput::make('herkunft.industrieware')
-                                            ->label('Industrieware (%)')
-                                            ->numeric()
-                                            ->minValue(0)
-                                            ->maxValue(100)
-                                            ->suffix('%'),
-                                    ])
-                                    ->columns(3),
                             ]),
                         Tab::make('Werbematerial')
                             ->schema([
@@ -304,14 +252,27 @@ class BuchungResource extends Resource
                     })
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('termin.markt.name')
+                TextColumn::make('markt.name')
                     ->label('Markt')
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('termin.start')
-                    ->label('Termin')
-                    ->formatStateUsing(fn($record) => self::formatDateRange($record->termin->start, $record->termin->ende))
-                    ->sortable(),
+                TextColumn::make('termine')
+                    ->label('Termine')
+                    ->formatStateUsing(function($record) {
+                        if (!$record->termine || !is_array($record->termine) || count($record->termine) === 0) {
+                            return 'Keine Termine';
+                        }
+                        
+                        $terminObjekte = \App\Models\Termin::whereIn('id', $record->termine)->orderBy('start')->get();
+                        $terminStrings = [];
+                        
+                        foreach ($terminObjekte as $termin) {
+                            $terminStrings[] = self::formatDateRange($termin->start, $termin->ende);
+                        }
+                        
+                        return implode(', ', $terminStrings);
+                    })
+                    ->sortable(false),
                 TextColumn::make('standort.name')
                     ->searchable(),
                 TextColumn::make('standplatz')
@@ -337,7 +298,7 @@ class BuchungResource extends Resource
                     ])
                     ->label('Status'),
                 Tables\Filters\SelectFilter::make('markt')
-                    ->relationship('termin.markt', 'name')
+                    ->relationship('markt', 'name')
                     ->label('Markt'),
                 Tables\Filters\SelectFilter::make('aussteller')
                     ->relationship('aussteller', 'name')
@@ -376,8 +337,23 @@ class BuchungResource extends Resource
                 Tables\Actions\Action::make('E-Mail senden')
                     ->label('')
                     ->action(function ($record) {
+                        // Lade die benötigten Relationen explizit
+                        $record->load(['markt', 'standort', 'aussteller']);
+                        
                         $mailService = new \App\Services\MailService();
-                        $mailService->sendAusstellerBestaetigung($record);
+                        $result = $mailService->sendAusstellerBestaetigung($record);
+                        
+                        if ($result) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('E-Mail erfolgreich versendet')
+                                ->success()
+                                ->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Fehler beim E-Mail-Versand')
+                                ->danger()
+                                ->send();
+                        }
                     })
                     ->requiresConfirmation()
                     ->color('success')
