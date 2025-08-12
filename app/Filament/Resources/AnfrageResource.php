@@ -8,6 +8,7 @@ use App\Models\Anfrage;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Filters\SelectFilter;
 
 class AnfrageResource extends Resource
 {
@@ -23,7 +24,6 @@ class AnfrageResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'offen'))
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Vom')
@@ -78,6 +78,37 @@ class AnfrageResource extends Resource
                         
                         return implode(', ', $namen);
                     }),
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn($state) => match($state) {
+                        'offen' => 'Offen',
+                        'gebucht' => 'Gebucht',
+                        'warteschlange' => 'Warteliste',
+                        'aussteller_importiert' => 'Importiert',
+                        'abgesagt' => 'Abgesagt',
+                        default => ucfirst($state)
+                    })
+                    ->color(fn($state) => match($state) {
+                        'offen' => 'warning',
+                        'gebucht' => 'success',
+                        'warteschlange' => 'info',
+                        'aussteller_importiert' => 'gray',
+                        'abgesagt' => 'danger',
+                        default => 'secondary'
+                    }),
+            ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'offen' => 'Offen',
+                        'gebucht' => 'Gebucht',
+                        'warteschlange' => 'Warteliste',
+                        'aussteller_importiert' => 'Importiert',
+                        'abgesagt' => 'Abgesagt',
+                    ])
+                    ->default('offen'),
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([

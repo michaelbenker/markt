@@ -487,13 +487,34 @@ class ViewAnfrage extends ViewRecord
         $a = $this->getCurrentAnfrage();
 
         try {
+            // Warenangebot formatieren
+            $warenangebotText = '';
+            if (is_array($a->warenangebot)) {
+                if (isset($a->warenangebot['subkategorien'])) {
+                    $subkategorienIds = $a->warenangebot['subkategorien'];
+                    $sonstiges = $a->warenangebot['sonstiges'] ?? null;
+                    $namen = [];
+                    if (!empty($subkategorienIds)) {
+                        $namen = \App\Models\Subkategorie::whereIn('id', $subkategorienIds)->pluck('name')->toArray();
+                        if ($sonstiges && in_array(24, $subkategorienIds)) {
+                            $namen[] = "Sonstiges: " . $sonstiges;
+                        }
+                    } elseif ($sonstiges) {
+                        $namen[] = "Sonstiges: " . $sonstiges;
+                    }
+                    $warenangebotText = implode(", ", $namen);
+                }
+            } else {
+                $warenangebotText = $a->warenangebot ?? '';
+            }
+
             // Aussteller-Objekt für MailService erstellen
             $aussteller = new Aussteller();
             $aussteller->email = $a->email;
             $aussteller->vorname = $a->vorname;
-            $aussteller->name = $a->name;
+            $aussteller->name = $a->nachname;
             $aussteller->firma = $a->firma;
-            $aussteller->warenangebot = $a->warenangebot;
+            $aussteller->warenangebot = $warenangebotText;
 
             // Absage-E-Mail über MailService senden
             $mailService = new \App\Services\MailService();
@@ -511,14 +532,15 @@ class ViewAnfrage extends ViewRecord
                 throw new \Exception('E-Mail-Versand fehlgeschlagen');
             }
 
-            // Anfrage löschen
+            // Anfrage Status auf abgesagt setzen
             $anfrageId = $a->id;
             $originalEmail = $a->email;
-            $a->delete();
+            $a->status = 'abgesagt';
+            $a->save();
 
             $message = config('mail.dev_redirect_email')
-                ? "Die Absage wurde im Testmodus an " . config('mail.dev_redirect_email') . " gesendet (Original: {$originalEmail}) und die Anfrage #{$anfrageId} wurde gelöscht."
-                : "Die Absage wurde an {$originalEmail} gesendet und die Anfrage #{$anfrageId} wurde gelöscht.";
+                ? "Die Absage wurde im Testmodus an " . config('mail.dev_redirect_email') . " gesendet (Original: {$originalEmail}) und die Anfrage #{$anfrageId} wurde als abgesagt markiert."
+                : "Die Absage wurde an {$originalEmail} gesendet und die Anfrage #{$anfrageId} wurde als abgesagt markiert.";
 
             Notification::make()
                 ->title('Absage erfolgreich versendet')
