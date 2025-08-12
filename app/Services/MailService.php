@@ -189,6 +189,55 @@ class MailService
     }
 
     /**
+     * Spezielle Methode für Warteliste-Benachrichtigung
+     */
+    public function sendAnfrageWarteliste(\App\Models\Anfrage $anfrage, ?string $anmeldefrist = null): bool
+    {
+        if (!$anfrage->email) {
+            return false;
+        }
+
+        // Lade benötigte Relationen
+        $anfrage->load(['markt']);
+
+        $data = [
+            'anfrage' => $anfrage,
+            'anmeldefrist' => $anmeldefrist,
+        ];
+
+        return $this->send(
+            'anfrage_warteliste',
+            $anfrage->email,
+            $data,
+            trim($anfrage->vorname . ' ' . $anfrage->nachname)
+        );
+    }
+
+    /**
+     * Spezielle Methode für Aussteller-Import ohne Buchung
+     */
+    public function sendAnfrageAusstellerImportiert(\App\Models\Anfrage $anfrage): bool
+    {
+        if (!$anfrage->email) {
+            return false;
+        }
+
+        // Lade benötigte Relationen
+        $anfrage->load(['markt']);
+
+        $data = [
+            'anfrage' => $anfrage,
+        ];
+
+        return $this->send(
+            'anfrage_aussteller_importiert',
+            $anfrage->email,
+            $data,
+            trim($anfrage->vorname . ' ' . $anfrage->nachname)
+        );
+    }
+
+    /**
      * Spezielle Methode für tägliche Anfragen-Zusammenfassung
      */
     public function sendDailyAnfragenSummary(\App\Models\User $user): bool
@@ -434,6 +483,34 @@ class MailService
                 }
                 break;
 
+            case 'anfrage_warteliste':
+                $anfrage = $data['anfrage'] ?? null;
+                $anmeldefrist = $data['anmeldefrist'] ?? null;
+                
+                if ($anfrage) {
+                    $name = trim(($anfrage->anrede ? $anfrage->anrede . ' ' : '') . $anfrage->vorname . ' ' . $anfrage->nachname);
+                    
+                    $processedData = [
+                        'markt_name' => $anfrage->markt->name ?? 'Unbekannter Markt',
+                        'anmeldefrist' => $anmeldefrist ?: 'wird noch bekannt gegeben',
+                        'name' => $name,
+                    ];
+                }
+                break;
+
+            case 'anfrage_aussteller_importiert':
+                $anfrage = $data['anfrage'] ?? null;
+                
+                if ($anfrage) {
+                    $name = trim(($anfrage->anrede ? $anfrage->anrede . ' ' : '') . $anfrage->vorname . ' ' . $anfrage->nachname);
+                    
+                    $processedData = [
+                        'markt_name' => $anfrage->markt->name ?? 'Unbekannter Markt',
+                        'name' => $name,
+                    ];
+                }
+                break;
+
             case 'aussteller_absage':
                 $aussteller = $data['aussteller'] ?? null;
 
@@ -674,6 +751,37 @@ class MailService
                 return [
                     'buchung' => $dummyBuchung,
                     'aussteller' => $dummyAussteller,
+                ];
+
+            case 'anfrage_warteliste':
+                $dummyAnfrage = new \stdClass();
+                $dummyAnfrage->anrede = 'Herr';
+                $dummyAnfrage->vorname = $ausstellerDummyData['vorname'];
+                $dummyAnfrage->nachname = $ausstellerDummyData['name'];
+                $dummyAnfrage->email = $ausstellerDummyData['email'];
+                
+                $dummyMarkt = new \stdClass();
+                $dummyMarkt->name = $baseDummyData['markt'];
+                $dummyAnfrage->markt = $dummyMarkt;
+                
+                return [
+                    'anfrage' => $dummyAnfrage,
+                    'anmeldefrist' => '31.12.2024',
+                ];
+
+            case 'anfrage_aussteller_importiert':
+                $dummyAnfrage = new \stdClass();
+                $dummyAnfrage->anrede = 'Herr';
+                $dummyAnfrage->vorname = $ausstellerDummyData['vorname'];
+                $dummyAnfrage->nachname = $ausstellerDummyData['name'];
+                $dummyAnfrage->email = $ausstellerDummyData['email'];
+                
+                $dummyMarkt = new \stdClass();
+                $dummyMarkt->name = $baseDummyData['markt'];
+                $dummyAnfrage->markt = $dummyMarkt;
+                
+                return [
+                    'anfrage' => $dummyAnfrage,
                 ];
 
             case 'aussteller_absage':

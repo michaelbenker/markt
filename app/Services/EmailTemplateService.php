@@ -42,6 +42,29 @@ class EmailTemplateService
                 ],
             ],
             [
+                'key' => 'anfrage_warteliste',
+                'name' => 'Anfrage auf Warteliste',
+                'subject' => 'Ihre Anmeldung - {{markt_name}}',
+                'description' => 'E-Mail wenn eine Anfrage auf die Warteliste gesetzt wird',
+                'content' => $this->getAnfrageWartelisteTemplate(),
+                'available_variables' => [
+                    ['variable' => 'markt_name', 'description' => 'Name des Marktes'],
+                    ['variable' => 'anmeldefrist', 'description' => 'Datum der Anmeldefrist'],
+                    ['variable' => 'name', 'description' => 'Name des Anfragenden'],
+                ],
+            ],
+            [
+                'key' => 'anfrage_aussteller_importiert',
+                'name' => 'Aussteller in Datenbank aufgenommen',
+                'subject' => 'Ihre Anfrage für {{markt_name}}',
+                'description' => 'E-Mail wenn Aussteller ohne Buchung in Datenbank aufgenommen wird',
+                'content' => $this->getAnfrageAusstellerImportiertTemplate(),
+                'available_variables' => [
+                    ['variable' => 'markt_name', 'description' => 'Name des Marktes'],
+                    ['variable' => 'name', 'description' => 'Name des Anfragenden'],
+                ],
+            ],
+            [
                 'key' => 'aussteller_absage',
                 'name' => 'Aussteller-Absage',
                 'subject' => 'Absage für Ihre Standanfrage - {{markt_name}}',
@@ -129,6 +152,44 @@ Wir haben Ihre Buchungsanfrage erhalten und werden uns in Kürze bei Ihnen melde
 {{bemerkung}}
 
 Bei Rückfragen antworten Sie einfach auf diese E-Mail.
+
+Mit freundlichen Grüßen  
+Ihr Markt-Team';
+    }
+
+    private function getAnfrageWartelisteTemplate(): string
+    {
+        return '# Ihre Anmeldung für {{markt_name}}
+
+Sehr geehrte/r {{name}},
+
+vielen Dank für Ihre Anmeldung!
+
+Die Anmeldefrist endet am **{{anmeldefrist}}**.
+
+Wir melden uns bei Ihnen, sobald die Entscheidung über die Teilnehmenden getroffen ist.
+
+Bei Rückfragen stehen wir Ihnen gerne zur Verfügung.
+
+Mit freundlichen Grüßen  
+Ihr Markt-Team';
+    }
+
+    private function getAnfrageAusstellerImportiertTemplate(): string
+    {
+        return '# Ihre Anfrage für {{markt_name}}
+
+Sehr geehrte/r {{name}},
+
+vielen Dank für Ihr Interesse an unserem Markt **{{markt_name}}**.
+
+Für diesen Markt können wir Ihnen derzeit leider keine Zusage erteilen.
+
+Wir haben Ihre Daten jedoch in unsere Datenbank aufgenommen und werden Sie gerne bei zukünftigen Märkten berücksichtigen.
+
+Sollten sich kurzfristig Änderungen ergeben oder Plätze frei werden, melden wir uns umgehend bei Ihnen.
+
+Bei Fragen stehen wir Ihnen gerne zur Verfügung.
 
 Mit freundlichen Grüßen  
 Ihr Markt-Team';

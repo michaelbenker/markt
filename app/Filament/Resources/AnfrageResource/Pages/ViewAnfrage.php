@@ -372,10 +372,13 @@ class ViewAnfrage extends ViewRecord
             return $this->redirect(\App\Filament\Resources\AusstellerResource::getUrl('edit', ['record' => $existingAussteller->id]));
         }
 
-        // Nur Sonstiges-Text aus Warenangebot in die Aussteller-Bemerkung
-        $ausstellerBemerkung = null;
+        // Bemerkung mit Markt-Information erstellen
+        $ausstellerBemerkung = "Bewerbung für: " . ($a->markt->name ?? 'Unbekannter Markt');
         if (is_array($a->warenangebot) && isset($a->warenangebot['sonstiges'])) {
-            $ausstellerBemerkung = "Sonstiges Warenangebot: " . $a->warenangebot['sonstiges'];
+            $ausstellerBemerkung .= "\nSonstiges Warenangebot: " . $a->warenangebot['sonstiges'];
+        }
+        if ($a->bemerkung) {
+            $ausstellerBemerkung .= "\nAnfrage-Bemerkung: " . $a->bemerkung;
         }
 
         $aus = Aussteller::create([
@@ -390,7 +393,7 @@ class ViewAnfrage extends ViewRecord
             'land' => $a->land,
             'telefon' => $a->telefon,
             'email' => $a->email,
-            'bemerkung' => $ausstellerBemerkung,  // Nur Sonstiges, nicht die Anfrage-Bemerkung
+            'bemerkung' => $ausstellerBemerkung,
             'steuer_id' => $a->steuer_id,
             'handelsregisternummer' => $a->handelsregisternummer,
             'stand' => $a->stand,
@@ -411,17 +414,67 @@ class ViewAnfrage extends ViewRecord
             $aus->tags()->attach($this->selectedTags);
         }
 
-        // Anfrage Status auf gebucht setzen
-        $a->status = 'gebucht';
+        // Anfrage Status auf aussteller_importiert setzen
+        $a->status = 'aussteller_importiert';
         $a->save();
 
-        Notification::make()
-            ->title('Aussteller erfolgreich angelegt')
-            ->body('Der Aussteller wurde ohne Buchung erstellt.')
-            ->success()
-            ->send();
+        // E-Mail senden
+        $mailService = new \App\Services\MailService();
+        $result = $mailService->sendAnfrageAusstellerImportiert($a);
+        
+        if ($result) {
+            Notification::make()
+                ->title('Aussteller erfolgreich angelegt')
+                ->body('Der Aussteller wurde ohne Buchung erstellt und eine Benachrichtigungs-E-Mail wurde versendet.')
+                ->success()
+                ->send();
+        } else {
+            Notification::make()
+                ->title('Aussteller angelegt')
+                ->body('Der Aussteller wurde erstellt, aber die E-Mail konnte nicht versendet werden.')
+                ->warning()
+                ->send();
+        }
 
         return $this->redirect(\App\Filament\Resources\AusstellerResource::getUrl('edit', ['record' => $aus->id]));
+    }
+
+    /**
+     * Anfrage auf Warteliste setzen
+     */
+    public function aufWartelisteSetzen()
+    {
+        $anfrage = $this->getCurrentAnfrage();
+        
+        // Status auf warteschlange setzen
+        $anfrage->update(['status' => 'warteschlange']);
+        
+        // E-Mail senden
+        $mailService = new \App\Services\MailService();
+        
+        // Optional: Anmeldefrist könnte aus dem Markt kommen
+        // Hier verwenden wir ein festes Datum als Beispiel
+        // Sie können das anpassen, um das Datum aus dem Markt zu holen
+        $anmeldefrist = now()->addDays(14)->format('d.m.Y');
+        
+        $result = $mailService->sendAnfrageWarteliste($anfrage, $anmeldefrist);
+        
+        if ($result) {
+            Notification::make()
+                ->title('Anfrage auf Warteliste gesetzt')
+                ->body('Die Bestätigungs-E-Mail wurde versendet.')
+                ->success()
+                ->send();
+        } else {
+            Notification::make()
+                ->title('Fehler beim E-Mail-Versand')
+                ->body('Die Anfrage wurde auf Warteliste gesetzt, aber die E-Mail konnte nicht versendet werden.')
+                ->warning()
+                ->send();
+        }
+        
+        // Zurück zur Anfragen-Übersicht
+        return redirect()->route('filament.admin.resources.anfrage.index');
     }
 
     /**

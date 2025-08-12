@@ -281,7 +281,7 @@
                 </div>
 
                 <div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-5">
                         <form wire:submit.prevent="ausstellerNeuUndBuchung()">
                             <x-filament::button color="success" class="w-full" type="submit" icon="heroicon-o-plus-circle">
                                 Buchung anlegen
@@ -290,6 +290,11 @@
                         <form wire:submit.prevent="ausstellerNeuOhneBuchung()">
                             <x-filament::button color="info" class="w-full" type="submit" icon="heroicon-o-user-plus">
                                 Nur Aussteller anlegen
+                            </x-filament::button>
+                        </form>
+                        <form wire:submit.prevent="aufWartelisteSetzen()">
+                            <x-filament::button color="warning" class="w-full" type="submit" icon="heroicon-o-clock">
+                                Auf Warteliste setzen
                             </x-filament::button>
                         </form>
                         <form wire:submit.prevent="ausstellerAbsagen()">
