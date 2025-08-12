@@ -29,7 +29,7 @@ class ViewAnfrage extends ViewRecord
     public function mount($record): void
     {
         parent::mount($record);
-        
+
         $this->anfrageId = $this->record->id;
         $this->matchingAussteller = $this->getMatchingAussteller();
 
@@ -42,7 +42,7 @@ class ViewAnfrage extends ViewRecord
             }
         }
     }
-    
+
     protected function getHeaderActions(): array
     {
         return [
@@ -134,12 +134,42 @@ class ViewAnfrage extends ViewRecord
         if (!$markt) {
             return 'Anfrage-Details';
         }
+
         $name = $markt->name;
-        $termine = $markt->termine?->map(function ($t) {
-            return \Carbon\Carbon::parse($t->start)->format('d.m.Y');
-        })->toArray() ?? [];
-        $termineStr = count($termine) ? ' (' . implode(', ', $termine) . ')' : '';
-        return "Anfrage: " . $name . $termineStr;
+
+        return "Anfrage: " . $name;
+    }
+
+    public function getWarenangebotText(): string
+    {
+        $anfrage = $this->record;
+
+        if (!is_array($anfrage->warenangebot)) {
+            return $anfrage->warenangebot ?? '';
+        }
+
+        // Neue Struktur mit subkategorien
+        if (isset($anfrage->warenangebot['subkategorien'])) {
+            $subkategorienIds = $anfrage->warenangebot['subkategorien'];
+            $sonstiges = $anfrage->warenangebot['sonstiges'] ?? null;
+
+            $namen = [];
+            if (!empty($subkategorienIds)) {
+                $namen = \App\Models\Subkategorie::whereIn('id', $subkategorienIds)->pluck('name')->toArray();
+
+                // Wenn Sonstiges vorhanden und ID 24 in den Subkategorien ist, füge den Text hinzu
+                if ($sonstiges && in_array(24, $subkategorienIds)) {
+                    $namen[] = "Sonstiges: " . $sonstiges;
+                }
+            } elseif ($sonstiges) {
+                $namen[] = "Sonstiges: " . $sonstiges;
+            }
+
+            return implode(', ', $namen);
+        }
+
+        // Alte Struktur (falls vorhanden)
+        return implode(', ', $anfrage->warenangebot);
     }
 
     protected function getCurrentAnfrage()
@@ -161,17 +191,23 @@ class ViewAnfrage extends ViewRecord
         }
 
         $markt = $a->markt;
-        $termin = $markt?->termine?->sortBy('start')->first();
         // Wunschstandort verwenden, falls angegeben, sonst ersten verfügbaren Standort
         $standort = $a->wunschStandort ?? $markt?->standorte?->first();
-        $maxStandplatz = Buchung::where('termin_id', $termin?->id)
+
+        // Standplatz bestimmen - verwende ersten Termin für die Berechnung
+        $ersterTermin = $a->termine->first();
+        $maxStandplatz = Buchung::whereJsonContains('termine', $ersterTermin?->id)
             ->where('standort_id', $standort?->id)
             ->max('standplatz');
         $nextStandplatz = $maxStandplatz ? ((int)$maxStandplatz + 1) : 1;
 
+        // Termin-IDs aus der Anfrage übernehmen
+        $terminIds = $a->termine->pluck('id')->toArray();
+
         $buchung = Buchung::create([
             'status' => 'bearbeitung',
-            'termin_id' => $termin?->id,
+            'markt_id' => $markt?->id,
+            'termine' => $terminIds, // Alle Termine aus der Anfrage
             'standort_id' => $standort?->id,
             'standplatz' => $nextStandplatz,
             'aussteller_id' => $ausstellerId,
@@ -179,6 +215,7 @@ class ViewAnfrage extends ViewRecord
             'warenangebot' => $a->warenangebot,
             'herkunft' => $a->herkunft,
             'werbematerial' => $a->werbematerial,
+            'bemerkung' => $a->bemerkung,  // Bemerkung aus Anfrage in Buchung übernehmen
         ]);
 
         // Gewünschte Zusatzleistungen aus Anfrage importieren
@@ -198,8 +235,8 @@ class ViewAnfrage extends ViewRecord
             'details' => 'Buchung wurde aus Anfrage #' . $a->id . ' importiert.',
             'daten' => $a instanceof Anfrage ? $a->toArray() : [],
         ]);
-        // Anfrage als importiert markieren
-        $a->importiert = true;
+        // Anfrage Status auf gebucht setzen
+        $a->status = 'gebucht';
         $a->save();
         Notification::make()
             ->title('Buchung erfolgreich erstellt')
@@ -220,8 +257,8 @@ class ViewAnfrage extends ViewRecord
 
             $this->updateAusstellerFromAnfrage($aussteller, $anfrage);
 
-            // Anfrage als importiert markieren
-            $anfrage->update(['importiert' => true]);
+            // Anfrage Status auf aussteller_importiert setzen
+            $anfrage->update(['status' => 'aussteller_importiert']);
 
             Notification::make()
                 ->title('Aussteller aktualisiert')
@@ -267,6 +304,12 @@ class ViewAnfrage extends ViewRecord
             return $this->createBuchung($existingAussteller->id);
         }
 
+        // Nur Sonstiges-Text aus Warenangebot in die Aussteller-Bemerkung
+        $ausstellerBemerkung = null;
+        if (is_array($a->warenangebot) && isset($a->warenangebot['sonstiges'])) {
+            $ausstellerBemerkung = "Sonstiges Warenangebot: " . $a->warenangebot['sonstiges'];
+        }
+
         $aus = Aussteller::create([
             'firma' => $a->firma,
             'anrede' => $a->anrede,
@@ -279,6 +322,7 @@ class ViewAnfrage extends ViewRecord
             'land' => $a->land,
             'telefon' => $a->telefon,
             'email' => $a->email,
+            'bemerkung' => $ausstellerBemerkung,  // Nur Sonstiges, nicht die Anfrage-Bemerkung
             'steuer_id' => $a->steuer_id,
             'handelsregisternummer' => $a->handelsregisternummer,
             'stand' => $a->stand,
@@ -289,7 +333,7 @@ class ViewAnfrage extends ViewRecord
 
         // Medien von Anfrage zu Aussteller verschieben
         $this->moveMedienFromAnfrageToAussteller($a, $aus);
-        
+
         // Subkategorien aus Anfrage importieren
         $this->importSubkategorienFromAnfrage($a, $aus);
 
@@ -316,6 +360,12 @@ class ViewAnfrage extends ViewRecord
             return $this->redirect(\App\Filament\Resources\AusstellerResource::getUrl('edit', ['record' => $existingAussteller->id]));
         }
 
+        // Nur Sonstiges-Text aus Warenangebot in die Aussteller-Bemerkung
+        $ausstellerBemerkung = null;
+        if (is_array($a->warenangebot) && isset($a->warenangebot['sonstiges'])) {
+            $ausstellerBemerkung = "Sonstiges Warenangebot: " . $a->warenangebot['sonstiges'];
+        }
+
         $aus = Aussteller::create([
             'firma' => $a->firma,
             'anrede' => $a->anrede,
@@ -328,7 +378,7 @@ class ViewAnfrage extends ViewRecord
             'land' => $a->land,
             'telefon' => $a->telefon,
             'email' => $a->email,
-            'bemerkung' => $a->bemerkung,
+            'bemerkung' => $ausstellerBemerkung,  // Nur Sonstiges, nicht die Anfrage-Bemerkung
             'steuer_id' => $a->steuer_id,
             'handelsregisternummer' => $a->handelsregisternummer,
             'stand' => $a->stand,
@@ -339,12 +389,12 @@ class ViewAnfrage extends ViewRecord
 
         // Medien von Anfrage zu Aussteller verschieben
         $this->moveMedienFromAnfrageToAussteller($a, $aus);
-        
+
         // Subkategorien aus Anfrage importieren
         $this->importSubkategorienFromAnfrage($a, $aus);
 
-        // Anfrage als importiert markieren
-        $a->importiert = true;
+        // Anfrage Status auf gebucht setzen
+        $a->status = 'gebucht';
         $a->save();
 
         Notification::make()
@@ -461,6 +511,13 @@ class ViewAnfrage extends ViewRecord
      */
     private function updateAusstellerFromAnfrage(Aussteller $aussteller, Anfrage $anfrage): void
     {
+        // Sonstiges-Text aus Warenangebot extrahieren und zur bestehenden Aussteller-Bemerkung hinzufügen
+        $bemerkung = $aussteller->bemerkung;  // Bestehende Bemerkung des Ausstellers behalten
+        if (is_array($anfrage->warenangebot) && isset($anfrage->warenangebot['sonstiges'])) {
+            $sonstigesText = "Sonstiges Warenangebot: " . $anfrage->warenangebot['sonstiges'];
+            $bemerkung = $bemerkung ? $bemerkung . "\n\n" . $sonstigesText : $sonstigesText;
+        }
+
         // Aussteller-Daten aktualisieren
         $aussteller->update([
             'firma' => $anfrage->firma,
@@ -474,7 +531,7 @@ class ViewAnfrage extends ViewRecord
             'land' => $anfrage->land,
             'telefon' => $anfrage->telefon,
             'email' => $anfrage->email,
-            'bemerkung' => $anfrage->bemerkung,
+            'bemerkung' => $bemerkung,  // Nur Sonstiges wird hinzugefügt, nicht die Anfrage-Bemerkung
             'steuer_id' => $anfrage->steuer_id,
             'handelsregisternummer' => $anfrage->handelsregisternummer,
             'stand' => $anfrage->stand,
@@ -485,7 +542,7 @@ class ViewAnfrage extends ViewRecord
 
         // Medien von Anfrage zu Aussteller verschieben
         $this->moveMedienFromAnfrageToAussteller($anfrage, $aussteller);
-        
+
         // Subkategorien aus Anfrage importieren
         $this->importSubkategorienFromAnfrage($anfrage, $aussteller);
     }
@@ -534,9 +591,16 @@ class ViewAnfrage extends ViewRecord
             return;
         }
 
+        // Neue Struktur: warenangebot hat 'subkategorien' Array
+        $subkategorienIds = $anfrage->warenangebot['subkategorien'] ?? [];
+
+        if (empty($subkategorienIds)) {
+            return;
+        }
+
         $validSubkategorieIds = [];
 
-        foreach ($anfrage->warenangebot as $subkategorieId) {
+        foreach ($subkategorienIds as $subkategorieId) {
             // Prüfen ob Subkategorie existiert
             if (\App\Models\Subkategorie::find($subkategorieId)) {
                 $validSubkategorieIds[] = $subkategorieId;
@@ -548,7 +612,7 @@ class ViewAnfrage extends ViewRecord
         if (!empty($validSubkategorieIds)) {
             // Subkategorien dem Aussteller zuordnen
             $aussteller->subkategorien()->sync($validSubkategorieIds);
-            
+
             Log::info("Subkategorien [" . implode(', ', $validSubkategorieIds) . "] importiert für Aussteller #{$aussteller->id} aus Anfrage #{$anfrage->id}");
         }
     }

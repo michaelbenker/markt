@@ -72,6 +72,14 @@ class AusstellerImportSeeder extends Seeder
                     // sonst bleibt wie sie ist
                 }
 
+                // Generiere zufälliges Rating zwischen 3 und 5 Sternen
+                $rating = rand(3, 5);
+                $ratingBemerkungen = [
+                    3 => 'Solider Aussteller mit Verbesserungspotenzial',
+                    4 => 'Guter Aussteller mit ansprechendem Angebot',
+                    5 => 'Hervorragender Aussteller, sehr empfehlenswert'
+                ];
+
                 Aussteller::create([
                     'firma' => $row['firma'] ?? null,
                     'anrede' => $row['anrede'] ?? null,
@@ -88,8 +96,8 @@ class AusstellerImportSeeder extends Seeder
                     'email' => $row['email'] ?? null,
                     'briefanrede' => $row['briefanrede'] ?? null,
                     'bemerkung' => $row['bemerkung'] ?? null,
-                    'rating' => 0,
-                    'rating_bemerkung' => null,
+                    'rating' => $rating,
+                    'rating_bemerkung' => $ratingBemerkungen[$rating],
                 ]);
 
                 Log::info("Zeile " . ($index + 2) . ": Erfolgreich importiert", [

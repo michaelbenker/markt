@@ -24,6 +24,11 @@ class TerminSeeder extends Seeder
                 'start' => '2025-12-13',
                 'ende' => '2025-12-14',
             ],
+            [
+                'markt_id' => 2,
+                'start' => '2026-06-13',
+                'ende' => '2026-06-14',
+            ],
         ];
 
         foreach ($termine as $termin) {

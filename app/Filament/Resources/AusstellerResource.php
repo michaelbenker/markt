@@ -21,7 +21,6 @@ use Filament\Forms\Components\Repeater;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
-use Illuminate\Support\Facades\Mail;
 use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Collection;
 use Maatwebsite\Excel\Facades\Excel;
@@ -55,7 +54,10 @@ class AusstellerResource extends Resource
                         Tab::make('Allgemein')
                             ->schema([
                                 Grid::make(2)->schema([
-                                    TextInput::make('firma')->label('Firma')->columnSpan(2),
+                                    TextInput::make('firma')
+                                        ->label('Firma')
+                                        ->columnSpan(2)
+                                        ->dehydrateStateUsing(fn(?string $state): ?string => $state ? trim($state) : null),
                                     Grid::make(2)->schema([
                                         Select::make('anrede')
                                             ->label('Anrede')
@@ -65,14 +67,34 @@ class AusstellerResource extends Resource
                                                 'Divers' => 'Divers',
                                             ])
                                             ->nullable(),
-                                        TextInput::make('briefanrede')->label('Briefanrede'),
+                                        TextInput::make('briefanrede')
+                                            ->label('Briefanrede')
+                                            ->dehydrateStateUsing(fn(?string $state): ?string => $state ? trim($state) : null),
                                     ])->columnSpan(2),
-                                    TextInput::make('vorname')->label('Vorname')->required(),
-                                    TextInput::make('name')->label('Name')->required(),
-                                    TextInput::make('strasse')->label('Straße')->required(),
-                                    TextInput::make('hausnummer')->label('Hausnummer')->nullable(),
-                                    TextInput::make('plz')->label('PLZ')->required(),
-                                    TextInput::make('ort')->label('Ort')->required(),
+                                    TextInput::make('vorname')
+                                        ->label('Vorname')
+                                        ->required()
+                                        ->dehydrateStateUsing(fn(string $state): string => trim($state)),
+                                    TextInput::make('name')
+                                        ->label('Name')
+                                        ->required()
+                                        ->dehydrateStateUsing(fn(string $state): string => trim($state)),
+                                    TextInput::make('strasse')
+                                        ->label('Straße')
+                                        ->required()
+                                        ->dehydrateStateUsing(fn(string $state): string => trim($state)),
+                                    TextInput::make('hausnummer')
+                                        ->label('Hausnummer')
+                                        ->nullable()
+                                        ->dehydrateStateUsing(fn(?string $state): ?string => $state ? trim($state) : null),
+                                    TextInput::make('plz')
+                                        ->label('PLZ')
+                                        ->required()
+                                        ->dehydrateStateUsing(fn(string $state): string => trim($state)),
+                                    TextInput::make('ort')
+                                        ->label('Ort')
+                                        ->required()
+                                        ->dehydrateStateUsing(fn(string $state): string => trim($state)),
                                     Select::make('land')
                                         ->label('Land')
                                         ->options([
@@ -87,23 +109,31 @@ class AusstellerResource extends Resource
                                         ->default('Deutschland')
                                         ->columnSpan(2),
                                     Grid::make(2)->schema([
-                                        TextInput::make('telefon')->label('Telefon')->tel(),
-                                        TextInput::make('mobil')->label('Mobil')->tel(),
+                                        TextInput::make('telefon')
+                                            ->label('Telefon')
+                                            ->tel()
+                                            ->dehydrateStateUsing(fn(?string $state): ?string => $state ? trim($state) : null),
+                                        TextInput::make('mobil')
+                                            ->label('Mobil')
+                                            ->tel()
+                                            ->dehydrateStateUsing(fn(?string $state): ?string => $state ? trim($state) : null),
                                     ])->columnSpan(2),
                                     Grid::make(2)->schema([
                                         TextInput::make('email')
                                             ->label('E-Mail')
                                             ->email()
-                                            ->required(),
+                                            ->required()
+                                            ->dehydrateStateUsing(fn(string $state): string => trim($state)),
                                     ])->columnSpan(2),
                                     Grid::make(2)->schema([
                                         TextInput::make('steuer_id')
-                                            ->label('Steuer-ID'),
+                                            ->label('Steuer-ID')
+                                            ->dehydrateStateUsing(fn(?string $state): ?string => $state ? trim($state) : null),
                                         TextInput::make('handelsregisternummer')
-                                            ->label('Handelsregisternummer'),
+                                            ->label('Handelsregisternummer')
+                                            ->dehydrateStateUsing(fn(?string $state): ?string => $state ? trim($state) : null),
                                     ])->columnSpan(2),
                                 ]),
-                                Textarea::make('bemerkung')->label('Bemerkung')->rows(4)->columnSpan(2),
                             ]),
                         Tab::make('Kategorie & Stand')
                             ->schema([
@@ -132,6 +162,7 @@ class AusstellerResource extends Resource
                                             ->when($kategorieId, fn($query) => $query->where('kategorie_id', $kategorieId))
                                             ->pluck('name', 'id');
                                     }),
+                                Textarea::make('bemerkung')->label('Bemerkung')->rows(4),
                                 Section::make('Stand')
                                     ->schema([
                                         TextInput::make('stand.laenge')
@@ -284,7 +315,7 @@ class AusstellerResource extends Resource
                     ->icon('heroicon-o-envelope')
                     ->action(function ($record) {
                         try {
-                            \Mail::raw('Dies ist eine Test-E-Mail von der Markt-App.', function ($message) use ($record) {
+                            \Illuminate\Support\Facades\Mail::raw('Dies ist eine Test-E-Mail von der Markt-App.', function ($message) use ($record) {
                                 $message->to($record->email)
                                     ->subject('Test-E-Mail Markt-App');
                             });

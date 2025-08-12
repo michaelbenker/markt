@@ -7,6 +7,23 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
             <div>
                 <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                    <dt class="font-semibold">Markt</dt>
+                    <dd>{{ $a->markt->name ?? 'Unbekannt' }}</dd>
+
+                    <dt class="font-semibold">Gewünschte Termine</dt>
+                    <dd>
+                        @if($a->termine && count($a->termine) > 0)
+                        @foreach($a->termine as $termin)
+                        <div>{{ \Carbon\Carbon::parse($termin->start)->format('d.m.Y') }} - {{ \Carbon\Carbon::parse($termin->ende)->format('d.m.Y') }}</div>
+                        @endforeach
+                        @else
+                        Keine Termine ausgewählt
+                        @endif
+                    </dd>
+
+                    <dt class="md:col-span-2 border-t pt-2"></dt>
+                    <dd class="hidden"></dd>
+
                     <dt class="font-semibold">Firma</dt>
                     <dd>{{ $a->firma }}</dd>
 
@@ -25,6 +42,9 @@
                     <dt class="font-semibold">E-Mail</dt>
                     <dd>{{ $a->email }}</dd>
 
+                    <dt class="md:col-span-2 border-t pt-2"></dt>
+                    <dd class="hidden"></dd>
+
                     <dt class="font-semibold">Stand</dt>
                     <dd>
                         @if(is_array($a->stand))
@@ -35,20 +55,13 @@
                     </dd>
 
                     <dt class="font-semibold">Warenangebot</dt>
-                    <dd>
-                        @if(is_array($a->warenangebot))
-                        {{ implode(', ', \App\Models\Subkategorie::whereIn('id', $a->warenangebot)->pluck('name')->toArray()) }}
-                        @else
-                        {{ $a->warenangebot }}
-                        @endif
-                    </dd>
+                    <dd>{{ $this->getWarenangebotText() }}</dd>
 
                     <dt class="font-semibold">Herkunft</dt>
                     <dd>
                         @if(is_array($a->herkunft))
                         Eigenfertigung: {{ $a->herkunft['eigenfertigung'] ?? '-' }}%,
-                        Industrieware (nicht Entwicklungsländer): {{ $a->herkunft['industrieware_nicht_entwicklungslaender'] ?? '-' }}%,
-                        Industrieware (Entwicklungsländer): {{ $a->herkunft['industrieware_entwicklungslaender'] ?? '-' }}%
+                        Industrieware: {{ $a->herkunft['industrieware'] ?? '-' }}%
                         @else
                         {{ $a->herkunft }}
                         @endif
@@ -64,6 +77,9 @@
                     <dt class="font-semibold">Wunschstandort</dt>
                     <dd>{{ $a->wunschStandort->name }}</dd>
                     @endif
+
+                    <dt class="md:col-span-2 border-t pt-2"></dt>
+                    <dd class="hidden"></dd>
 
                     @if($a->soziale_medien)
                     <dt class="font-semibold">Soziale Medien</dt>
@@ -84,18 +100,24 @@
                     @endif
 
                     @if($a->wuensche_zusatzleistungen && count($a->wuensche_zusatzleistungen) > 0)
+
+                    <dt class="md:col-span-2 border-t pt-2"></dt>
+                    <dd class="hidden"></dd>
+
                     <dt class="font-semibold">Wünsche für Zusatzleistungen</dt>
                     <dd>
                         @foreach($a->gewuenschteLeistungen() as $leistung)
-                            <span class="inline-block bg-gray-100 rounded px-2 py-1 text-sm mr-2 mb-1">
-                                {{ $leistung->name }} 
-                                <span class="text-gray-600">({{ number_format($leistung->preis / 100, 2, ',', '.') }} € / {{ $leistung->einheit }})</span>
-                            </span>
+                        <span class="inline-block bg-gray-100 rounded px-2 py-1 text-sm mr-2 mb-1">
+                            {{ $leistung->name }}
+                            <span class="text-gray-600">({{ number_format($leistung->preis / 100, 2, ',', '.') }} € / {{ $leistung->einheit }})</span>
+                        </span>
                         @endforeach
                     </dd>
                     @endif
 
                     @if($a->werbematerial)
+                    <dt class="md:col-span-2 border-t pt-2"></dt>
+                    <dd class="hidden"></dd>
                     <dt class="font-semibold">Gewünschtes Werbematerial</dt>
                     <dd>
                         @if(is_array($a->werbematerial) && count($a->werbematerial) > 0)
@@ -117,6 +139,9 @@
                         @endif
                     </dd>
                     @endif
+
+                    <dt class="md:col-span-2 border-t pt-2"></dt>
+                    <dd class="hidden"></dd>
 
                     <dt class="font-semibold">Bemerkung</dt>
                     <dd>{{ $a->bemerkung }}</dd>

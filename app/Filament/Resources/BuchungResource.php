@@ -27,6 +27,7 @@ use Filament\Forms\Components\ToggleButtons;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Filament\Forms\Components\Actions\Action;
+use Filament\Forms\Components\CheckboxList;
 
 class BuchungResource extends Resource
 {
@@ -43,7 +44,7 @@ class BuchungResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->disabled(fn ($record) => $record && $record->status === 'abgelehnt')
+            ->disabled(fn($record) => $record && $record->status === 'abgelehnt')
             ->schema([
                 Tabs::make('Buchung')
                     ->columnSpan('full')
@@ -75,10 +76,53 @@ class BuchungResource extends Resource
                                     ])
                                     ->inline()
                                     ->required(),
-                                Select::make('termin_id')
-                                    ->relationship('termin', 'start')
-                                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->markt->name} | " . self::formatDateRange($record->start, $record->ende))
+                                Select::make('markt_id')
+                                    ->label('Markt')
+                                    ->options(function () {
+                                        // Nur Märkte mit zukünftigen Terminen anzeigen
+                                        return \App\Models\Markt::whereHas('termine', function ($query) {
+                                            $query->where('start', '>', now());
+                                        })->pluck('name', 'id');
+                                    })
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        // Wenn Markt gewechselt wird, Termine zurücksetzen
+                                        $set('termine', []);
+                                    })
                                     ->required(),
+                                CheckboxList::make('termine')
+                                    ->label('Termine')
+                                    ->options(function (callable $get, $record) {
+                                        $marktId = $get('markt_id');
+                                        if (!$marktId) {
+                                            return [];
+                                        }
+                                        
+                                        // Bei bestehenden Records: Alle Termine des Marktes anzeigen (nicht nur zukünftige)
+                                        $query = \App\Models\Termin::where('markt_id', $marktId);
+                                        
+                                        // Bei neuen Records: Nur zukünftige Termine
+                                        if (!$record) {
+                                            $query->where('start', '>', now());
+                                        }
+                                        
+                                        return $query->orderBy('start')
+                                            ->get()
+                                            ->mapWithKeys(function ($termin) {
+                                                $label = self::formatDateRange($termin->start, $termin->ende);
+                                                return [$termin->id => $label];
+                                            });
+                                    })
+                                    ->default(function ($record) {
+                                        // Bei bestehenden Records: Gespeicherte Termine vorauswählen
+                                        if ($record && $record->termine) {
+                                            return is_array($record->termine) ? $record->termine : json_decode($record->termine, true);
+                                        }
+                                        return [];
+                                    })
+                                    ->columns(1)
+                                    ->required()
+                                    ->visible(fn (callable $get) => $get('markt_id') !== null),
                                 Select::make('standort_id')->relationship('standort', 'name')->required(),
                                 TextInput::make('standplatz')->required(),
                                 Select::make('aussteller_id')
@@ -96,18 +140,12 @@ class BuchungResource extends Resource
                                             ]))
                                             ->visible(fn($record) => $record?->aussteller_id !== null)
                                     ),
+                                Textarea::make('bemerkung')->label('Bemerkung')->rows(4),
                             ]),
                         Tab::make('Waren')
                             ->schema([
                                 Section::make('Stand')
                                     ->schema([
-                                        // Select::make('stand.art')
-                                        //     ->label('Art')
-                                        //     ->options([
-                                        //         'klein' => 'Klein',
-                                        //         'mittel' => 'Mittel',
-                                        //         'groß' => 'Groß',
-                                        //     ]),
                                         TextInput::make('stand.laenge')
                                             ->label('Länge (m)')
                                             ->numeric(),
@@ -125,13 +163,13 @@ class BuchungResource extends Resource
                                     ->options(function () {
                                         $kategorien = Kategorie::with('subkategorien')->get();
                                         $options = [];
-                                        
+
                                         foreach ($kategorien as $kategorie) {
                                             foreach ($kategorie->subkategorien as $subkategorie) {
                                                 $options[$subkategorie->id] = $kategorie->name . ' → ' . $subkategorie->name;
                                             }
                                         }
-                                        
+
                                         return $options;
                                     })
                                     ->searchable()
@@ -144,14 +182,8 @@ class BuchungResource extends Resource
                                             ->minValue(0)
                                             ->maxValue(100)
                                             ->suffix('%'),
-                                        TextInput::make('herkunft.industrieware_nicht_entwicklungslaender')
-                                            ->label('Industrieware (nicht Entwicklungsland) (%)')
-                                            ->numeric()
-                                            ->minValue(0)
-                                            ->maxValue(100)
-                                            ->suffix('%'),
-                                        TextInput::make('herkunft.industrieware_entwicklungslaender')
-                                            ->label('Industrieware (Entwicklungsland) (%)')
+                                        TextInput::make('herkunft.industrieware')
+                                            ->label('Industrieware (%)')
                                             ->numeric()
                                             ->minValue(0)
                                             ->maxValue(100)

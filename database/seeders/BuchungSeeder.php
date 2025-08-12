@@ -75,9 +75,13 @@ class BuchungSeeder extends Seeder
         $rechnungStatus = ['draft', 'sent', 'paid', 'overdue', 'canceled', 'partial'];
 
         for ($i = 1; $i <= 100; $i++) {
+            $terminId = rand(1, 2);
+            $marktId = $terminId == 1 ? 1 : 2; // Termin 1 gehört zu Markt 1, Termin 2 zu Markt 2
+            
             $buchung = Buchung::create([
                 'status' => $status[array_rand($status)],
-                'termin_id' => rand(1, 2),
+                'markt_id' => $marktId,
+                'termine' => [$terminId], // Array von Termin-IDs
                 'standort_id' => 1,
                 'standplatz' => $i,
                 'aussteller_id' => $i,

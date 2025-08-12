@@ -4,19 +4,6 @@
 
         <p class="mb-6 text-sm text-gray-600">Felder mit <span class="text-red-600 font-bold">*</span> sind Pflichtfelder.</p>
 
-        <!-- Vorausgewählter Termin -->
-        @if($selectedTerminId)
-        @php
-        $selectedTermin = $termine->firstWhere('id', $selectedTerminId);
-        @endphp
-        @if($selectedTermin)
-        <h2 class="text-2xl font-bold mb-3">
-            {{ $selectedTermin->markt->name }}
-            ({{ \Carbon\Carbon::parse($selectedTermin->start)->format('d.m.Y') }})
-        </h2>
-        @endif
-        @endif
-
         @if ($errors->any())
         <div class="bg-red-100 text-red-800 px-4 py-3 rounded mb-6">
             <ul class="list-disc list-inside">
@@ -27,22 +14,78 @@
         </div>
         @endif
 
+        <!-- Markt-Auswahl wenn kein Markt ausgewählt oder mehrere verfügbar -->
+        @if(!$selectedMarkt && $aktiveMaerkte->count() > 1)
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">Markt auswählen</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach($aktiveMaerkte as $markt)
+                <a href="{{ route('anfrage.create', ['markt' => $markt->slug]) }}"
+                    class="block p-4 border-2 border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition">
+                    <h3 class="font-semibold text-lg">{{ $markt->name }}</h3>
+                    @if($markt->termine->count() > 0)
+                    <p class="text-sm text-gray-600 mt-1">
+                        @if($markt->termine->count() == 1)
+                        {{ $markt->termine->first()->start->format('d.m.Y') }}
+                        @else
+                        {{ $markt->termine->count() }} Termine verfügbar
+                        @endif
+                    </p>
+                    @endif
+                </a>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        <!-- Formular wenn Markt ausgewählt -->
+        @if($selectedMarkt)
         <form action="{{ route('anfrage.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
             @csrf
+
+            <!-- Markt & Termine -->
             <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Termin Auswahl</h2>
-                <div>
-                    <label for="termin" class="block font-medium text-sm text-gray-700">Termin</label>
-                    <select name="termin" id="termin" required
-                        class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="">Bitte wählen Sie einen Termin</option>
-                        @foreach($termine as $termin)
-                        <option value="{{ $termin->id }}" data-markt-id="{{ $termin->markt->id }}" data-markt-slug="{{ $termin->markt->slug }}" {{ $selectedTerminId == $termin->id ? 'selected' : '' }}>
-                            {{ $termin->markt->name }} - {{ \Carbon\Carbon::parse($termin->start)->format('d.m.Y') }} bis {{ \Carbon\Carbon::parse($termin->ende)->format('d.m.Y') }}
-                        </option>
-                        @endforeach
-                    </select>
+                <h2 class="text-xl font-semibold mb-4">{{ $selectedMarkt->name }}</h2>
+
+                @if($selectedTermine->count() == 1)
+                <!-- Nur ein Termin - automatisch ausgewählt -->
+                <input type="hidden" name="termine[]" value="{{ $selectedTermine->first()->id }}">
+                <p class="text-gray-700">
+                    <strong>Termin:</strong>
+                    {{ $selectedTermine->first()->start->format('d.m.Y') }} -
+                    {{ $selectedTermine->first()->ende->format('d.m.Y') }}
+                </p>
+                @else
+                <!-- Mehrere Termine - Checkboxen -->
+                <p class="mb-3 text-sm text-gray-600">Bitte wählen Sie einen oder mehrere Termine aus:</p>
+                <div class="space-y-2">
+                    @foreach($selectedTermine as $termin)
+                    <label class="flex items-start">
+                        <input type="checkbox"
+                            name="termine[]"
+                            value="{{ $termin->id }}"
+                            checked
+                            class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="ps-2">
+                            {{ $termin->start->format('d.m.Y') }} -
+                            {{ $termin->ende->format('d.m.Y') }}
+                            @if($termin->beschreibung)
+                            <span class="text-sm text-gray-600 block">{{ $termin->beschreibung }}</span>
+                            @endif
+                        </span>
+                    </label>
+                    @endforeach
                 </div>
+                @endif
+
+                <!-- Link zum Wechseln des Marktes -->
+                @if($aktiveMaerkte->count() > 1)
+                <div class="mt-3 pt-3 border-t">
+                    <a href="{{ route('anfrage.create') }}" class="text-sm text-indigo-600 hover:text-indigo-500">
+                        Anderen Markt auswählen
+                    </a>
+                </div>
+                @endif
             </div>
 
             <!-- Aussteller Informationen -->
@@ -60,6 +103,7 @@
                         <label for="anrede" class="block font-medium text-sm text-gray-700">Anrede</label>
                         <select name="anrede" id="anrede"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Bitte wählen</option>
                             <option value="Herr" {{ old('anrede') == 'Herr' ? 'selected' : '' }}>Herr</option>
                             <option value="Frau" {{ old('anrede') == 'Frau' ? 'selected' : '' }}>Frau</option>
                             <option value="Divers" {{ old('anrede') == 'Divers' ? 'selected' : '' }}>Divers</option>
@@ -112,7 +156,7 @@
                         <label for="land" class="block font-medium text-sm text-gray-700">Land <span class="text-red-600">*</span></label>
                         <select name="land" id="land" required autocomplete="country"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="Deutschland" {{ old('land') == 'Deutschland' ? 'selected' : '' }}>Deutschland</option>
+                            <option value="Deutschland" {{ old('land', 'Deutschland') == 'Deutschland' ? 'selected' : '' }}>Deutschland</option>
                             <option value="Österreich" {{ old('land') == 'Österreich' ? 'selected' : '' }}>Österreich</option>
                             <option value="Schweiz" {{ old('land') == 'Schweiz' ? 'selected' : '' }}>Schweiz</option>
                             <option value="Italien" {{ old('land') == 'Italien' ? 'selected' : '' }}>Italien</option>
@@ -155,159 +199,13 @@
                             value="{{ old('handelsregisternummer') }}"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
-
-                    <!-- <div>
-                        <label for="homepage" class="block font-medium text-sm text-gray-700">Homepage</label>
-                        <input type="url" name="homepage" id="homepage"
-                            value="{{ old('homepage') }}"
-                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    </div> -->
                 </div>
+
                 <div class="mt-6">
-                    <label for="bereits_ausgestellt" class="block font-medium text-sm text-gray-700">Haben Sie bereits an Märkten in Fürstenfeld teilgenommen?</label>
+                    <label for="bereits_ausgestellt" class="block font-medium text-sm text-gray-700">Haben Sie bereits an Märkten teilgenommen?</label>
                     <textarea name="bereits_ausgestellt" id="bereits_ausgestellt" rows="3"
-                        class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="Bitte geben Sie an, wann und bei welchen Veranstaltungen.">{{ old('bereits_ausgestellt') }}</textarea>
-                </div>
-            </div>
-
-            <!-- Stand Informationen -->
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Stand Informationen</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div>
-                        <label for="stand_laenge" class="block font-medium text-sm text-gray-700">Länge (m)</label>
-                        <input type="number" name="stand[laenge]" id="stand_laenge" step="0.1"
-                            value="{{ old('stand.laenge') }}"
-                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label for="stand_tiefe" class="block font-medium text-sm text-gray-700">Tiefe (m)</label>
-                        <input type="number" name="stand[tiefe]" id="stand_tiefe" step="0.1"
-                            value="{{ old('stand.tiefe') }}"
-                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    </div>
-
-                    <div>
-                        <label for="stand_flaeche" class="block font-medium text-sm text-gray-700">Fläche (m²)</label>
-                        <input type="number" name="stand[flaeche]" id="stand_flaeche" step="0.1"
-                            value="{{ old('stand.flaeche') }}"
-                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    </div>
-                </div>
-                <div class="mt-6">
-                    <label for="wunsch_standort_id" class="block font-medium text-sm text-gray-700">Wunschstandort</label>
-                    <select name="wunsch_standort_id" id="wunsch_standort_id"
-                        class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="">Kein Wunschstandort</option>
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1">Wählen Sie einen Termin aus, um verfügbare Standorte zu sehen.</p>
-                </div>
-            </div>
-
-
-            <!-- Warenangebot -->
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Warenangebot <span class="text-red-600">*</span></h2>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block font-medium text-sm text-gray-700 mb-2">
-                            Warenangebot (Mehrfachauswahl möglich) <span class="text-red-600">*</span>
-                        </label>
-                        <div id="warenangebot_error" class="text-red-600 text-sm mb-2 hidden">Bitte wählen Sie mindestens eine Kategorie aus.</div>
-                        <div id="warenangebot_container" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            <div class="col-span-3 text-gray-500 text-center py-4">
-                                Bitte wählen Sie zuerst einen Termin aus, um die verfügbaren Kategorien zu sehen.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <hr class="mt-6" />
-                <div class="mt-6">
-                    <label class="inline-flex items-center">
-                        <input type="hidden" name="vorfuehrung_am_stand" value="0">
-                        <input type="checkbox" name="vorfuehrung_am_stand" value="1" {{ old('vorfuehrung_am_stand') ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <span class="ml-2">Vorführung des Handwerkes am eigenen Stand</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Herkunft der Waren -->
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Herkunft der Waren <span class="text-red-600">*</span></h2>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="flex flex-col">
-                        <label for="herkunft_eigenfertigung" class="block font-medium text-sm text-gray-700 h-12 flex items-end">Eigenfertigung (%) <span class="text-red-600">*</span></label>
-                        <input type="number" name="herkunft[eigenfertigung]" id="herkunft_eigenfertigung" min="0" max="100"
-                            value="{{ old('herkunft.eigenfertigung') }}"
-                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    </div>
-
-                    <div class="flex flex-col">
-                        <label for="herkunft_industrieware_nicht_entwicklungslaender" class="block font-medium text-sm text-gray-700 h-12 flex items-end">Industrieware<br>(nicht Entwicklungsland) (%) <span class="text-red-600">*</span></label>
-                        <input type="number" name="herkunft[industrieware_nicht_entwicklungslaender]" id="herkunft_industrieware_nicht_entwicklungslaender" min="0" max="100"
-                            value="{{ old('herkunft.industrieware_nicht_entwicklungslaender') }}"
-                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    </div>
-
-                    <div class="flex flex-col">
-                        <label for="herkunft_industrieware_entwicklungslaender" class="block font-medium text-sm text-gray-700 h-12 flex items-end">Industrieware<br>(Entwicklungsland) (%) <span class="text-red-600">*</span></label>
-                        <input type="number" name="herkunft[industrieware_entwicklungslaender]" id="herkunft_industrieware_entwicklungslaender" min="0" max="100"
-                            value="{{ old('herkunft.industrieware_entwicklungslaender') }}"
-                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bilder und Dateien -->
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Bilder und Dateien</h2>
-                <div class="space-y-6">
-                    <!-- Detailfotos Warenangebot -->
-                    <div>
-                        <label for="detailfotos_warenangebot" class="block font-medium text-sm text-gray-700 mb-2">
-                            Detailfotos aus dem Warenangebot (bis zu 4 Bilder)
-                        </label>
-                        <input type="file" name="detailfotos_warenangebot[]" id="detailfotos_warenangebot"
-                            accept="image/*" multiple
-                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                        <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF bis 5MB pro Bild</p>
-                        <div id="detailfotos_error" class="text-red-600 text-sm mt-1 hidden"></div>
-                        <div id="detailfotos_preview" class="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2"></div>
-                    </div>
-
-                    <!-- Foto Verkaufsstand -->
-                    <div>
-                        <label for="foto_verkaufsstand" class="block font-medium text-sm text-gray-700 mb-2">
-                            Foto Ihres Verkaufsstandes (1 Bild)
-                        </label>
-                        <input type="file" name="foto_verkaufsstand" id="foto_verkaufsstand"
-                            accept="image/*"
-                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                        <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF bis 5MB</p>
-                    </div>
-
-                    <!-- Foto Werkstatt -->
-                    <div>
-                        <label for="foto_werkstatt" class="block font-medium text-sm text-gray-700 mb-2">
-                            Foto, das Sie in Ihrer Werkstatt zeigt (1 Bild)
-                        </label>
-                        <input type="file" name="foto_werkstatt" id="foto_werkstatt"
-                            accept="image/*"
-                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                        <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF bis 5MB</p>
-                    </div>
-
-                    <!-- Lebenslauf/Vita -->
-                    <div>
-                        <label for="lebenslauf_vita" class="block font-medium text-sm text-gray-700 mb-2">
-                            Lebenslauf/Vita (PDF)
-                        </label>
-                        <input type="file" name="lebenslauf_vita" id="lebenslauf_vita"
-                            accept=".pdf"
-                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                        <p class="text-xs text-gray-500 mt-1">Nur PDF-Dateien bis 10MB</p>
-                    </div>
+                        placeholder="Bitte geben Sie an, wann und bei welchen Veranstaltungen"
+                        class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('bereits_ausgestellt') }}</textarea>
                 </div>
             </div>
 
@@ -346,46 +244,232 @@
                 </div>
             </div>
 
-            <!-- Wünsche für Zusatzleistungen -->
-            <div class="bg-white p-6 rounded-lg shadow" id="zusatzleistungen-section">
-                <h2 class="text-xl font-semibold mb-4">Wünsche für Zusatzleistungen</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" id="zusatzleistungen-container">
-                    <p class="text-gray-500 col-span-3">Bitte wählen Sie zunächst einen Termin aus.</p>
+            <!-- Stand Informationen -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Stand Informationen</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div>
+                        <label for="stand_laenge" class="block font-medium text-sm text-gray-700">Länge (Meter) <span class="text-red-600">*</span></label>
+                        <input type="number" name="stand[laenge]" id="stand_laenge" required step="0.5" min="0"
+                            value="{{ old('stand.laenge') }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="stand_tiefe" class="block font-medium text-sm text-gray-700">Tiefe (Meter) <span class="text-red-600">*</span></label>
+                        <input type="number" name="stand[tiefe]" id="stand_tiefe" required step="0.5" min="0"
+                            value="{{ old('stand.tiefe') }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="stand_flaeche" class="block font-medium text-sm text-gray-700">Fläche (m²)</label>
+                        <input type="number" name="stand[flaeche]" id="stand_flaeche" step="0.1" min="0"
+                            value="{{ old('stand.flaeche') }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Wunsch-Standort -->
+                @if(isset($standorteByMarkt[$selectedMarkt->id]) && $standorteByMarkt[$selectedMarkt->id]->count() > 0)
+                <div class="mt-6">
+                    <label for="wunsch_standort_id" class="block font-medium text-sm text-gray-700">Wunsch-Standort</label>
+                    <select name="wunsch_standort_id" id="wunsch_standort_id"
+                        class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">Kein besonderer Wunsch</option>
+                        @foreach($standorteByMarkt[$selectedMarkt->id] as $standort)
+                        <option value="{{ $standort->id }}" {{ old('wunsch_standort_id') == $standort->id ? 'selected' : '' }}>
+                            {{ $standort->name }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+                <p class="text-sm text-gray-600 mt-3">Die finale Standzuweisung erfolgt über den Veranstalter. </p>
+                @endif
+            </div>
+
+            <!-- Warenangebot -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Warenangebot <span class="text-red-600">*</span></h2>
+                @if(isset($subkategorienByMarkt[$selectedMarkt->id]))
+                @php
+                $gruppierteSubkategorien = $subkategorienByMarkt[$selectedMarkt->id]->groupBy('kategorie.name');
+                @endphp
+                @foreach($gruppierteSubkategorien as $kategorieName => $subkategorien)
+                <div class="mb-4">
+                    <h3 class="font-semibold text-gray-700 mb-2">{{ $kategorieName }}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        @foreach($subkategorien as $subkategorie)
+                        <label class="flex items-center">
+                            <input type="checkbox" name="warenangebot[]" value="{{ $subkategorie->id }}"
+                                {{ in_array($subkategorie->id, old('warenangebot', [])) ? 'checked' : '' }}
+                                class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm">{{ $subkategorie->name }}</span>
+                        </label>
+                        @endforeach
+                    </div>
+                </div>
+                @endforeach
+                @else
+                <p class="text-gray-500">Keine Kategorien für diesen Markt verfügbar.</p>
+                @endif
+
+                <!-- Sonstiges Textfeld (wird nur bei aktivierter Checkbox angezeigt) -->
+                <div id="sonstiges-container" class="mt-4 hidden">
+                    <label for="warenangebot_sonstiges" class="block font-medium text-sm text-gray-700 mb-1">
+                        Bitte beschreiben Sie "Sonstiges" genauer:
+                    </label>
+                    <textarea
+                        name="warenangebot_sonstiges"
+                        id="warenangebot_sonstiges"
+                        rows="2"
+                        placeholder="z.B. Handgefertigte Kerzen, Selbstgemachte Seifen..."
+                        class="block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('warenangebot_sonstiges') }}</textarea>
+                </div>
+
+                <div class="border-t mt-3 pt-3">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="vorfuehrung_am_stand" value="1"
+                            {{ old('vorfuehrung_am_stand') ? 'checked' : '' }}
+                            class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm">Ich führe handwerkliche Tätigkeiten am Stand vor</span>
+                    </label>
                 </div>
             </div>
 
-            <!-- Werbematerial -->
+            <!-- Herkunft der Ware -->
             <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Gewünschtes Werbematerial</h2>
+                <h2 class="text-xl font-semibold mb-4">Herkunft der Ware <span class="text-red-600">*</span></h2>
+                <p class="text-sm text-gray-600 mb-4">Bitte geben Sie die prozentuale Aufteilung an</p>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                        <label for="werbematerial_plakate_a3" class="block font-medium text-sm text-gray-700">Plakate A3</label>
-                        <input type="number" name="werbematerial[plakate_a3]" id="werbematerial_plakate_a3" min="0" max="100"
+                        <label for="eigenfertigung" class="block font-medium text-sm text-gray-700">Eigenfertigung (%)</label>
+                        <input type="number" name="herkunft[eigenfertigung]" id="eigenfertigung" min="0" max="100" required
+                            value="{{ old('herkunft.eigenfertigung', 0) }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="industrieware" class="block font-medium text-sm text-gray-700">Industrieware (%)</label>
+                        <input type="number" name="herkunft[industrieware]" id="industrieware" min="0" max="100" required
+                            value="{{ old('herkunft.industrieware', 0) }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zusätzliche Informationen -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Wünsche für Zusatzleistungen</h2>
+                @if(isset($leistungenByMarkt[$selectedMarkt->id]) && $leistungenByMarkt[$selectedMarkt->id]->count() > 0)
+                    @php
+                        $leistungenGruppiert = $leistungenByMarkt[$selectedMarkt->id]->groupBy('kategorie');
+                    @endphp
+                    
+                    <!-- Miete-Leistungen (nur Anzeige) -->
+                    @if(isset($leistungenGruppiert['miete']))
+                    <div class="mb-6">
+                        <h3 class="font-semibold text-sm text-gray-700 mb-2">Standgebühren</h3>
+                        <div class="bg-gray-50 p-3 rounded">
+                            @foreach($leistungenGruppiert['miete'] as $leistung)
+                            <div class="flex justify-between items-center py-1">
+                                <span class="text-sm">{{ $leistung->name }}</span>
+                                <span class="text-sm font-medium">{{ number_format($leistung->preis / 100, 2, ',', '.') }} €</span>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    <!-- Andere Leistungen (anklickbar, nach Kategorie gruppiert) -->
+                    @foreach($leistungenGruppiert as $kategorie => $leistungen)
+                        @if($kategorie !== 'miete')
+                        <div class="mb-4">
+                            <h3 class="font-semibold text-sm text-gray-700 mb-2 capitalize">{{ ucfirst($kategorie) }}</h3>
+                            <div class="space-y-2">
+                                @foreach($leistungen as $leistung)
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="wuensche_zusatzleistungen[]" value="{{ $leistung->id }}"
+                                        {{ in_array($leistung->id, old('wuensche_zusatzleistungen', [])) ? 'checked' : '' }}
+                                        class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm">
+                                        {{ $leistung->name }}
+                                        @if($leistung->preis > 0)
+                                        ({{ number_format($leistung->preis / 100, 2, ',', '.') }} €)
+                                        @endif
+                                    </span>
+                                </label>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+                    @endforeach
+                @else
+                    <p class="text-gray-500 text-sm">Keine Zusatzleistungen verfügbar.</p>
+                @endif
+            </div>
+
+            <!-- Gewünschtes Werbematerial -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Gewünschtes Werbematerial</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="plakate_a3" class="block text-sm text-gray-700">Plakate A3 (Anzahl)</label>
+                        <input type="number" name="werbematerial[plakate_a3]" id="plakate_a3" min="0" max="100"
                             value="{{ old('werbematerial.plakate_a3', 0) }}"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
-
                     <div>
-                        <label for="werbematerial_plakate_a1" class="block font-medium text-sm text-gray-700">Plakate A1</label>
-                        <input type="number" name="werbematerial[plakate_a1]" id="werbematerial_plakate_a1" min="0" max="100"
+                        <label for="plakate_a1" class="block text-sm text-gray-700">Plakate A1 (Anzahl)</label>
+                        <input type="number" name="werbematerial[plakate_a1]" id="plakate_a1" min="0" max="100"
                             value="{{ old('werbematerial.plakate_a1', 0) }}"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
-
                     <div>
-                        <label for="werbematerial_flyer" class="block font-medium text-sm text-gray-700">Flyer</label>
-                        <input type="number" name="werbematerial[flyer]" id="werbematerial_flyer" min="0" max="1000"
+                        <label for="flyer" class="block text-sm text-gray-700">Flyer (Anzahl)</label>
+                        <input type="number" name="werbematerial[flyer]" id="flyer" min="0" max="1000"
                             value="{{ old('werbematerial.flyer', 0) }}"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
+                    <div class="flex items-center mt-6">
+                        <input type="checkbox" name="werbematerial[social_media_post]" id="social_media_post" value="1"
+                            {{ old('werbematerial.social_media_post') ? 'checked' : '' }}
+                            class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <label for="social_media_post" class="text-sm">Social Media Post erwünscht</label>
+                    </div>
+                </div>
+            </div>
 
-                    <div class="flex items-center">
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" name="werbematerial[social_media_post]" value="1"
-                                {{ old('werbematerial.social_media_post') ? 'checked' : '' }}
-                                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <span class="ml-2">Social Media Post</span>
-                        </label>
+            <!-- Datei-Uploads -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Datei-Uploads</h2>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block font-medium text-sm text-gray-700 mb-2">Detailfotos Warenangebot (max. 4 Bilder)</label>
+                        <input type="file" name="detailfotos_warenangebot[]" multiple accept="image/*"
+                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <p class="text-xs text-gray-500 mt-1">Erlaubte Formate: JPG, PNG, GIF (max. 5MB pro Bild)</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-sm text-gray-700 mb-2">Foto Verkaufsstand</label>
+                        <input type="file" name="foto_verkaufsstand" accept="image/*"
+                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <p class="text-xs text-gray-500 mt-1">Erlaubte Formate: JPG, PNG, GIF (max. 5MB)</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-sm text-gray-700 mb-2">Foto Werkstatt</label>
+                        <input type="file" name="foto_werkstatt" accept="image/*"
+                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <p class="text-xs text-gray-500 mt-1">Erlaubte Formate: JPG, PNG, GIF (max. 5MB)</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-sm text-gray-700 mb-2">Lebenslauf/Vita (PDF)</label>
+                        <input type="file" name="lebenslauf_vita" accept=".pdf"
+                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <p class="text-xs text-gray-500 mt-1">Nur PDF-Dateien (max. 10MB)</p>
                     </div>
                 </div>
             </div>
@@ -398,256 +482,76 @@
                     placeholder="Hier können Sie uns noch etwas mitteilen...">{{ old('bemerkung') }}</textarea>
             </div>
 
-            <div class="pt-6">
-                <button type="submit"
-                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded">
-                    Buchung anfragen
+            <!-- Submit Button -->
+            <div class="flex justify-end">
+                <button type="submit" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    Anfrage absenden
                 </button>
             </div>
         </form>
-
-        <script>
-            // Subkategorien-Daten von PHP
-            const subkategorienByMarkt = @json($subkategorienByMarkt);
-            const standorteByMarkt = @json($standorteByMarkt);
-            const maerkteBySlug = @json($maerkteBySlug);
-            const oldWarenangebotValues = @json(old('warenangebot', []));
-            const oldWunschStandortId = @json(old('wunsch_standort_id'));
-            const oldZusatzleistungen = @json(old('wuensche_zusatzleistungen', []));
-
-            document.addEventListener('DOMContentLoaded', function() {
-                const terminSelect = document.getElementById('termin');
-                const warenangebotContainer = document.getElementById('warenangebot_container');
-                const wunschStandortSelect = document.getElementById('wunsch_standort_id');
-                const zusatzleistungenContainer = document.getElementById('zusatzleistungen-container');
-
-                // Event Listener für Termin-Auswahl
-                terminSelect.addEventListener('change', function() {
-                    updateWarenangebot();
-                    updateWunschStandorte();
-                    updateZusatzleistungen();
-                });
-
-                // Initial laden, falls ein Termin vorausgewählt ist
-                if (terminSelect.value) {
-                    updateWarenangebot();
-                    updateWunschStandorte();
-                    updateZusatzleistungen();
-                }
-
-                function updateWarenangebot() {
-                    const selectedTerminId = terminSelect.value;
-                    if (!selectedTerminId) {
-                        warenangebotContainer.innerHTML = '<div class="col-span-3 text-gray-500 text-center py-4">Bitte wählen Sie zuerst einen Termin aus, um die verfügbaren Kategorien zu sehen.</div>';
-                        return;
-                    }
-
-                    // Markt-ID aus dem ausgewählten Termin ermitteln
-                    const selectedOption = terminSelect.options[terminSelect.selectedIndex];
-                    const marktId = selectedOption.dataset.marktId;
-
-                    if (!marktId || !subkategorienByMarkt[marktId]) {
-                        warenangebotContainer.innerHTML = '<div class="col-span-3 text-gray-500 text-center py-4">Für diesen Markt sind keine Kategorien hinterlegt.</div>';
-                        return;
-                    }
-
-                    const subkategorien = subkategorienByMarkt[marktId];
-                    let html = '';
-
-                    subkategorien.forEach(function(subkat) {
-                        const isChecked = oldWarenangebotValues.includes(subkat.id.toString()) ? 'checked' : '';
-
-                        html += `
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="warenangebot[]" value="${subkat.id}" ${isChecked} 
-                                       class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 warenangebot-checkbox">
-                                <span class="ml-2">${subkat.name}</span>
-                            </label>
-                        `;
-                    });
-
-                    warenangebotContainer.innerHTML = html;
-
-                    // Event Listener für neue Checkboxen hinzufügen
-                    addWarenangebotEventListeners();
-                }
-
-                function updateWunschStandorte() {
-                    const selectedTerminId = terminSelect.value;
-
-                    // Alle Optionen außer der ersten löschen
-                    wunschStandortSelect.innerHTML = '<option value="">Kein Wunschstandort</option>';
-
-                    if (!selectedTerminId) {
-                        return;
-                    }
-
-                    // Markt-ID aus dem ausgewählten Termin ermitteln
-                    const selectedOption = terminSelect.options[terminSelect.selectedIndex];
-                    const marktId = selectedOption.dataset.marktId;
-
-                    if (!marktId || !standorteByMarkt[marktId]) {
-                        return;
-                    }
-
-                    const standorte = standorteByMarkt[marktId];
-                    standorte.forEach(function(standort) {
-                        const option = document.createElement('option');
-                        option.value = standort.id;
-                        option.textContent = standort.name;
-
-                        // Vorauswahl wiederherstellen
-                        if (oldWunschStandortId && oldWunschStandortId == standort.id) {
-                            option.selected = true;
-                        }
-
-                        wunschStandortSelect.appendChild(option);
-                    });
-                }
-
-                function updateZusatzleistungen() {
-                    const selectedTerminId = terminSelect.value;
-                    if (!selectedTerminId) {
-                        zusatzleistungenContainer.innerHTML = '<p class="text-gray-500 col-span-3">Bitte wählen Sie zunächst einen Termin aus.</p>';
-                        return;
-                    }
-
-                    // Markt-Slug aus dem ausgewählten Termin ermitteln
-                    const selectedOption = terminSelect.options[terminSelect.selectedIndex];
-                    const marktSlug = selectedOption.dataset.marktSlug;
-
-                    if (!marktSlug || !maerkteBySlug[marktSlug]) {
-                        zusatzleistungenContainer.innerHTML = '<p class="text-gray-500 col-span-3">Für diesen Markt sind keine Zusatzleistungen konfiguriert.</p>';
-                        return;
-                    }
-
-                    const markt = maerkteBySlug[marktSlug];
-                    const leistungen = markt.leistungen;
-
-                    if (!leistungen || leistungen.length === 0) {
-                        zusatzleistungenContainer.innerHTML = '<p class="text-gray-500 col-span-3">Für diesen Markt sind keine Zusatzleistungen konfiguriert.</p>';
-                        return;
-                    }
-
-                    let html = '';
-                    leistungen.forEach(function(leistung) {
-                        const isChecked = oldZusatzleistungen.includes(leistung.id.toString()) ? 'checked' : '';
-                        const preis = (leistung.preis / 100).toLocaleString('de-DE', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        });
-
-                        html += `
-                            <label class="inline-flex items-start">
-                                <input type="checkbox" 
-                                       name="wuensche_zusatzleistungen[]" 
-                                       value="${leistung.id}" 
-                                       ${isChecked}
-                                       class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 mt-1">
-                                <div class="ml-2">
-                                    <span class="block font-medium">${leistung.name}</span>
-                                    <span class="text-sm text-gray-600">${preis} € / ${leistung.einheit}</span>
-                                    ${leistung.beschreibung ? `<span class="text-xs text-gray-500 block">${leistung.beschreibung}</span>` : ''}
-                                </div>
-                            </label>
-                        `;
-                    });
-
-                    zusatzleistungenContainer.innerHTML = html;
-                }
-
-                function addWarenangebotEventListeners() {
-                    const warenangebotCheckboxes = document.querySelectorAll('.warenangebot-checkbox');
-                    const warenangebotError = document.getElementById('warenangebot_error');
-
-                    warenangebotCheckboxes.forEach(checkbox => {
-                        checkbox.addEventListener('change', function() {
-                            const checkedBoxes = document.querySelectorAll('.warenangebot-checkbox:checked');
-                            if (checkedBoxes.length > 0) {
-                                warenangebotError.classList.add('hidden');
-                            }
-                        });
-                    });
-                }
-
-                // Detailfotos Validierung
-                const detailfotosInput = document.getElementById('detailfotos_warenangebot');
-                const detailfotosError = document.getElementById('detailfotos_error');
-                const detailfotosPreview = document.getElementById('detailfotos_preview');
-
-                detailfotosInput.addEventListener('change', function() {
-                    const files = Array.from(this.files);
-                    detailfotosError.classList.add('hidden');
-                    detailfotosPreview.innerHTML = '';
-
-                    // Prüfe Anzahl der Dateien
-                    if (files.length > 4) {
-                        detailfotosError.textContent = 'Maximal 4 Bilder erlaubt. Bitte wählen Sie weniger Dateien aus.';
-                        detailfotosError.classList.remove('hidden');
-                        this.value = ''; // Auswahl zurücksetzen
-                        return;
-                    }
-
-                    // Prüfe Dateigröße und zeige Vorschau
-                    let hasError = false;
-                    files.forEach((file, index) => {
-                        // Dateigröße prüfen (5MB = 5242880 Bytes)
-                        if (file.size > 5242880) {
-                            detailfotosError.textContent = `Die Datei "${file.name}" ist zu groß. Maximal 5MB pro Bild erlaubt.`;
-                            detailfotosError.classList.remove('hidden');
-                            hasError = true;
-                            return;
-                        }
-
-                        // Dateityp prüfen
-                        if (!file.type.startsWith('image/')) {
-                            detailfotosError.textContent = `Die Datei "${file.name}" ist kein gültiges Bild.`;
-                            detailfotosError.classList.remove('hidden');
-                            hasError = true;
-                            return;
-                        }
-
-                        // Vorschau erstellen
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            const preview = document.createElement('div');
-                            preview.className = 'relative';
-                            preview.innerHTML = `
-                                <img src="${e.target.result}" class="w-full h-20 object-cover rounded border">
-                                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 truncate">
-                                    ${file.name}
-                                </div>
-                            `;
-                            detailfotosPreview.appendChild(preview);
-                        };
-                        reader.readAsDataURL(file);
-                    });
-
-                    if (hasError) {
-                        this.value = ''; // Auswahl zurücksetzen
-                        detailfotosPreview.innerHTML = '';
-                    }
-                });
-
-                // Warenangebot Validierung
-                const form = document.querySelector('form');
-                const warenangebotError = document.getElementById('warenangebot_error');
-
-                form.addEventListener('submit', function(e) {
-                    const checkedBoxes = document.querySelectorAll('.warenangebot-checkbox:checked');
-                    if (checkedBoxes.length === 0) {
-                        e.preventDefault();
-                        warenangebotError.classList.remove('hidden');
-                        warenangebotError.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
-                        });
-                        return false;
-                    } else {
-                        warenangebotError.classList.add('hidden');
-                    }
-                });
-            });
-        </script>
+        @endif
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // Sonstiges-Textfeld ein/ausblenden
+            function setupSonstigesField() {
+                const sonstigesCheckboxes = document.querySelectorAll('input[name="warenangebot[]"][value="24"]');
+                const sonstigesContainer = document.getElementById('sonstiges-container');
+
+                function toggleSonstigesField() {
+                    let isChecked = false;
+                    sonstigesCheckboxes.forEach(checkbox => {
+                        if (checkbox.checked) {
+                            isChecked = true;
+                        }
+                    });
+
+                    if (sonstigesContainer) {
+                        if (isChecked) {
+                            sonstigesContainer.classList.remove('hidden');
+                        } else {
+                            sonstigesContainer.classList.add('hidden');
+                            // Optional: Textfeld leeren wenn Checkbox deaktiviert wird
+                            const textField = document.getElementById('warenangebot_sonstiges');
+                            if (textField) {
+                                textField.value = '';
+                            }
+                        }
+                    }
+                }
+
+                // Event Listener für alle Sonstiges-Checkboxen
+                sonstigesCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', toggleSonstigesField);
+                });
+
+                // Initial prüfen ob Sonstiges bereits gecheckt ist (z.B. bei old() values)
+                toggleSonstigesField();
+            }
+
+            // Setup aufrufen - mit kleiner Verzögerung falls DOM noch nicht bereit
+            setTimeout(setupSonstigesField, 100);
+
+            // Validierung für Termine bei mehreren Checkboxen
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const checkboxes = document.querySelectorAll('input[name="termine[]"]');
+                    let checked = false;
+                    checkboxes.forEach(cb => {
+                        if (cb.checked) checked = true;
+                    });
+
+                    if (checkboxes.length > 0 && !checked) {
+                        e.preventDefault();
+                        alert('Bitte wählen Sie mindestens einen Termin aus.');
+                    }
+                });
+            }
+        });
+    </script>
+    @endpush
 </x-layouts.app>

@@ -18,32 +18,41 @@ class AnfrageController extends Controller
 {
     public function create(Request $request)
     {
-        $termine = Termin::with('markt')
-            ->where('start', '>', now())
-            ->orderBy('start')
-            ->get();
+        // Alle Märkte mit zukünftigen Terminen laden (= aktive Märkte)
+        $aktiveMaerkte = Markt::with(['termine' => function($query) {
+                $query->where('start', '>', now())
+                      ->orderBy('start');
+            }])
+            ->get()
+            ->filter(fn($markt) => $markt->termine->isNotEmpty());
 
-        // Query Parameter für Vorauswahl eines Termins
-        $selectedTerminId = null;
-        if ($request->has('termin')) {
-            $selectedTerminId = $request->get('termin');
-        } elseif ($request->has('markt')) {
-            // Legacy: Falls noch markt-Parameter verwendet wird
+        $selectedMarkt = null;
+        $selectedTermine = collect();
+        
+        // 1. Markt per Query Parameter
+        if ($request->has('markt')) {
             $marktSlug = $request->get('markt');
-            $markt = Markt::where('slug', $marktSlug)->first();
-            if ($markt) {
-                $naechsterTermin = $termine->where('markt_id', $markt->id)->first();
-                $selectedTerminId = $naechsterTermin?->id;
+            $selectedMarkt = $aktiveMaerkte->firstWhere('slug', $marktSlug);
+            
+            if ($selectedMarkt) {
+                $selectedTermine = $selectedMarkt->termine;
             }
         }
-
+        
+        // 2. Kein Markt per Query - prüfe ob nur ein aktiver Markt
+        if (!$selectedMarkt && $aktiveMaerkte->count() === 1) {
+            $selectedMarkt = $aktiveMaerkte->first();
+            $selectedTermine = $selectedMarkt->termine;
+        }
+        
         // Subkategorien, Standorte und Leistungen für alle Märkte laden
         $subkategorienByMarkt = [];
         $standorteByMarkt = [];
-        $maerkteBySlug = [];
-        foreach ($termine as $termin) {
-            $markt = $termin->markt;
-            if ($markt && $markt->subkategorien) {
+        $leistungenByMarkt = [];
+        
+        foreach ($aktiveMaerkte as $markt) {
+            // Subkategorien laden
+            if ($markt->subkategorien) {
                 $subkategorien = Subkategorie::whereIn('id', $markt->subkategorien)
                     ->with('kategorie')
                     ->orderBy('kategorie_id')
@@ -52,24 +61,30 @@ class AnfrageController extends Controller
                 $subkategorienByMarkt[$markt->id] = $subkategorien;
             }
             
-            // Standorte für jeden Markt laden
-            if ($markt) {
-                $standorte = $markt->standorte()->orderBy('name')->get();
-                $standorteByMarkt[$markt->id] = $standorte;
-                
-                // Markt mit Leistungen für Template verfügbar machen
-                $markt->load('leistungen');
-                $maerkteBySlug[$markt->slug] = $markt;
-            }
+            // Standorte laden
+            $standorte = $markt->standorte()->orderBy('name')->get();
+            $standorteByMarkt[$markt->id] = $standorte;
+            
+            // Leistungen laden
+            $markt->load('leistungen');
+            $leistungenByMarkt[$markt->id] = $markt->leistungen;
         }
 
-        return view('anfrage.create', compact('termine', 'selectedTerminId', 'subkategorienByMarkt', 'standorteByMarkt', 'maerkteBySlug'));
+        return view('anfrage.create', compact(
+            'aktiveMaerkte', 
+            'selectedMarkt', 
+            'selectedTermine',
+            'subkategorienByMarkt', 
+            'standorteByMarkt',
+            'leistungenByMarkt'
+        ));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'termin' => 'required|exists:termin,id',
+            'termine' => 'required|array|min:1',
+            'termine.*' => 'required|exists:termin,id',
             'firma' => 'nullable|string|max:255',
             'anrede' => 'nullable|string|in:Herr,Frau,Divers',
             'vorname' => 'required|string|max:255',
@@ -91,10 +106,10 @@ class AnfrageController extends Controller
             'wunsch_standort_id' => 'nullable|exists:standort,id',
             'warenangebot' => 'required|array',
             'warenangebot.*' => 'integer|exists:subkategorie,id',
+            'warenangebot_sonstiges' => 'nullable|string|max:500',
             'herkunft' => 'required|array',
             'herkunft.eigenfertigung' => 'required|integer|min:0|max:100',
-            'herkunft.industrieware_nicht_entwicklungslaender' => 'required|integer|min:0|max:100',
-            'herkunft.industrieware_entwicklungslaender' => 'required|integer|min:0|max:100',
+            'herkunft.industrieware' => 'required|integer|min:0|max:100',
             'bereits_ausgestellt' => 'nullable|string',
             'vorfuehrung_am_stand' => 'nullable|in:0,1',
             'bemerkung' => 'nullable|string',
@@ -113,12 +128,27 @@ class AnfrageController extends Controller
             'lebenslauf_vita' => 'nullable|file|mimes:pdf|max:10240', // 10MB
         ], [], [
             'herkunft.eigenfertigung' => 'Eigenfertigung',
-            'herkunft.industrieware_nicht_entwicklungslaender' => 'Industrieware (nicht Entwicklungsland)',
-            'herkunft.industrieware_entwicklungslaender' => 'Industrieware (Entwicklungsland)',
+            'herkunft.industrieware' => 'Industrieware',
         ]);
 
+        // Warenangebot als strukturiertes JSON vorbereiten
+        $warenangebotJson = [
+            'subkategorien' => $validated['warenangebot'],
+        ];
+        
+        // Sonstiges hinzufügen, wenn vorhanden
+        if (!empty($validated['warenangebot_sonstiges']) && in_array(24, $validated['warenangebot'])) {
+            $warenangebotJson['sonstiges'] = $validated['warenangebot_sonstiges'];
+        }
+        
+        // Markt ID von den Terminen ermitteln
+        $ersterTermin = Termin::find($validated['termine'][0]);
+        $marktId = $ersterTermin->markt_id;
+        
+        // Eine Anfrage mit mehreren Terminen erstellen
         $anfrage = Anfrage::create([
-            'termin_id' => $validated['termin'],
+            'markt_id' => $marktId,
+            'termine' => $validated['termine'], // Array von Termin-IDs
             'firma' => $validated['firma'] ?? null,
             'anrede' => $validated['anrede'] ?? null,
             'vorname' => $validated['vorname'],
@@ -133,19 +163,21 @@ class AnfrageController extends Controller
             'steuer_id' => $validated['steuer_id'] ?? null,
             'handelsregisternummer' => $validated['handelsregisternummer'] ?? null,
             'stand' => $validated['stand'],
-            'warenangebot' => $validated['warenangebot'],
+            'warenangebot' => $warenangebotJson,
             'herkunft' => $validated['herkunft'],
             'bereits_ausgestellt' => $validated['bereits_ausgestellt'] ?? null,
             'vorfuehrung_am_stand' => (bool) ($validated['vorfuehrung_am_stand'] ?? false),
-            'importiert' => false,
+            'status' => 'offen',
             'bemerkung' => $validated['bemerkung'] ?? null,
             'soziale_medien' => $validated['soziale_medien'] ?? null,
             'wuensche_zusatzleistungen' => $validated['wuensche_zusatzleistungen'] ?? null,
             'werbematerial' => $this->transformWerbematerial($validated['werbematerial'] ?? []),
             'wunsch_standort_id' => $validated['wunsch_standort_id'] ?? null,
         ]);
+        
+        $ersteAnfrage = $anfrage;
 
-        // File Uploads in Medien-Tabelle speichern
+        // File Uploads in Medien-Tabelle speichern (nur für erste Anfrage)
         $sortOrder = 1;
 
         // Detailfotos Warenangebot (bis zu 4 Bilder)
@@ -156,7 +188,7 @@ class AnfrageController extends Controller
 
                 Medien::create([
                     'mediable_type' => Anfrage::class,
-                    'mediable_id' => $anfrage->id,
+                    'mediable_id' => $ersteAnfrage->id,
                     'category' => 'angebot',
                     'title' => 'Detailfoto Warenangebot',
                     'mime_type' => $file->getMimeType(),
@@ -176,7 +208,7 @@ class AnfrageController extends Controller
 
             Medien::create([
                 'mediable_type' => Anfrage::class,
-                'mediable_id' => $anfrage->id,
+                'mediable_id' => $ersteAnfrage->id,
                 'category' => 'stand',
                 'title' => 'Foto Verkaufsstand',
                 'mime_type' => $file->getMimeType(),
@@ -195,7 +227,7 @@ class AnfrageController extends Controller
 
             Medien::create([
                 'mediable_type' => Anfrage::class,
-                'mediable_id' => $anfrage->id,
+                'mediable_id' => $ersteAnfrage->id,
                 'category' => 'werkstatt',
                 'title' => 'Foto Werkstatt',
                 'mime_type' => $file->getMimeType(),
@@ -214,7 +246,7 @@ class AnfrageController extends Controller
 
             Medien::create([
                 'mediable_type' => Anfrage::class,
-                'mediable_id' => $anfrage->id,
+                'mediable_id' => $ersteAnfrage->id,
                 'category' => 'vita',
                 'title' => 'Lebenslauf/Vita',
                 'mime_type' => $file->getMimeType(),
@@ -225,18 +257,18 @@ class AnfrageController extends Controller
             ]);
         }
 
-        // Bestätigungsmail an den Anfragesteller über MailService
+        // Bestätigungsmail an den Anfragesteller über MailService (nur für erste Anfrage)
         try {
             $mailService = new \App\Services\MailService();
-            $mailService->sendAnfrageBestaetigung($anfrage);
+            $mailService->sendAnfrageBestaetigung($ersteAnfrage);
         } catch (\Exception $e) {
             Log::error('Fehler beim Versenden der Bestätigungsmail: ' . $e->getMessage());
         }
 
-        // Benachrichtigung an alle User (sofort, nicht in Queue)
-        User::all()->each(function ($user) use ($anfrage) {
+        // Benachrichtigung an alle User (sofort, nicht in Queue) - nur für erste Anfrage
+        User::all()->each(function ($user) use ($ersteAnfrage) {
             try {
-                $user->notify(new NeueAnfrageNotification($anfrage));
+                $user->notify(new NeueAnfrageNotification($ersteAnfrage));
             } catch (\Exception $e) {
                 Log::error('Fehler beim Versenden der Notification: ' . $e->getMessage());
             }

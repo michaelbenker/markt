@@ -35,7 +35,10 @@ class AnfrageSeeder extends Seeder
         // Create 15 records
         $records = [
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Sistecs Media Agentur',
                 'anrede' => 'Herr',
                 'vorname' => 'Michael',
@@ -48,14 +51,13 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '491708666718',
                 'email' => 'mb@sistecs.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => [rand(1, 24)],
+                'warenangebot' => ['subkategorien' => [rand(1, 24)]],
                 'herkunft' => [
                     'eigenfertigung' => 100,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 0
+                    'industrieware' => 0
                 ],
                 'bereits_ausgestellt' => 'Nein, erste Teilnahme',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'irgendwas',
                 'soziale_medien' => ['facebook' => 'https://facebook.com/sistecs', 'instagram' => 'sistecs_media'],
                 'wuensche_zusatzleistungen' => ['strom', 'wasser'],
@@ -64,7 +66,8 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Sistecs Media',
                 'anrede' => 'Herr',
                 'vorname' => 'M.',
@@ -77,14 +80,13 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '491708666718',
                 'email' => 'michael.benker@sistecs.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => [rand(1, 24)],
+                'warenangebot' => ['subkategorien' => [rand(1, 24)]],
                 'herkunft' => [
                     'eigenfertigung' => 100,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 0
+                    'industrieware' => 0
                 ],
                 'bereits_ausgestellt' => 'Nein, erste Teilnahme',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'Variante 2',
                 'soziale_medien' => null,
                 'wuensche_zusatzleistungen' => null,
@@ -93,7 +95,8 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Sistecs',
                 'anrede' => 'Herr',
                 'vorname' => 'Michael',
@@ -106,14 +109,13 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '491708666718',
                 'email' => 'mb@sistecs.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => [rand(1, 24)],
+                'warenangebot' => ['subkategorien' => [rand(1, 24)]],
                 'herkunft' => [
                     'eigenfertigung' => 100,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 0
+                    'industrieware' => 0
                 ],
                 'bereits_ausgestellt' => 'Nein, erste Teilnahme',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'Variante 3',
                 'soziale_medien' => ['facebook' => 'sistecs', 'twitter' => '@sistecs'],
                 'wuensche_zusatzleistungen' => ['strom'],
@@ -122,7 +124,8 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Müller & Schmidt GmbH',
                 'anrede' => 'Frau',
                 'vorname' => 'Anna',
@@ -135,14 +138,13 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '498912345678',
                 'email' => 'anna.mueller@example.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => [rand(1, 24), rand(1, 24)],
+                'warenangebot' => ['subkategorien' => [rand(1, 23), rand(1, 23)]],
                 'herkunft' => [
                     'eigenfertigung' => 80,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 20
+                    'industrieware' => 20
                 ],
                 'bereits_ausgestellt' => 'Ja, bereits mehrfach ausgestellt',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'Erfahrene Ausstellerin',
                 'soziale_medien' => ['instagram' => 'mueller_schmuck', 'website' => 'www.mueller-schmuck.de'],
                 'wuensche_zusatzleistungen' => ['strom', 'tisch'],
@@ -151,7 +153,8 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Kreativwerkstatt',
                 'anrede' => 'Herr',
                 'vorname' => 'Thomas',
@@ -164,14 +167,13 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '498987654321',
                 'email' => 'thomas.schmidt@example.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => [rand(1, 24), rand(1, 24)],
+                'warenangebot' => ['subkategorien' => [rand(1, 23), rand(1, 23)]],
                 'herkunft' => [
                     'eigenfertigung' => 100,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 0
+                    'industrieware' => 0
                 ],
                 'bereits_ausgestellt' => 'Nein, erste Teilnahme',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'Erstmalige Teilnahme',
                 'soziale_medien' => null,
                 'wuensche_zusatzleistungen' => null,
@@ -184,7 +186,8 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Bio-Lebensmittel',
                 'anrede' => 'Frau',
                 'vorname' => 'Maria',
@@ -197,14 +200,13 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '498912345679',
                 'email' => 'maria.weber@example.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => [rand(1, 24), rand(1, 24)],
+                'warenangebot' => ['subkategorien' => [rand(1, 23), rand(1, 23)]],
                 'herkunft' => [
                     'eigenfertigung' => 90,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 10
+                    'industrieware' => 10
                 ],
                 'bereits_ausgestellt' => 'Ja, bereits mehrfach ausgestellt',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'Bio-zertifiziert',
                 'soziale_medien' => null,
                 'wuensche_zusatzleistungen' => null,
@@ -213,7 +215,8 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Antiquitäten-Haus',
                 'anrede' => 'Herr',
                 'vorname' => 'Peter',
@@ -226,14 +229,13 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '498912345680',
                 'email' => 'peter.fischer@example.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => [rand(1, 24)],
+                'warenangebot' => ['subkategorien' => [rand(1, 24)]],
                 'herkunft' => [
                     'eigenfertigung' => 0,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 100
+                    'industrieware' => 100
                 ],
                 'bereits_ausgestellt' => 'Ja, bereits mehrfach ausgestellt',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'Spezialisiert auf Möbel',
                 'soziale_medien' => null,
                 'wuensche_zusatzleistungen' => null,
@@ -242,7 +244,8 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Mode-Atelier',
                 'anrede' => 'Frau',
                 'vorname' => 'Lisa',
@@ -255,14 +258,13 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '498912345681',
                 'email' => 'lisa.wagner@example.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => ['kleidung', 'accessoires'],
+                'warenangebot' => ['subkategorien' => [rand(1, 23), rand(1, 23)]],
                 'herkunft' => [
                     'eigenfertigung' => 70,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 30
+                    'industrieware' => 30
                 ],
                 'bereits_ausgestellt' => 'Nein, erste Teilnahme',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'Nachhaltige Mode',
                 'soziale_medien' => null,
                 'wuensche_zusatzleistungen' => null,
@@ -271,7 +273,8 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Kunst-Galerie',
                 'anrede' => 'Herr',
                 'vorname' => 'Max',
@@ -284,14 +287,13 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '498912345682',
                 'email' => 'max.becker@example.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => [rand(1, 24), rand(1, 24)],
+                'warenangebot' => ['subkategorien' => [rand(1, 23), rand(1, 23)]],
                 'herkunft' => [
                     'eigenfertigung' => 100,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 0
+                    'industrieware' => 0
                 ],
                 'bereits_ausgestellt' => 'Ja, bereits mehrfach ausgestellt',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'Moderne Kunst',
                 'soziale_medien' => null,
                 'wuensche_zusatzleistungen' => null,
@@ -300,7 +302,8 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Schmuck-Design',
                 'anrede' => 'Frau',
                 'vorname' => 'Sophie',
@@ -313,14 +316,13 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '498912345683',
                 'email' => 'sophie.hoffmann@example.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => [rand(1, 24)],
+                'warenangebot' => ['subkategorien' => [rand(1, 24)]],
                 'herkunft' => [
                     'eigenfertigung' => 100,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 0
+                    'industrieware' => 0
                 ],
                 'bereits_ausgestellt' => 'Nein, erste Teilnahme',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'Handgefertigter Schmuck',
                 'soziale_medien' => null,
                 'wuensche_zusatzleistungen' => null,
@@ -329,7 +331,8 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Deko-Studio',
                 'anrede' => 'Herr',
                 'vorname' => 'Andreas',
@@ -342,14 +345,13 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '498912345684',
                 'email' => 'andreas.koch@example.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => [rand(1, 24), rand(1, 24)],
+                'warenangebot' => ['subkategorien' => [rand(1, 23), rand(1, 23)]],
                 'herkunft' => [
                     'eigenfertigung' => 85,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 15
+                    'industrieware' => 15
                 ],
                 'bereits_ausgestellt' => 'Ja, bereits mehrfach ausgestellt',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'Individuelle Dekoration',
                 'soziale_medien' => null,
                 'wuensche_zusatzleistungen' => null,
@@ -358,7 +360,8 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Getränke-Spezialitäten',
                 'anrede' => 'Frau',
                 'vorname' => 'Julia',
@@ -371,14 +374,13 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '498912345685',
                 'email' => 'julia.schaefer@example.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => [rand(1, 24)],
+                'warenangebot' => ['subkategorien' => [rand(1, 24)]],
                 'herkunft' => [
                     'eigenfertigung' => 100,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 0
+                    'industrieware' => 0
                 ],
                 'bereits_ausgestellt' => 'Nein, erste Teilnahme',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'Regionale Spezialitäten',
                 'soziale_medien' => null,
                 'wuensche_zusatzleistungen' => null,
@@ -387,7 +389,8 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Handwerk-Kunst',
                 'anrede' => 'Herr',
                 'vorname' => 'Martin',
@@ -400,14 +403,13 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '498912345686',
                 'email' => 'martin.wolf@example.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => ['handwerk', 'kunst'],
+                'warenangebot' => ['subkategorien' => [rand(1, 23), rand(1, 23)]],
                 'herkunft' => [
                     'eigenfertigung' => 100,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 0
+                    'industrieware' => 0
                 ],
                 'bereits_ausgestellt' => 'Ja, bereits mehrfach ausgestellt',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'Traditionelles Handwerk',
                 'soziale_medien' => null,
                 'wuensche_zusatzleistungen' => null,
@@ -416,7 +418,8 @@ class AnfrageSeeder extends Seeder
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
-                'termin_id' => 1,
+                'markt_id' => 1,
+                'termine' => [1],
                 'firma' => 'Sonstiges-Kreativ',
                 'anrede' => 'Frau',
                 'vorname' => 'Sarah',
@@ -429,14 +432,16 @@ class AnfrageSeeder extends Seeder
                 'telefon' => '498912345687',
                 'email' => 'sarah.meyer@example.de',
                 'stand' => ['tiefe' => 3, 'laenge' => 4, 'flaeche' => 12],
-                'warenangebot' => [rand(1, 24)],
+                'warenangebot' => [
+                    'subkategorien' => [24, rand(1, 23)],
+                    'sonstiges' => 'Handgefertigte Kerzen und selbstgemachte Seifen'
+                ],
                 'herkunft' => [
                     'eigenfertigung' => 100,
-                    'industrieware_entwicklungslaender' => 0,
-                    'industrieware_nicht_entwicklungslaender' => 0
+                    'industrieware' => 0
                 ],
                 'bereits_ausgestellt' => 'Nein, erste Teilnahme',
-                'importiert' => false,
+                'status' => 'offen',
                 'bemerkung' => 'Kreative Unikate',
                 'soziale_medien' => null,
                 'wuensche_zusatzleistungen' => null,

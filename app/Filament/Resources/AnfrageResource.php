@@ -23,7 +23,7 @@ class AnfrageResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn(Builder $query) => $query->where('importiert', false))
+            ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'offen'))
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Vom')
@@ -60,7 +60,23 @@ class AnfrageResource extends Resource
                         if (!is_array($record->warenangebot) || empty($record->warenangebot)) {
                             return '';
                         }
-                        return \App\Models\Subkategorie::whereIn('id', $record->warenangebot)->pluck('name')->implode(', ');
+                        
+                        // Neue Struktur: warenangebot ist ein Array mit 'subkategorien' und optional 'sonstiges'
+                        $subkategorienIds = $record->warenangebot['subkategorien'] ?? [];
+                        $sonstiges = $record->warenangebot['sonstiges'] ?? null;
+                        
+                        if (empty($subkategorienIds)) {
+                            return $sonstiges ?: '';
+                        }
+                        
+                        $namen = \App\Models\Subkategorie::whereIn('id', $subkategorienIds)->pluck('name')->toArray();
+                        
+                        // Wenn Sonstiges vorhanden und ID 24 in den Subkategorien ist, füge den Text hinzu
+                        if ($sonstiges && in_array(24, $subkategorienIds)) {
+                            $namen[] = "Sonstiges: " . $sonstiges;
+                        }
+                        
+                        return implode(', ', $namen);
                     }),
             ])
             ->defaultSort('created_at', 'desc')

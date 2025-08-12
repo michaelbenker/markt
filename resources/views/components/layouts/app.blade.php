@@ -46,6 +46,7 @@
     @livewire('notifications')
 
     @filamentScripts
+    @stack('scripts')
 </body>
 
 </html>

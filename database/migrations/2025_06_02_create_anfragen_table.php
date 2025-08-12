@@ -9,7 +9,9 @@ return new class extends Migration {
     {
         Schema::create('anfrage', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('termin_id');
+            $table->unsignedBigInteger('markt_id'); // Neu: Direkte Zuordnung zum Markt
+            $table->json('termine')->nullable(); // Neu: Array von Termin-IDs
+            $table->unsignedBigInteger('termin_id')->nullable(); // Jetzt nullable für Übergang
             $table->string('firma')->nullable();
             $table->string('anrede')->nullable();
             $table->string('vorname');
@@ -29,13 +31,15 @@ return new class extends Migration {
             $table->json('herkunft');
             $table->text('bereits_ausgestellt')->nullable();
             $table->boolean('vorfuehrung_am_stand')->default(false);
-            $table->boolean('importiert')->default(false);
+            $table->enum('status', ['offen', 'gebucht', 'aussteller_importiert', 'warteschlange', 'abgesagt'])
+                  ->default('offen');
             $table->text('bemerkung')->nullable();
             $table->json('soziale_medien')->nullable();
             $table->json('wuensche_zusatzleistungen')->nullable();
             $table->json('werbematerial')->nullable();
             $table->timestamps();
 
+            $table->foreign('markt_id')->references('id')->on('markt')->onDelete('cascade');
             $table->foreign('termin_id')->references('id')->on('termin')->onDelete('cascade');
             $table->foreign('wunsch_standort_id')->references('id')->on('standort')->onDelete('set null');
         });

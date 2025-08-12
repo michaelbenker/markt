@@ -14,6 +14,8 @@ class Anfrage extends Model
     protected $table = 'anfrage';
 
     protected $fillable = [
+        'markt_id',
+        'termine',
         'termin_id',
         'firma',
         'anrede',
@@ -33,7 +35,7 @@ class Anfrage extends Model
         'herkunft',
         'bereits_ausgestellt',
         'vorfuehrung_am_stand',
-        'importiert',
+        'status',
         'bemerkung',
         'soziale_medien',
         'wuensche_zusatzleistungen',
@@ -42,10 +44,11 @@ class Anfrage extends Model
     ];
 
     protected $casts = [
+        'termine' => 'array',
         'stand' => 'array',
         'warenangebot' => 'array',
         'herkunft' => 'array',
-        'importiert' => 'boolean',
+        'vorfuehrung_am_stand' => 'boolean',
         'soziale_medien' => 'array',
         'wuensche_zusatzleistungen' => 'array',
         'werbematerial' => 'array',
@@ -56,10 +59,25 @@ class Anfrage extends Model
         return $this->belongsTo(Termin::class);
     }
 
-    // Shortcut für Markt über Termin
+    // Direkte Relation zum Markt
     public function markt()
     {
-        return $this->hasOneThrough(Markt::class, Termin::class, 'id', 'id', 'termin_id', 'markt_id');
+        return $this->belongsTo(Markt::class);
+    }
+
+    // Accessor für mehrere Termine
+    public function getTermineAttribute($value)
+    {
+        // Wenn termine JSON vorhanden ist, diese verwenden
+        if ($value) {
+            $terminIds = is_array($value) ? $value : json_decode($value, true);
+            return Termin::whereIn('id', $terminIds)->get();
+        }
+        // Fallback auf termin_id für Rückwärtskompatibilität
+        if ($this->termin_id) {
+            return Termin::where('id', $this->termin_id)->get();
+        }
+        return collect();
     }
 
     /**

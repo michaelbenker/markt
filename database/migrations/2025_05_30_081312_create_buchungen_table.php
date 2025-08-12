@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->enum('status', ['anfrage', 'bearbeitung', 'bestätigt', 'erledigt', 'abgelehnt'])->default('anfrage');
-            $table->foreignId('termin_id')->constrained('termin')->cascadeOnDelete();
+            $table->foreignId('markt_id')->constrained('markt')->cascadeOnDelete(); // Neu: Direkte Zuordnung zum Markt
+            $table->json('termine')->nullable(); // Neu: Array von Termin-IDs
             $table->foreignId('standort_id')->constrained('standort')->cascadeOnDelete();
             $table->string('standplatz');
             $table->foreignId('aussteller_id')->constrained('aussteller')->cascadeOnDelete();
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->json('warenangebot')->nullable();
             $table->json('herkunft')->nullable();
             $table->json('werbematerial')->nullable();
+            $table->string('bemerkung')->nullable();
             $table->timestamps();
         });
     }

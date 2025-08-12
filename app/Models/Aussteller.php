@@ -28,6 +28,7 @@ class Aussteller extends Model
         'email',
         'briefanrede',
         'bemerkung',
+        'vorfuehrung_am_stand',
         'steuer_id',
         'handelsregisternummer',
         'rating',

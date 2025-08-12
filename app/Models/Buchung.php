@@ -14,7 +14,8 @@ class Buchung extends Model
     protected $table = 'buchung';
     protected $fillable = [
         'status',
-        'termin_id',
+        'markt_id',
+        'termine',
         'standort_id',
         'standplatz',
         'aussteller_id',
@@ -22,9 +23,11 @@ class Buchung extends Model
         'warenangebot',
         'herkunft',
         'werbematerial',
+        'bemerkung',
     ];
 
     protected $casts = [
+        'termine' => 'array',
         'stand' => 'array',
         'warenangebot' => 'array',
         'herkunft' => 'array',
@@ -77,9 +80,24 @@ class Buchung extends Model
         });
     }
 
-    public function termin()
+    public function markt()
     {
-        return $this->belongsTo(Termin::class);
+        return $this->belongsTo(Markt::class);
+    }
+
+    // Neue Relation für mehrere Termine
+    public function getTermineAttribute($value)
+    {
+        // Wenn termine JSON vorhanden ist, diese verwenden
+        if ($value) {
+            $terminIds = is_array($value) ? $value : json_decode($value, true);
+            return Termin::whereIn('id', $terminIds)->get();
+        }
+        // Fallback auf termin_id für Rückwärtskompatibilität
+        if ($this->termin_id) {
+            return Termin::where('id', $this->termin_id)->get();
+        }
+        return collect();
     }
 
     public function standort()
