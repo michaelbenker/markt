@@ -24,6 +24,10 @@ use Filament\Forms\Components\Hidden;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\HtmlString;
+use Filament\Tables\Actions\BulkAction;
+use Illuminate\Database\Eloquent\Collection;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\RechnungDatevExport;
 
 class RechnungResource extends Resource
 {
@@ -557,6 +561,28 @@ class RechnungResource extends Resource
                                 ->success()
                                 ->send();
                         }),
+                    BulkAction::make('exportDatev')
+                        ->label('DATEV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->action(function (Collection $records) {
+                            // Optional: Zeitraum aus den ausgewählten Rechnungen ermitteln
+                            $von = $records->min('rechnungsdatum');
+                            $bis = $records->max('rechnungsdatum');
+                            
+                            $vonFormatted = $von ? \Carbon\Carbon::parse($von)->format('Ymd') : now()->startOfMonth()->format('Ymd');
+                            $bisFormatted = $bis ? \Carbon\Carbon::parse($bis)->format('Ymd') : now()->endOfMonth()->format('Ymd');
+                            
+                            $filename = 'EXTF_Buchungsstapel_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+                            
+                            return Excel::download(
+                                new RechnungDatevExport($records, $vonFormatted, $bisFormatted),
+                                $filename
+                            );
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('DATEV-Export erstellen')
+                        ->modalDescription('Die ausgewählten Rechnungen werden im DATEV-Format exportiert.')
+                        ->modalSubmitActionLabel('Exportieren'),
                 ]),
             ])
             ->paginated([15, 30, 50, 100])
