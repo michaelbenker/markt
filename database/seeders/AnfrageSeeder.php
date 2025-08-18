@@ -63,6 +63,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => ['strom', 'wasser'],
                 'werbematerial' => ['plakate_a3' => 5, 'plakate_a1' => 2, 'flyer' => 100, 'social_media_post' => true],
                 'wunsch_standort_id' => 1,
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
@@ -92,6 +93,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => null,
                 'werbematerial' => ['plakate_a3' => 2, 'plakate_a1' => 0, 'flyer' => 0, 'social_media_post' => true],
                 'wunsch_standort_id' => null,
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
@@ -121,6 +123,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => ['strom'],
                 'werbematerial' => ['plakate_a3' => 0, 'plakate_a1' => 1, 'flyer' => 50, 'social_media_post' => false],
                 'wunsch_standort_id' => 2,
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
@@ -150,6 +153,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => ['strom', 'tisch'],
                 'werbematerial' => ['plakate_a3' => 10, 'plakate_a1' => 0, 'flyer' => 200, 'social_media_post' => true],
                 'wunsch_standort_id' => 3,
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
@@ -183,6 +187,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => null,
                 'werbematerial' => ['plakate_a3' => rand(0, 5), 'plakate_a1' => rand(0, 2), 'flyer' => rand(0, 100), 'social_media_post' => (bool) rand(0, 1)],
                 'wunsch_standort_id' => rand(1, 3),
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
@@ -212,6 +217,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => null,
                 'werbematerial' => ['plakate_a3' => rand(0, 5), 'plakate_a1' => rand(0, 2), 'flyer' => rand(0, 100), 'social_media_post' => (bool) rand(0, 1)],
                 'wunsch_standort_id' => rand(1, 3),
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
@@ -241,6 +247,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => null,
                 'werbematerial' => ['plakate_a3' => rand(0, 5), 'plakate_a1' => rand(0, 2), 'flyer' => rand(0, 100), 'social_media_post' => (bool) rand(0, 1)],
                 'wunsch_standort_id' => rand(1, 3),
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
@@ -270,6 +277,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => null,
                 'werbematerial' => ['plakate_a3' => rand(0, 5), 'plakate_a1' => rand(0, 2), 'flyer' => rand(0, 100), 'social_media_post' => (bool) rand(0, 1)],
                 'wunsch_standort_id' => rand(1, 3),
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
@@ -299,6 +307,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => null,
                 'werbematerial' => ['plakate_a3' => rand(0, 5), 'plakate_a1' => rand(0, 2), 'flyer' => rand(0, 100), 'social_media_post' => (bool) rand(0, 1)],
                 'wunsch_standort_id' => rand(1, 3),
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
@@ -328,6 +337,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => null,
                 'werbematerial' => ['plakate_a3' => rand(0, 5), 'plakate_a1' => rand(0, 2), 'flyer' => rand(0, 100), 'social_media_post' => (bool) rand(0, 1)],
                 'wunsch_standort_id' => rand(1, 3),
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
@@ -357,6 +367,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => null,
                 'werbematerial' => ['plakate_a3' => rand(0, 5), 'plakate_a1' => rand(0, 2), 'flyer' => rand(0, 100), 'social_media_post' => (bool) rand(0, 1)],
                 'wunsch_standort_id' => rand(1, 3),
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
@@ -386,6 +397,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => null,
                 'werbematerial' => ['plakate_a3' => rand(0, 5), 'plakate_a1' => rand(0, 2), 'flyer' => rand(0, 100), 'social_media_post' => (bool) rand(0, 1)],
                 'wunsch_standort_id' => rand(1, 3),
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
@@ -415,6 +427,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => null,
                 'werbematerial' => ['plakate_a3' => rand(0, 5), 'plakate_a1' => rand(0, 2), 'flyer' => rand(0, 100), 'social_media_post' => (bool) rand(0, 1)],
                 'wunsch_standort_id' => rand(1, 3),
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
             [
@@ -447,6 +460,7 @@ class AnfrageSeeder extends Seeder
                 'wuensche_zusatzleistungen' => null,
                 'werbematerial' => ['plakate_a3' => rand(0, 5), 'plakate_a1' => rand(0, 2), 'flyer' => rand(0, 100), 'social_media_post' => (bool) rand(0, 1)],
                 'wunsch_standort_id' => rand(1, 3),
+                'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 'created_at' => $twoDaysAgo->copy()->addHours(rand(0, 48)),
             ],
         ];

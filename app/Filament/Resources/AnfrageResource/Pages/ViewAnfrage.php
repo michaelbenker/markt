@@ -41,7 +41,7 @@ class ViewAnfrage extends ViewRecord
                 $this->updateData[$aus->id] = true;
             }
         }
-        
+
         // Tags als JSON für JavaScript vorbereiten (ohne Icons, nur Namen)
         $tags = \App\Models\Tag::all()->mapWithKeys(function ($tag) {
             return [$tag->id => $tag->name];
@@ -333,6 +333,7 @@ class ViewAnfrage extends ViewRecord
             'handelsregisternummer' => $a->handelsregisternummer,
             'stand' => $a->stand,
             'warenangebot' => $a->warenangebot,
+            'vorfuehrung_am_stand' => $a->vorfuehrung_am_stand,
             'herkunft' => $a->herkunft,
             'soziale_medien' => $a->soziale_medien,
             'rating' => $this->selectedRating ?? 0,  // Rating übernehmen
@@ -398,6 +399,7 @@ class ViewAnfrage extends ViewRecord
             'handelsregisternummer' => $a->handelsregisternummer,
             'stand' => $a->stand,
             'warenangebot' => $a->warenangebot,
+            'vorfuehrung_am_stand' => $a->vorfuehrung_am_stand,
             'herkunft' => $a->herkunft,
             'soziale_medien' => $a->soziale_medien,
             'rating' => $this->selectedRating ?? 0,  // Rating übernehmen
@@ -421,7 +423,7 @@ class ViewAnfrage extends ViewRecord
         // E-Mail senden
         $mailService = new \App\Services\MailService();
         $result = $mailService->sendAnfrageAusstellerImportiert($a);
-        
+
         if ($result) {
             Notification::make()
                 ->title('Aussteller erfolgreich angelegt')
@@ -445,20 +447,20 @@ class ViewAnfrage extends ViewRecord
     public function aufWartelisteSetzen()
     {
         $anfrage = $this->getCurrentAnfrage();
-        
+
         // Status auf warteschlange setzen
         $anfrage->update(['status' => 'warteschlange']);
-        
+
         // E-Mail senden
         $mailService = new \App\Services\MailService();
-        
+
         // Optional: Anmeldefrist könnte aus dem Markt kommen
         // Hier verwenden wir ein festes Datum als Beispiel
         // Sie können das anpassen, um das Datum aus dem Markt zu holen
         $anmeldefrist = now()->addDays(14)->format('d.m.Y');
-        
+
         $result = $mailService->sendAnfrageWarteliste($anfrage, $anmeldefrist);
-        
+
         if ($result) {
             Notification::make()
                 ->title('Anfrage auf Warteliste gesetzt')
@@ -472,7 +474,7 @@ class ViewAnfrage extends ViewRecord
                 ->warning()
                 ->send();
         }
-        
+
         // Zurück zur Anfragen-Übersicht
         return redirect()->route('filament.admin.resources.anfrage.index');
     }
@@ -607,6 +609,7 @@ class ViewAnfrage extends ViewRecord
             'handelsregisternummer' => $anfrage->handelsregisternummer,
             'stand' => $anfrage->stand,
             'warenangebot' => $anfrage->warenangebot,
+            'vorfuehrung_am_stand' => $anfrage->vorfuehrung_am_stand,
             'herkunft' => $anfrage->herkunft,
             'soziale_medien' => $anfrage->soziale_medien,
         ]);

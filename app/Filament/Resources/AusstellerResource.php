@@ -14,7 +14,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Forms\Components\{TextInput, Textarea, Select, KeyValue, Grid, Section};
+use Filament\Forms\Components\{TextInput, Textarea, Select, KeyValue, Grid, Section, Toggle};
 use Filament\Tables\Columns\{TextColumn, IconColumn};
 use Filament\Forms\Components\MultiSelect;
 use Filament\Forms\Components\Repeater;
@@ -122,9 +122,13 @@ class AusstellerResource extends Resource
                                     Grid::make(2)->schema([
                                         TextInput::make('email')
                                             ->label('E-Mail')
+                                            ->nullable()
                                             ->email()
-                                            ->required()
-                                            ->dehydrateStateUsing(fn(string $state): string => trim($state)),
+                                            ->unique(
+                                                table: Aussteller::class,
+                                                ignoreRecord: true
+                                            )
+                                            ->dehydrateStateUsing(fn(?string $state): ?string => $state ? mb_strtolower(trim($state)) : null),
                                     ])->columnSpan(2),
                                     Grid::make(2)->schema([
                                         TextInput::make('steuer_id')
@@ -163,6 +167,9 @@ class AusstellerResource extends Resource
                                             ->when($kategorieId, fn($query) => $query->where('kategorie_id', $kategorieId))
                                             ->pluck('name', 'id');
                                     }),
+                                Toggle::make('vorfuehrung_am_stand')
+                                    ->label('Vorführung am Stand')
+                                    ->helperText('Bietet der Aussteller Vorführungen am Stand an?'),
                                 Textarea::make('bemerkung')->label('Bemerkung')->rows(4),
                                 Section::make('Stand')
                                     ->schema([
@@ -236,7 +243,7 @@ class AusstellerResource extends Resource
                                         ->multiple()
                                         ->relationship('tags', 'name')
                                         ->getOptionLabelFromRecordUsing(function (\App\Models\Tag $record) {
-                                            $icon = match($record->type) {
+                                            $icon = match ($record->type) {
                                                 'positiv' => '✅',
                                                 'negativ' => '❌',
                                                 default => '➖'
@@ -246,7 +253,7 @@ class AusstellerResource extends Resource
                                         ->preload()
                                         ->searchable()
                                         ->helperText('Wähle passende Tags für diesen Aussteller'),
-                                ])->visible(fn ($livewire) => !($livewire instanceof Pages\CreateAussteller)),
+                                ])->visible(fn($livewire) => !($livewire instanceof Pages\CreateAussteller)),
                             ]),
                     ]),
             ]);

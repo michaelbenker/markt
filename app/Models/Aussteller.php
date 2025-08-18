@@ -42,6 +42,7 @@ class Aussteller extends Model
         'stand' => 'array',
         'rating' => 'integer',
         'herkunft' => 'array',
+        'vorfuehrung_am_stand' => 'boolean',
     ];
 
     protected $attributes = [
