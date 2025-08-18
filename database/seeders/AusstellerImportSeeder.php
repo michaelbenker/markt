@@ -115,6 +115,7 @@ class AusstellerImportSeeder extends Seeder
                     'soziale_medien' => $sozialeMedien,
                     'rating' => $rating,
                     'rating_bemerkung' => $ratingBemerkungen[$rating],
+                    'vorfuehrung_am_stand' => (bool) rand(0, 1),
                 ]);
 
                 // Zufällig 1-3 Subkategorien zuweisen
