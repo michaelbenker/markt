@@ -154,7 +154,10 @@ class MarktResource extends Resource
                             return 'Keine Termine geplant';
                         }
                         return $termine->map(function ($termin) {
-                            return $termin->start->format('d.m.Y') . ' - ' . $termin->ende->format('d.m.Y');
+                            if ($termin->ende) {
+                                return $termin->start->format('d.m.Y') . ' - ' . $termin->ende->format('d.m.Y');
+                            }
+                            return $termin->start->format('d.m.Y');
                         })->join(', ');
                     }),
             ])

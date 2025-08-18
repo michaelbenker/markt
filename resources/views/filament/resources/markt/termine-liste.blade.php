@@ -6,7 +6,11 @@
             @foreach($markt->termine->sortBy('start') as $termin)
                 <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-md">
                     <span class="text-sm text-gray-600 dark:text-gray-400">
-                        {{ $termin->start->locale('de')->isoFormat('DD.MM.YYYY') }} - {{ $termin->ende->locale('de')->isoFormat('DD.MM.YYYY') }}
+                        @if($termin->ende)
+                            {{ $termin->start->locale('de')->isoFormat('DD.MM.YYYY') }} - {{ $termin->ende->locale('de')->isoFormat('DD.MM.YYYY') }}
+                        @else
+                            {{ $termin->start->locale('de')->isoFormat('DD.MM.YYYY') }}
+                        @endif
                         @if($termin->bemerkung)
                             <span class="text-xs text-gray-500">({{ Str::limit($termin->bemerkung, 30) }})</span>
                         @endif

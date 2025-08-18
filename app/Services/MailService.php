@@ -139,7 +139,7 @@ class MailService
         try {
             // Anhänge verarbeiten
             $processedAttachments = $this->processCustomAttachments($attachments);
-            
+
             // E-Mail erstellen und versenden
             $mailable = new UniversalMail($subject, $content, $processedAttachments);
 
@@ -245,12 +245,12 @@ class MailService
         try {
             $mailable = new \App\Mail\TaeglicheAnfragenUebersicht();
             $this->sendMail($user->email, $user->name, $mailable);
-            
+
             Log::info("Tägliche Anfragen-Zusammenfassung versendet", [
                 'user_id' => $user->id,
                 'email' => $user->email
             ]);
-            
+
             return true;
         } catch (\Exception $e) {
             Log::error("Fehler beim Versand der täglichen Zusammenfassung", [
@@ -258,7 +258,7 @@ class MailService
                 'email' => $user->email,
                 'error' => $e->getMessage()
             ]);
-            
+
             return false;
         }
     }
@@ -270,14 +270,14 @@ class MailService
     {
         // Im Development-Modus alle E-Mails an MAIL_DEV_REDIRECT_EMAIL umleiten
         $devRedirectEmail = config('mail.dev_redirect_email');
-        
+
         if ($devRedirectEmail) {
             Log::info("E-Mail Dev-Redirect aktiv", [
                 'original_email' => $toEmail,
                 'original_name' => $toName,
                 'redirect_email' => $devRedirectEmail
             ]);
-            
+
             Mail::to($devRedirectEmail, 'Test Recipient (Original: ' . ($toName ?: $toEmail) . ')')->send($mailable);
         } else {
             Mail::to($toEmail, $toName)->send($mailable);
@@ -290,10 +290,10 @@ class MailService
     private function processCustomAttachments(array $attachments): array
     {
         $processedAttachments = [];
-        
+
         foreach ($attachments as $attachment) {
             $type = $attachment['type'] ?? null;
-            
+
             switch ($type) {
                 case 'buchung_pdf':
                     $buchung = $attachment['buchung'] ?? null;
@@ -313,7 +313,7 @@ class MailService
                         }
                     }
                     break;
-                    
+
                 case 'rechnung_pdf':
                     $rechnung = $attachment['rechnung'] ?? null;
                     if ($rechnung) {
@@ -334,7 +334,7 @@ class MailService
                     break;
             }
         }
-        
+
         return $processedAttachments;
     }
 
@@ -386,17 +386,17 @@ class MailService
 
                     // Neue Termin-Logik: termine ist jetzt ein Array von Termin-IDs
                     $termine = 'Termin wird noch bekannt gegeben';
-                    
+
                     // Hole die tatsächlichen Termine über die Methode
                     if (method_exists($buchung, 'termineObjekte')) {
                         $terminObjekte = $buchung->termineObjekte();
-                        
+
                         if ($terminObjekte->count() > 0) {
                             $terminStrings = [];
                             foreach ($terminObjekte as $termin) {
                                 $start = \Carbon\Carbon::parse($termin->start)->format('d.m.Y');
                                 $ende = \Carbon\Carbon::parse($termin->ende)->format('d.m.Y');
-                                
+
                                 if ($start === $ende) {
                                     $terminStrings[] = $start;
                                 } else {
@@ -428,23 +428,27 @@ class MailService
 
             case 'anfrage_bestaetigung':
                 $anfrage = $data['anfrage'] ?? null;
-                
+
                 if ($anfrage) {
                     // Name formatieren
                     $name = trim(($anfrage->anrede ? $anfrage->anrede . ' ' : '') . $anfrage->vorname . ' ' . $anfrage->nachname);
-                    
+
                     // Termine formatieren
                     $termine = 'Keine Termine ausgewählt';
                     if ($anfrage->termine && count($anfrage->termine) > 0) {
                         $terminStrings = [];
                         foreach ($anfrage->termine as $termin) {
                             $start = \Carbon\Carbon::parse($termin->start)->format('d.m.Y');
-                            $ende = \Carbon\Carbon::parse($termin->ende)->format('d.m.Y');
-                            $terminStrings[] = $start . ' - ' . $ende;
+                            if ($termin->ende) {
+                                $ende = \Carbon\Carbon::parse($termin->ende)->format('d.m.Y');
+                                $terminStrings[] = $start . ' - ' . $ende;
+                            } else {
+                                $terminStrings[] = $start;
+                            }
                         }
                         $termine = implode(', ', $terminStrings);
                     }
-                    
+
                     // Warenangebot formatieren
                     $warenangebot = '-';
                     if (is_array($anfrage->warenangebot)) {
@@ -465,13 +469,13 @@ class MailService
                     } else {
                         $warenangebot = $anfrage->warenangebot;
                     }
-                    
+
                     // Bemerkung formatieren
                     $bemerkung = '';
                     if ($anfrage->bemerkung) {
                         $bemerkung = "\n**Bemerkung:**\n" . $anfrage->bemerkung;
                     }
-                    
+
                     $processedData = [
                         'markt_name' => $anfrage->markt->name ?? 'Unbekannter Markt',
                         'termine' => $termine,
@@ -486,10 +490,10 @@ class MailService
             case 'anfrage_warteliste':
                 $anfrage = $data['anfrage'] ?? null;
                 $anmeldefrist = $data['anmeldefrist'] ?? null;
-                
+
                 if ($anfrage) {
                     $name = trim(($anfrage->anrede ? $anfrage->anrede . ' ' : '') . $anfrage->vorname . ' ' . $anfrage->nachname);
-                    
+
                     $processedData = [
                         'markt_name' => $anfrage->markt->name ?? 'Unbekannter Markt',
                         'anmeldefrist' => $anmeldefrist ?: 'wird noch bekannt gegeben',
@@ -500,10 +504,10 @@ class MailService
 
             case 'anfrage_aussteller_importiert':
                 $anfrage = $data['anfrage'] ?? null;
-                
+
                 if ($anfrage) {
                     $name = trim(($anfrage->anrede ? $anfrage->anrede . ' ' : '') . $anfrage->vorname . ' ' . $anfrage->nachname);
-                    
+
                     $processedData = [
                         'markt_name' => $anfrage->markt->name ?? 'Unbekannter Markt',
                         'name' => $name,
@@ -536,13 +540,13 @@ class MailService
                 break;
         }
 
-        Log::debug('Template-Daten für aussteller_bestaetigung', [
-            'data_pretty' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-        ]);
+        // Log::debug('Template-Daten für aussteller_bestaetigung', [
+        //     'data_pretty' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        // ]);
 
-        Log::debug('Template-Daten für aussteller_bestaetigung', [
-            'processedData' => json_encode($processedData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-        ]);
+        // Log::debug('Template-Daten für aussteller_bestaetigung', [
+        //     'processedData' => json_encode($processedData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        // ]);
 
         return $processedData;
     }
@@ -759,11 +763,11 @@ class MailService
                 $dummyAnfrage->vorname = $ausstellerDummyData['vorname'];
                 $dummyAnfrage->nachname = $ausstellerDummyData['name'];
                 $dummyAnfrage->email = $ausstellerDummyData['email'];
-                
+
                 $dummyMarkt = new \stdClass();
                 $dummyMarkt->name = $baseDummyData['markt'];
                 $dummyAnfrage->markt = $dummyMarkt;
-                
+
                 return [
                     'anfrage' => $dummyAnfrage,
                     'anmeldefrist' => '31.12.2024',
@@ -775,11 +779,11 @@ class MailService
                 $dummyAnfrage->vorname = $ausstellerDummyData['vorname'];
                 $dummyAnfrage->nachname = $ausstellerDummyData['name'];
                 $dummyAnfrage->email = $ausstellerDummyData['email'];
-                
+
                 $dummyMarkt = new \stdClass();
                 $dummyMarkt->name = $baseDummyData['markt'];
                 $dummyAnfrage->markt = $dummyMarkt;
-                
+
                 return [
                     'anfrage' => $dummyAnfrage,
                 ];

@@ -209,7 +209,7 @@ Aufgrund der begrenzten Platzkapazität und der hohen Nachfrage können wir Ihne
 
 > **Ihre Anfrage im Überblick:**  
 > **Markt:** {{markt_name}}  
-> **Termin:** {{termin}}
+> **Termin:** {{termin}}  
 > **Eingereicht am:** {{eingereicht_am}}  
 > **Firma:** {{firma}}  
 > **Warenangebot:** {{warenangebot}}

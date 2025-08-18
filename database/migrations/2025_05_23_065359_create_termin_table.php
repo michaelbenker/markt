@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('markt_id')->constrained('markt')->onDelete('cascade');
             $table->date('start');
-            $table->date('ende');
+            $table->date('ende')->nullable();
             $table->string('bemerkung')->nullable();
             $table->timestamps();
         });

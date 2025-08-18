@@ -58,6 +58,33 @@ class Anfrage extends Model
     {
         return $this->belongsTo(Termin::class);
     }
+    
+    // Helper-Methode um die Termin-Objekte zu holen
+    public function getTermineObjects()
+    {
+        if (!$this->termine || !is_array($this->termine)) {
+            return collect();
+        }
+        
+        return Termin::whereIn('id', $this->termine)->get();
+    }
+    
+    // Helper-Methode für formatierte Termine als String
+    public function getFormattedTermine(): string
+    {
+        $termineObjects = $this->getTermineObjects();
+        
+        if ($termineObjects->isEmpty()) {
+            return 'Keine Termine ausgewählt';
+        }
+        
+        return $termineObjects->map(function ($termin) {
+            if ($termin->ende) {
+                return $termin->start->format('d.m.Y') . ' - ' . $termin->ende->format('d.m.Y');
+            }
+            return $termin->start->format('d.m.Y');
+        })->join(', ');
+    }
 
     // Direkte Relation zum Markt
     public function markt()

@@ -42,6 +42,11 @@
         @if($selectedMarkt)
         <form action="{{ route('anfrage.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
             @csrf
+            
+            @if($selectedTermine->count() == 1)
+                <!-- Hidden field für einzelnen Termin direkt nach CSRF -->
+                <input type="hidden" name="termine[]" value="{{ $selectedTermine->first()->id }}">
+            @endif
 
             <!-- Markt & Termine -->
             <div class="bg-white p-6 rounded-lg shadow">
@@ -49,12 +54,33 @@
 
                 @if($selectedTermine->count() == 1)
                 <!-- Nur ein Termin - automatisch ausgewählt -->
-                <input type="hidden" name="termine[]" value="{{ $selectedTermine->first()->id }}">
-                <p class="text-gray-700">
-                    <strong>Termin:</strong>
-                    {{ $selectedTermine->first()->start->format('d.m.Y') }} -
-                    {{ $selectedTermine->first()->ende->format('d.m.Y') }}
-                </p>
+                <div class="p-3 bg-gray-50 rounded-md">
+                    <p class="text-gray-700">
+                        <strong>Termin:</strong>
+                        @if($selectedTermine->first()->ende)
+                            {{ $selectedTermine->first()->start->format('d.m.Y') }} -
+                            {{ $selectedTermine->first()->ende->format('d.m.Y') }}
+                        @else
+                            {{ $selectedTermine->first()->start->format('d.m.Y') }}
+                        @endif
+                        @if($selectedTermine->first()->bemerkung)
+                            <span class="text-sm text-gray-600 block mt-1">{{ $selectedTermine->first()->bemerkung }}</span>
+                        @endif
+                    </p>
+                </div>
+                <script>
+                    // Debug: Sicherstellen, dass das hidden field beim Submit vorhanden ist
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const form = document.querySelector('form');
+                        form.addEventListener('submit', function(e) {
+                            const hiddenTermin = document.getElementById('single-termin');
+                            if (hiddenTermin) {
+                                console.log('Hidden Termin value:', hiddenTermin.value);
+                                console.log('Hidden Termin name:', hiddenTermin.name);
+                            }
+                        });
+                    });
+                </script>
                 @else
                 <!-- Mehrere Termine - Checkboxen -->
                 <p class="mb-3 text-sm text-gray-600">Bitte wählen Sie einen oder mehrere Termine aus:</p>
@@ -67,8 +93,12 @@
                             checked
                             class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         <span class="ps-2">
-                            {{ $termin->start->format('d.m.Y') }} -
-                            {{ $termin->ende->format('d.m.Y') }}
+                            @if($termin->ende)
+                                {{ $termin->start->format('d.m.Y') }} -
+                                {{ $termin->ende->format('d.m.Y') }}
+                            @else
+                                {{ $termin->start->format('d.m.Y') }}
+                            @endif
                             @if($termin->beschreibung)
                             <span class="text-sm text-gray-600 block">{{ $termin->beschreibung }}</span>
                             @endif
@@ -539,16 +569,23 @@
             const form = document.querySelector('form');
             if (form) {
                 form.addEventListener('submit', function(e) {
-                    const checkboxes = document.querySelectorAll('input[name="termine[]"]');
-                    let checked = false;
-                    checkboxes.forEach(cb => {
-                        if (cb.checked) checked = true;
-                    });
-
-                    if (checkboxes.length > 0 && !checked) {
-                        e.preventDefault();
-                        alert('Bitte wählen Sie mindestens einen Termin aus.');
+                    // Nur Checkboxen prüfen, nicht hidden fields
+                    const checkboxes = document.querySelectorAll('input[type="checkbox"][name="termine[]"]');
+                    
+                    // Wenn es Checkboxen gibt, prüfen ob mindestens eine ausgewählt ist
+                    if (checkboxes.length > 0) {
+                        let checked = false;
+                        checkboxes.forEach(cb => {
+                            if (cb.checked) checked = true;
+                        });
+                        
+                        if (!checked) {
+                            e.preventDefault();
+                            alert('Bitte wählen Sie mindestens einen Termin aus.');
+                        }
                     }
+                    // Wenn keine Checkboxen da sind (= nur ein Termin mit hidden field), 
+                    // dann ist alles ok und das Formular wird normal submitted
                 });
             }
         });

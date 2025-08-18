@@ -47,7 +47,6 @@ class TerminResource extends Resource
                     ->displayFormat('d.m.Y'),
                 Forms\Components\DatePicker::make('ende')
                     ->label('Enddatum')
-                    ->required()
                     ->native(false)
                     ->displayFormat('d.m.Y')
                     ->after('start'),

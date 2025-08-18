@@ -25,12 +25,25 @@ class ViewAnfrage extends ViewRecord
     public array $selectedTags = [];
     public ?int $selectedRating = 0;
     public string $tagsJson = '{}';
+    public $termineObjects = [];
 
     public function mount($record): void
     {
         parent::mount($record);
 
         $this->anfrageId = $this->record->id;
+        // Als Array speichern für Livewire
+        // $this->record->termine gibt bereits die Termin-Objekte zurück (durch den Accessor)
+        $termine = $this->record->termine;
+
+        $this->termineObjects = $termine->map(function ($termin) {
+            return [
+                'id' => $termin->id,
+                'start' => $termin->start->format('d.m.Y'),
+                'ende' => $termin->ende ? $termin->ende->format('d.m.Y') : null,
+            ];
+        })->toArray();
+
         $this->matchingAussteller = $this->getMatchingAussteller();
 
         // Checkbox für alle Aussteller mit Unterschied standardmäßig anhaken

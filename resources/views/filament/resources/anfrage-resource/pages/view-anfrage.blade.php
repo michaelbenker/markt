@@ -12,9 +12,15 @@
 
                     <dt class="font-semibold">Gewünschte Termine</dt>
                     <dd>
-                        @if($a->termine && count($a->termine) > 0)
-                        @foreach($a->termine as $termin)
-                        <div>{{ \Carbon\Carbon::parse($termin->start)->format('d.m.Y') }} - {{ \Carbon\Carbon::parse($termin->ende)->format('d.m.Y') }}</div>
+                        @if($this->termineObjects && count($this->termineObjects) > 0)
+                        @foreach($this->termineObjects as $termin)
+                        <div>
+                            @if($termin['ende'])
+                                {{ $termin['start'] }} - {{ $termin['ende'] }}
+                            @else
+                                {{ $termin['start'] }}
+                            @endif
+                        </div>
                         @endforeach
                         @else
                         Keine Termine ausgewählt
@@ -166,19 +172,17 @@
                     <h3 class="text-lg font-semibold mb-4 text-gray-900">🔍 Gefundene Aussteller</h3>
                     <div class="grid gap-4">
                         @foreach($this->matchingAussteller as $match)
-                        @php($aus = $match['aussteller'])
-                        @php($differences = $this->getAusstellerDifferences($aus))
                         <div class="border rounded-lg p-4 bg-gray-50">
-                            <div class="font-bold text-lg mb-1">{{ $aus->firma ?? '-' }}</div>
-                            <div class="text-gray-700">{{ $aus->name }}, {{ $aus->vorname }}</div>
-                            <div class="text-gray-600">{{ $aus->email }} | {{ $aus->telefon }}</div>
-                            <div class="text-gray-600">{{ $aus->plz }} {{ $aus->ort }}</div>
+                            <div class="font-bold text-lg mb-1">{{ $match['aussteller']->firma ?? '-' }}</div>
+                            <div class="text-gray-700">{{ $match['aussteller']->name }}, {{ $match['aussteller']->vorname }}</div>
+                            <div class="text-gray-600">{{ $match['aussteller']->email }} | {{ $match['aussteller']->telefon }}</div>
+                            <div class="text-gray-600">{{ $match['aussteller']->plz }} {{ $match['aussteller']->ort }}</div>
 
-                            @if(count($differences) > 0)
+                            @if(count($this->getAusstellerDifferences($match['aussteller'])) > 0)
                             <div class="mt-2 mb-4 p-2 bg-amber-50 border border-amber-200 rounded text-sm">
                                 <div class="font-medium text-amber-800 mb-1">⚠️ Unterschiede gefunden:</div>
                                 <ul class="text-amber-700 list-disc list-inside">
-                                    @foreach($differences as $diff)
+                                    @foreach($this->getAusstellerDifferences($match['aussteller']) as $diff)
                                     <li>{{ $diff }}</li>
                                     @endforeach
                                 </ul>
@@ -188,11 +192,11 @@
                             <div class="flex gap-2 items-center">
                                 <label class="flex items-center gap-2 text-sm">
                                     <input type="checkbox"
-                                        wire:model.defer="updateData.{{ $aus->id }}"
-                                        @if(count($differences)> 0) checked @endif
+                                        wire:model.defer="updateData.{{ $match['aussteller']->id }}"
+                                        {{ count($this->getAusstellerDifferences($match['aussteller'])) > 0 ? 'checked' : '' }}
                                     class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                                     <span class="text-gray-700">
-                                        @if(count($differences) > 0)
+                                        @if(count($this->getAusstellerDifferences($match['aussteller'])) > 0)
                                         Geänderte Daten übernehmen
                                         @else
                                         Aussteller-Daten aus Anfrage aktualisieren
