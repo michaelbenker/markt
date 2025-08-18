@@ -103,6 +103,7 @@ class AnfrageController extends Controller
             'stand.laenge' => 'nullable|numeric|min:0',
             'stand.tiefe' => 'nullable|numeric|min:0',
             'stand.flaeche' => 'nullable|numeric|min:0',
+            'stand.aufbau' => 'nullable|string|max:500',
             'wunsch_standort_id' => 'nullable|exists:standort,id',
             'warenangebot' => 'required|array',
             'warenangebot.*' => 'integer|exists:subkategorie,id',

@@ -42,10 +42,10 @@
         @if($selectedMarkt)
         <form action="{{ route('anfrage.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
             @csrf
-            
+
             @if($selectedTermine->count() == 1)
-                <!-- Hidden field für einzelnen Termin direkt nach CSRF -->
-                <input type="hidden" name="termine[]" value="{{ $selectedTermine->first()->id }}">
+            <!-- Hidden field für einzelnen Termin direkt nach CSRF -->
+            <input type="hidden" name="termine[]" value="{{ $selectedTermine->first()->id }}">
             @endif
 
             <!-- Markt & Termine -->
@@ -58,13 +58,13 @@
                     <p class="text-gray-700">
                         <strong>Termin:</strong>
                         @if($selectedTermine->first()->ende)
-                            {{ $selectedTermine->first()->start->format('d.m.Y') }} -
-                            {{ $selectedTermine->first()->ende->format('d.m.Y') }}
+                        {{ $selectedTermine->first()->start->format('d.m.Y') }} -
+                        {{ $selectedTermine->first()->ende->format('d.m.Y') }}
                         @else
-                            {{ $selectedTermine->first()->start->format('d.m.Y') }}
+                        {{ $selectedTermine->first()->start->format('d.m.Y') }}
                         @endif
                         @if($selectedTermine->first()->bemerkung)
-                            <span class="text-sm text-gray-600 block mt-1">{{ $selectedTermine->first()->bemerkung }}</span>
+                        <span class="text-sm text-gray-600 block mt-1">{{ $selectedTermine->first()->bemerkung }}</span>
                         @endif
                     </p>
                 </div>
@@ -94,10 +94,10 @@
                             class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         <span class="ps-2">
                             @if($termin->ende)
-                                {{ $termin->start->format('d.m.Y') }} -
-                                {{ $termin->ende->format('d.m.Y') }}
+                            {{ $termin->start->format('d.m.Y') }} -
+                            {{ $termin->ende->format('d.m.Y') }}
                             @else
-                                {{ $termin->start->format('d.m.Y') }}
+                            {{ $termin->start->format('d.m.Y') }}
                             @endif
                             @if($termin->beschreibung)
                             <span class="text-sm text-gray-600 block">{{ $termin->beschreibung }}</span>
@@ -300,6 +300,15 @@
                     </div>
                 </div>
 
+                <!-- Standaufbau -->
+                <div class="mt-6">
+                    <label for="stand_aufbau" class="block font-medium text-sm text-gray-700">Standaufbau</label>
+                    <textarea name="stand[aufbau]" id="stand_aufbau" rows="3"
+                        placeholder="Unser Aufbau erfolgt durch Zelt/Pavillon, Verkaufshütte, Verkaufsanhänger, Marktschirm..."
+                        class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('stand.aufbau') }}</textarea>
+                    <p class="text-sm text-gray-600 mt-1">Angabe nur für Standplatz im Außenbereich erforderlich.</p>
+                </div>
+
                 <!-- Wunsch-Standort -->
                 @if(isset($standorteByMarkt[$selectedMarkt->id]) && $standorteByMarkt[$selectedMarkt->id]->count() > 0)
                 <div class="mt-6">
@@ -392,50 +401,50 @@
             <div class="bg-white p-6 rounded-lg shadow">
                 <h2 class="text-xl font-semibold mb-4">Wünsche für Zusatzleistungen</h2>
                 @if(isset($leistungenByMarkt[$selectedMarkt->id]) && $leistungenByMarkt[$selectedMarkt->id]->count() > 0)
-                    @php
-                        $leistungenGruppiert = $leistungenByMarkt[$selectedMarkt->id]->groupBy('kategorie');
-                    @endphp
-                    
-                    <!-- Miete-Leistungen (nur Anzeige) -->
-                    @if(isset($leistungenGruppiert['miete']))
-                    <div class="mb-6">
-                        <h3 class="font-semibold text-sm text-gray-700 mb-2">Standgebühren</h3>
-                        <div class="bg-gray-50 p-3 rounded">
-                            @foreach($leistungenGruppiert['miete'] as $leistung)
-                            <div class="flex justify-between items-center py-1">
-                                <span class="text-sm">{{ $leistung->name }}</span>
-                                <span class="text-sm font-medium">{{ number_format($leistung->preis / 100, 2, ',', '.') }} €</span>
-                            </div>
-                            @endforeach
+                @php
+                $leistungenGruppiert = $leistungenByMarkt[$selectedMarkt->id]->groupBy('kategorie');
+                @endphp
+
+                <!-- Miete-Leistungen (nur Anzeige) -->
+                @if(isset($leistungenGruppiert['miete']))
+                <div class="mb-6">
+                    <h3 class="font-semibold text-sm text-gray-700 mb-2">Standgebühren</h3>
+                    <div class="bg-gray-50 p-3 rounded">
+                        @foreach($leistungenGruppiert['miete'] as $leistung)
+                        <div class="flex justify-between items-center py-1">
+                            <span class="text-sm">{{ $leistung->name }}</span>
+                            <span class="text-sm font-medium">{{ number_format($leistung->preis / 100, 2, ',', '.') }} €</span>
                         </div>
+                        @endforeach
                     </div>
-                    @endif
-                    
-                    <!-- Andere Leistungen (anklickbar, nach Kategorie gruppiert) -->
-                    @foreach($leistungenGruppiert as $kategorie => $leistungen)
-                        @if($kategorie !== 'miete')
-                        <div class="mb-4">
-                            <h3 class="font-semibold text-sm text-gray-700 mb-2 capitalize">{{ ucfirst($kategorie) }}</h3>
-                            <div class="space-y-2">
-                                @foreach($leistungen as $leistung)
-                                <label class="flex items-center">
-                                    <input type="checkbox" name="wuensche_zusatzleistungen[]" value="{{ $leistung->id }}"
-                                        {{ in_array($leistung->id, old('wuensche_zusatzleistungen', [])) ? 'checked' : '' }}
-                                        class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                    <span class="text-sm">
-                                        {{ $leistung->name }}
-                                        @if($leistung->preis > 0)
-                                        ({{ number_format($leistung->preis / 100, 2, ',', '.') }} €)
-                                        @endif
-                                    </span>
-                                </label>
-                                @endforeach
-                            </div>
-                        </div>
-                        @endif
-                    @endforeach
+                </div>
+                @endif
+
+                <!-- Andere Leistungen (anklickbar, nach Kategorie gruppiert) -->
+                @foreach($leistungenGruppiert as $kategorie => $leistungen)
+                @if($kategorie !== 'miete')
+                <div class="mb-4">
+                    <h3 class="font-semibold text-sm text-gray-700 mb-2 capitalize">{{ ucfirst($kategorie) }}</h3>
+                    <div class="space-y-2">
+                        @foreach($leistungen as $leistung)
+                        <label class="flex items-center">
+                            <input type="checkbox" name="wuensche_zusatzleistungen[]" value="{{ $leistung->id }}"
+                                {{ in_array($leistung->id, old('wuensche_zusatzleistungen', [])) ? 'checked' : '' }}
+                                class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm">
+                                {{ $leistung->name }}
+                                @if($leistung->preis > 0)
+                                ({{ number_format($leistung->preis / 100, 2, ',', '.') }} €)
+                                @endif
+                            </span>
+                        </label>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+                @endforeach
                 @else
-                    <p class="text-gray-500 text-sm">Keine Zusatzleistungen verfügbar.</p>
+                <p class="text-gray-500 text-sm">Keine Zusatzleistungen verfügbar.</p>
                 @endif
             </div>
 
@@ -571,14 +580,14 @@
                 form.addEventListener('submit', function(e) {
                     // Nur Checkboxen prüfen, nicht hidden fields
                     const checkboxes = document.querySelectorAll('input[type="checkbox"][name="termine[]"]');
-                    
+
                     // Wenn es Checkboxen gibt, prüfen ob mindestens eine ausgewählt ist
                     if (checkboxes.length > 0) {
                         let checked = false;
                         checkboxes.forEach(cb => {
                             if (cb.checked) checked = true;
                         });
-                        
+
                         if (!checked) {
                             e.preventDefault();
                             alert('Bitte wählen Sie mindestens einen Termin aus.');

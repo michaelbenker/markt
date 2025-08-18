@@ -182,6 +182,12 @@ class AusstellerResource extends Resource
                                         TextInput::make('stand.flaeche')
                                             ->label('Fläche (m²)')
                                             ->numeric(),
+                                        Textarea::make('stand.aufbau')
+                                            ->label('Standaufbau')
+                                            ->placeholder('Unser Aufbau erfolgt durch Zelt/Pavillon, Verkaufshütte, Verkaufsanhänger, Marktschirm...')
+                                            ->rows(3)
+                                            ->columnSpan('full')
+                                            ->helperText('Angabe nur für Standplatz im Außenbereich erforderlich.'),
                                     ])
                                     ->columns(3),
                             ]),

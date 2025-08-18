@@ -55,6 +55,9 @@
                     <dd>
                         @if(is_array($a->stand))
                         Länge: {{ $a->stand['laenge'] ?? '-' }}m, Tiefe: {{ $a->stand['tiefe'] ?? '-' }}m, Fläche: {{ $a->stand['flaeche'] ?? '-' }}m²
+                        @if(!empty($a->stand['aufbau']))
+                        <br>Aufbau: {{ $a->stand['aufbau'] }}
+                        @endif
                         @else
                         {{ $a->stand }}
                         @endif
