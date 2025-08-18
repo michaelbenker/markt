@@ -21,6 +21,35 @@ class EditAussteller extends EditRecord
         }
     }
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        // E-Mail bereinigen: Leerzeichen entfernen und in Kleinbuchstaben konvertieren
+        if (isset($data['email']) && $data['email']) {
+            $data['email'] = mb_strtolower(trim($data['email']));
+        }
+
+        // Telefonnummern bereinigen
+        if (isset($data['telefon']) && $data['telefon']) {
+            $data['telefon'] = trim($data['telefon']);
+        }
+
+        if (isset($data['mobil']) && $data['mobil']) {
+            $data['mobil'] = trim($data['mobil']);
+        }
+
+        return $data;
+    }
+    
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        // Auch beim Laden bereinigen
+        if (isset($data['email']) && $data['email']) {
+            $data['email'] = trim($data['email']);
+        }
+        
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         $actions = [];
@@ -42,7 +71,7 @@ class EditAussteller extends EditRecord
 
         $actions[] = CommentsAction::make()
             ->label('Kommentare');
-            
+
         $actions[] =
             Actions\ActionGroup::make([
                 Actions\DeleteAction::make(),
