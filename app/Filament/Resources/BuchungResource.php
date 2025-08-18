@@ -28,6 +28,10 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Tables\Actions\BulkAction;
+use Illuminate\Database\Eloquent\Collection;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\BuchungExport;
 
 class BuchungResource extends Resource
 {
@@ -364,6 +368,18 @@ class BuchungResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    BulkAction::make('exportExcel')
+                        ->label('Excel Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->action(function (Collection $records) {
+                            $filename = 'buchungen_export_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+
+                            return Excel::download(new BuchungExport($records), $filename);
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('Buchungen exportieren')
+                        ->modalDescription('Möchten Sie die ausgewählten Buchungen als Excel-Datei (XLSX) exportieren?')
+                        ->modalSubmitActionLabel('Exportieren'),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
