@@ -18,7 +18,9 @@ class EmailTemplateResource extends Resource
 
     protected static ?string $navigationLabel = 'E-Mail-Templates';
 
-    protected static ?string $navigationGroup = 'System';
+    protected static ?string $navigationGroup = 'Einstellungen';
+    
+    protected static ?int $navigationSort = 90;
 
     public static function form(Form $form): Form
     {
