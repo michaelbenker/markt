@@ -22,7 +22,10 @@
         "mohamedsabil83/filament-forms-tinyeditor": "^2.4",
         "mokhosh/filament-rating": "^1.4",
         "njxqlus/filament-lightbox": "^3.3",
-        "parallax/filament-comments": "^1.5"
+        "nyholm/psr7": "^1.8",
+        "parallax/filament-comments": "^1.5",
+        "symfony/http-client": "^7.3",
+        "symfony/postmark-mailer": "^7.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
