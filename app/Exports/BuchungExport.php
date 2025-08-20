@@ -7,10 +7,16 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Illuminate\Database\Eloquent\Collection;
 
-class BuchungExport implements FromCollection, WithHeadings, WithMapping, WithStyles
+class BuchungExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithEvents
 {
     protected Collection $records;
 
@@ -126,11 +132,81 @@ class BuchungExport implements FromCollection, WithHeadings, WithMapping, WithSt
     public function styles(Worksheet $sheet)
     {
         return [
-            // Header-Zeile fett machen
-            1 => ['font' => ['bold' => true]],
-
-            // Auto-Width für alle Spalten
-            'A:Q' => ['alignment' => ['wrap_text' => true]],
+            // Header-Zeile mit Formatierung
+            1 => [
+                'font' => [
+                    'bold' => true,
+                    'size' => 12,
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'E7E7E7'],
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                ],
+            ],
+        ];
+    }
+    
+    /**
+     * Registriere Events für erweiterte Formatierung
+     */
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function(AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                
+                // Freeze erste Zeile (Header)
+                $sheet->freezePane('A2');
+                
+                // Setze Zeilenhöhe für Header
+                $sheet->getRowDimension(1)->setRowHeight(25);
+                
+                // Füge Rahmen hinzu
+                $lastColumn = $sheet->getHighestColumn();
+                $lastRow = $sheet->getHighestRow();
+                $sheet->getStyle('A1:' . $lastColumn . $lastRow)->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => 'CCCCCC'],
+                        ],
+                    ],
+                ]);
+                
+                // Setze Filter für alle Spalten
+                $sheet->setAutoFilter('A1:' . $lastColumn . $lastRow);
+                
+                // Formatiere Status-Spalte mit Farben
+                for ($row = 2; $row <= $lastRow; $row++) {
+                    $status = $sheet->getCell('A' . $row)->getValue();
+                    $color = match($status) {
+                        'Bestätigt' => '00B050', // Grün
+                        'Anfrage' => 'FFC000', // Orange
+                        'Bearbeitung' => '0070C0', // Blau
+                        'Abgelehnt' => 'FF0000', // Rot
+                        default => '000000', // Schwarz
+                    };
+                    $sheet->getStyle('A' . $row)->getFont()->getColor()->setRGB($color);
+                }
+                
+                // Formatiere E-Mail-Spalte als Hyperlink (Spalte H = Email)
+                for ($row = 2; $row <= $lastRow; $row++) {
+                    $email = $sheet->getCell('H' . $row)->getValue();
+                    if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        $sheet->getCell('H' . $row)->getHyperlink()->setUrl('mailto:' . $email);
+                        $sheet->getStyle('H' . $row)->getFont()->setUnderline(true)->getColor()->setRGB('0000FF');
+                    }
+                }
+                
+                // Setze Spaltenbreiten für bestimmte Spalten manuell (optional)
+                $sheet->getColumnDimension('M')->setWidth(50); // Gebuchte Leistungen
+                $sheet->getColumnDimension('N')->setWidth(40); // Werbematerial
+                $sheet->getColumnDimension('O')->setWidth(50); // Bemerkung
+            },
         ];
     }
     

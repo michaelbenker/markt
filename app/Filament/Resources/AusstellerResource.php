@@ -122,7 +122,7 @@ class AusstellerResource extends Resource
                                     Grid::make(2)->schema([
                                         TextInput::make('email')
                                             ->label('E-Mail')
-                                            ->nullable()
+                                            ->required()
                                             ->email()
                                             ->unique(
                                                 table: Aussteller::class,
@@ -234,6 +234,7 @@ class AusstellerResource extends Resource
                                             ->stars(5)
                                             ->size('lg')
                                             ->allowZero()
+                                            ->default(0)
                                             ->helperText('Klicke auf die Sterne für eine Bewertung (1-5 Sterne). Aktuell: {{ $state ?? 0 }} Sterne'),
                                         Textarea::make('rating_bemerkung')
                                             ->label('Bemerkung zur Bewertung')
@@ -261,6 +262,14 @@ class AusstellerResource extends Resource
                                         ->helperText('Wähle passende Tags für diesen Aussteller'),
                                 ])->visible(fn($livewire) => !($livewire instanceof Pages\CreateAussteller)),
                             ]),
+                        Tab::make('Buchungen')
+                            ->schema([
+                                Forms\Components\View::make('filament.resources.aussteller.buchungen-liste')
+                                    ->viewData(function ($record) {
+                                        return ['aussteller' => $record];
+                                    }),
+                            ])
+                            ->visible(fn($livewire) => !($livewire instanceof Pages\CreateAussteller)),
                     ]),
             ]);
     }
@@ -316,6 +325,39 @@ class AusstellerResource extends Resource
                     ->sortable(false),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('buchungsjahr')
+                    ->label('Buchungsjahr')
+                    ->options(function () {
+                        // Hole alle Jahre aus den Buchungen
+                        $jahre = \App\Models\Buchung::query()
+                            ->selectRaw('YEAR(created_at) as jahr')
+                            ->distinct()
+                            ->orderBy('jahr', 'desc')
+                            ->pluck('jahr');
+
+                        $options = [];
+                        foreach ($jahre as $jahr) {
+                            $options[$jahr] = $jahr;
+                        }
+
+                        // Falls noch keine Buchungen existieren, aktuelles Jahr anbieten
+                        if (empty($options)) {
+                            $options[date('Y')] = date('Y');
+                        }
+
+                        return $options;
+                    })
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['value'] ?? null,
+                            fn(Builder $query, $jahr) => $query->whereHas(
+                                'buchungen',
+                                fn(Builder $query) => $query->whereYear('created_at', $jahr)
+                            )
+                        );
+                    })
+                    ->default(date('Y')),
+
                 Tables\Filters\SelectFilter::make('markt')
                     ->label('Markt')
                     ->options(function () {
@@ -394,6 +436,13 @@ class AusstellerResource extends Resource
                         ->modalSubmitActionLabel('Exportieren'),
                 ]),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            // Keine RelationManagers - Buchungen werden als Tab angezeigt
+        ];
     }
 
     public static function getPages(): array
