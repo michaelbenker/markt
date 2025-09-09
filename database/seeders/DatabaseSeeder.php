@@ -26,7 +26,17 @@ class DatabaseSeeder extends Seeder
             ['email' => 'michaela.landmann@fuerstenfeld.de'],
             [
                 'name' => 'Michaela Landmann',
-                'password' => Hash::make('test1234'),
+                'password' => Hash::make('!mPxzX3-TQYqePc*nPhRQPWD9'),
+                'is_admin' => true,
+            ]
+        );
+
+
+        User::updateOrCreate(
+            ['email' => 'tanja.gandlgruber@fuerstenfeld.de'],
+            [
+                'name' => 'Tanja Gandlgruber',
+                'password' => Hash::make('rjXnsM8wugorZK3@bNVDpgGPi'),
                 'is_admin' => true,
             ]
         );

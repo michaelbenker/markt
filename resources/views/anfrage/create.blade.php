@@ -283,59 +283,6 @@
                 </div>
             </div>
 
-            <!-- Stand Informationen -->
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Stand Informationen</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div>
-                        <label for="stand_laenge" class="block font-medium text-sm text-gray-700">Länge (Meter) <span class="text-red-600">*</span></label>
-                        <input type="number" name="stand[laenge]" id="stand_laenge" required step="0.5" min="0"
-                            value="{{ old('stand.laenge') }}"
-                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    </div>
-
-                    <div>
-                        <label for="stand_tiefe" class="block font-medium text-sm text-gray-700">Tiefe (Meter) <span class="text-red-600">*</span></label>
-                        <input type="number" name="stand[tiefe]" id="stand_tiefe" required step="0.5" min="0"
-                            value="{{ old('stand.tiefe') }}"
-                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    </div>
-
-                    <div>
-                        <label for="stand_flaeche" class="block font-medium text-sm text-gray-700">Fläche (m²)</label>
-                        <input type="number" name="stand[flaeche]" id="stand_flaeche" step="0.1" min="0"
-                            value="{{ old('stand.flaeche') }}"
-                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    </div>
-                </div>
-
-                <!-- Standaufbau -->
-                <div class="mt-6">
-                    <label for="stand_aufbau" class="block font-medium text-sm text-gray-700">Standaufbau</label>
-                    <textarea name="stand[aufbau]" id="stand_aufbau" rows="3"
-                        placeholder="Unser Aufbau erfolgt durch Zelt/Pavillon, Verkaufshütte, Verkaufsanhänger, Marktschirm..."
-                        class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('stand.aufbau') }}</textarea>
-                    <p class="text-sm text-gray-600 mt-1">Angabe nur für Standplatz im Außenbereich erforderlich.</p>
-                </div>
-
-                <!-- Wunsch-Standort -->
-                @if(isset($standorteByMarkt[$selectedMarkt->id]) && $standorteByMarkt[$selectedMarkt->id]->count() > 0)
-                <div class="mt-6">
-                    <label for="wunsch_standort_id" class="block font-medium text-sm text-gray-700">Wunsch-Standort</label>
-                    <select name="wunsch_standort_id" id="wunsch_standort_id"
-                        class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="">Kein besonderer Wunsch</option>
-                        @foreach($standorteByMarkt[$selectedMarkt->id] as $standort)
-                        <option value="{{ $standort->id }}" {{ old('wunsch_standort_id') == $standort->id ? 'selected' : '' }}>
-                            {{ $standort->name }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-                <p class="text-sm text-gray-600 mt-3">Die finale Standzuweisung erfolgt über den Veranstalter. </p>
-                @endif
-            </div>
-
             <!-- Warenangebot -->
             <div class="bg-white p-6 rounded-lg shadow">
                 <h2 class="text-xl font-semibold mb-4">Warenangebot <span class="text-red-600">*</span></h2>
@@ -406,6 +353,59 @@
                 </div>
             </div>
 
+            <!-- Stand Informationen -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Stand Informationen</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div>
+                        <label for="stand_laenge" class="block font-medium text-sm text-gray-700">Länge (Meter) <span class="text-red-600">*</span></label>
+                        <input type="number" name="stand[laenge]" id="stand_laenge" required step="0.5" min="0"
+                            value="{{ old('stand.laenge') }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="stand_tiefe" class="block font-medium text-sm text-gray-700">Tiefe (Meter) <span class="text-red-600">*</span></label>
+                        <input type="number" name="stand[tiefe]" id="stand_tiefe" required step="0.5" min="0"
+                            value="{{ old('stand.tiefe') }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="stand_flaeche" class="block font-medium text-sm text-gray-700">Fläche (m²)</label>
+                        <input type="number" name="stand[flaeche]" id="stand_flaeche" step="0.1" min="0"
+                            value="{{ old('stand.flaeche') }}"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Standaufbau -->
+                <div class="mt-6">
+                    <label for="stand_aufbau" class="block font-medium text-sm text-gray-700">Standaufbau</label>
+                    <textarea name="stand[aufbau]" id="stand_aufbau" rows="3"
+                        placeholder="Unser Aufbau erfolgt durch Zelt/Pavillon, Verkaufshütte, Verkaufsanhänger, Marktschirm..."
+                        class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('stand.aufbau') }}</textarea>
+                    <p class="text-sm text-gray-600 mt-1">Angabe nur für Standplatz im Außenbereich erforderlich.</p>
+                </div>
+
+                <!-- Wunsch-Standort -->
+                @if(isset($standorteByMarkt[$selectedMarkt->id]) && $standorteByMarkt[$selectedMarkt->id]->count() > 0)
+                <div class="mt-6">
+                    <label for="wunsch_standort_id" class="block font-medium text-sm text-gray-700">Wunsch-Standort</label>
+                    <select name="wunsch_standort_id" id="wunsch_standort_id"
+                        class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">Kein besonderer Wunsch</option>
+                        @foreach($standorteByMarkt[$selectedMarkt->id] as $standort)
+                        <option value="{{ $standort->id }}" {{ old('wunsch_standort_id') == $standort->id ? 'selected' : '' }}>
+                            {{ $standort->name }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+                <p class="text-sm text-gray-600 mt-3">Die finale Standzuweisung erfolgt über den Veranstalter. </p>
+                @endif
+            </div>
+
             <!-- Zusätzliche Informationen -->
             <div class="bg-white p-6 rounded-lg shadow">
                 <h2 class="text-xl font-semibold mb-4">Wünsche für Zusatzleistungen</h2>
@@ -445,13 +445,13 @@
                                 ({{ number_format($leistung->preis / 100, 2, ',', '.') }} €)
                                 @endif
                             </span>
-                            <select name="wuensche_zusatzleistungen_menge[{{ $leistung->id }}]" 
+                            <select name="wuensche_zusatzleistungen_menge[{{ $leistung->id }}]"
                                 class="ml-4 text-sm rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 @for($i = 0; $i <= 10; $i++)
-                                <option value="{{ $i }}" {{ old('wuensche_zusatzleistungen_menge.'.$leistung->id, 0) == $i ? 'selected' : '' }}>
+                                    <option value="{{ $i }}" {{ old('wuensche_zusatzleistungen_menge.'.$leistung->id, 0) == $i ? 'selected' : '' }}>
                                     {{ $i }}
-                                </option>
-                                @endfor
+                                    </option>
+                                    @endfor
                             </select>
                         </div>
                         @else
