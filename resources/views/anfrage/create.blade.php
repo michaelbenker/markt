@@ -199,7 +199,11 @@
                         <label for="telefon" class="block font-medium text-sm text-gray-700">Telefon</label>
                         <input type="tel" name="telefon" id="telefon" autocomplete="tel"
                             value="{{ old('telefon') }}"
+                            pattern="^\+[1-9]\d{1,14}$"
+                            placeholder="+49 89 12345678"
+                            title="Bitte geben Sie eine internationale Telefonnummer mit Ländervorwahl ein (z.B. +49 für Deutschland)"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <p class="mt-1 text-sm text-gray-500">Format: +Ländervorwahl Nummer (z.B. +49 89 12345678)</p>
                     </div>
 
                     <div>
@@ -213,7 +217,11 @@
                         <label for="mobil" class="block font-medium text-sm text-gray-700">Mobil <span class="text-red-600">*</span></label>
                         <input type="tel" name="mobil" required id="mobil"
                             value="{{ old('mobil') }}"
+                            pattern="^\+[1-9]\d{1,14}$"
+                            placeholder="+49 176 12345678"
+                            title="Bitte geben Sie eine internationale Telefonnummer mit Ländervorwahl ein (z.B. +49 für Deutschland)"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <p class="mt-1 text-sm text-gray-500">Format: +Ländervorwahl Nummer (z.B. +49 176 12345678)</p>
                     </div>
 
                     <div>
@@ -232,7 +240,7 @@
                 </div>
 
                 <div class="mt-6">
-                    <label for="bereits_ausgestellt" class="block font-medium text-sm text-gray-700">Haben Sie bereits an Märkten teilgenommen?</label>
+                    <label for="bereits_ausgestellt" class="block font-medium text-sm text-gray-700">Haben Sie bereits an Märkten in Fürstenfeld teilgenommen?</label>
                     <textarea name="bereits_ausgestellt" id="bereits_ausgestellt" rows="3"
                         placeholder="Bitte geben Sie an, wann und bei welchen Veranstaltungen"
                         class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('bereits_ausgestellt') }}</textarea>

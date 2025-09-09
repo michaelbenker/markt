@@ -638,6 +638,7 @@ class ViewAnfrage extends ViewRecord
             'ort' => $anfrage->ort,
             'land' => $anfrage->land,
             'telefon' => $anfrage->telefon,
+            'mobil' => $anfrage->mobil,
             'email' => $anfrage->email,
             'bemerkung' => $bemerkung,  // Nur Sonstiges wird hinzugefügt, nicht die Anfrage-Bemerkung
             'steuer_id' => $anfrage->steuer_id,

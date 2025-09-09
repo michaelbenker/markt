@@ -22,6 +22,7 @@ return new class extends Migration {
             $table->string('ort');
             $table->string('land');
             $table->string('telefon')->nullable();
+            $table->string('mobil');
             $table->string('email');
             $table->string('steuer_id')->nullable();
             $table->string('handelsregisternummer')->nullable();

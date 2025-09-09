@@ -27,6 +27,7 @@ class Anfrage extends Model
         'ort',
         'land',
         'telefon',
+        'mobil',
         'email',
         'steuer_id',
         'handelsregisternummer',

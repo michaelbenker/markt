@@ -43,7 +43,10 @@
                     <dd>{{ $a->plz }} {{ $a->ort }} ({{ $a->land }})</dd>
 
                     <dt class="font-semibold">Telefon</dt>
-                    <dd>{{ $a->telefon }}</dd>
+                    <dd>{{ $a->telefon ?: '-' }}</dd>
+
+                    <dt class="font-semibold">Mobil</dt>
+                    <dd>{{ $a->mobil ?: '-' }}</dd>
 
                     <dt class="font-semibold">E-Mail</dt>
                     <dd>{{ $a->email }}</dd>
