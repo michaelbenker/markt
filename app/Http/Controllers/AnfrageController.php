@@ -8,6 +8,7 @@ use App\Models\Termin;
 use App\Models\Medien;
 use App\Models\Subkategorie;
 use App\Models\Standort;
+use App\Services\CountryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Notifications\NeueAnfrageNotification;
@@ -70,13 +71,17 @@ class AnfrageController extends Controller
             $leistungenByMarkt[$markt->id] = $markt->leistungen;
         }
 
+        // Länder aus Service laden
+        $countries = CountryService::getCountriesForSelect();
+
         return view('anfrage.create', compact(
             'aktiveMaerkte', 
             'selectedMarkt', 
             'selectedTermine',
             'subkategorienByMarkt', 
             'standorteByMarkt',
-            'leistungenByMarkt'
+            'leistungenByMarkt',
+            'countries'
         ));
     }
 

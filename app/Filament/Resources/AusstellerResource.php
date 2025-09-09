@@ -6,6 +6,7 @@ use App\Filament\Resources\AusstellerResource\Pages;
 use App\Filament\Resources\AusstellerResource\RelationManagers;
 use App\Models\Aussteller;
 use App\Models\Kategorie;
+use App\Services\CountryService;
 use Illuminate\Support\Facades\Log;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -98,14 +99,11 @@ class AusstellerResource extends Resource
                                         ->dehydrateStateUsing(fn(string $state): string => trim($state)),
                                     Select::make('land')
                                         ->label('Land')
-                                        ->options([
-                                            'Deutschland' => 'Deutschland',
-                                            'Österreich' => 'Österreich',
-                                            'Schweiz' => 'Schweiz',
-                                            'Italien' => 'Italien',
-                                            'Frankreich' => 'Frankreich',
-                                            'Niederlande' => 'Niederlande',
-                                        ])
+                                        ->options(function () {
+                                            $countries = CountryService::getCountriesForSelect();
+                                            unset($countries['---']); // Trennlinie entfernen für Filament Select
+                                            return $countries;
+                                        })
                                         ->searchable()
                                         ->default('Deutschland')
                                         ->columnSpan(2),

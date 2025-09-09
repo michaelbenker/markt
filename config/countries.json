@@ -1,0 +1,234 @@
+{
+  "countries": [
+    {
+      "code": "DE",
+      "name": "Deutschland",
+      "group": "DACH"
+    },
+    {
+      "code": "AT",
+      "name": "Österreich",
+      "group": "DACH"
+    },
+    {
+      "code": "CH",
+      "name": "Schweiz",
+      "group": "DACH"
+    },
+    {
+      "code": "AL",
+      "name": "Albanien",
+      "group": "Europe"
+    },
+    {
+      "code": "AD",
+      "name": "Andorra",
+      "group": "Europe"
+    },
+    {
+      "code": "BE",
+      "name": "Belgien",
+      "group": "Europe"
+    },
+    {
+      "code": "BA",
+      "name": "Bosnien und Herzegowina",
+      "group": "Europe"
+    },
+    {
+      "code": "BG",
+      "name": "Bulgarien",
+      "group": "Europe"
+    },
+    {
+      "code": "DK",
+      "name": "Dänemark",
+      "group": "Europe"
+    },
+    {
+      "code": "EE",
+      "name": "Estland",
+      "group": "Europe"
+    },
+    {
+      "code": "FI",
+      "name": "Finnland",
+      "group": "Europe"
+    },
+    {
+      "code": "FR",
+      "name": "Frankreich",
+      "group": "Europe"
+    },
+    {
+      "code": "GR",
+      "name": "Griechenland",
+      "group": "Europe"
+    },
+    {
+      "code": "IE",
+      "name": "Irland",
+      "group": "Europe"
+    },
+    {
+      "code": "IS",
+      "name": "Island",
+      "group": "Europe"
+    },
+    {
+      "code": "IT",
+      "name": "Italien",
+      "group": "Europe"
+    },
+    {
+      "code": "XK",
+      "name": "Kosovo",
+      "group": "Europe"
+    },
+    {
+      "code": "HR",
+      "name": "Kroatien",
+      "group": "Europe"
+    },
+    {
+      "code": "LV",
+      "name": "Lettland",
+      "group": "Europe"
+    },
+    {
+      "code": "LI",
+      "name": "Liechtenstein",
+      "group": "Europe"
+    },
+    {
+      "code": "LT",
+      "name": "Litauen",
+      "group": "Europe"
+    },
+    {
+      "code": "LU",
+      "name": "Luxemburg",
+      "group": "Europe"
+    },
+    {
+      "code": "MT",
+      "name": "Malta",
+      "group": "Europe"
+    },
+    {
+      "code": "MD",
+      "name": "Moldawien",
+      "group": "Europe"
+    },
+    {
+      "code": "MC",
+      "name": "Monaco",
+      "group": "Europe"
+    },
+    {
+      "code": "ME",
+      "name": "Montenegro",
+      "group": "Europe"
+    },
+    {
+      "code": "NL",
+      "name": "Niederlande",
+      "group": "Europe"
+    },
+    {
+      "code": "MK",
+      "name": "Nordmazedonien",
+      "group": "Europe"
+    },
+    {
+      "code": "NO",
+      "name": "Norwegen",
+      "group": "Europe"
+    },
+    {
+      "code": "PL",
+      "name": "Polen",
+      "group": "Europe"
+    },
+    {
+      "code": "PT",
+      "name": "Portugal",
+      "group": "Europe"
+    },
+    {
+      "code": "RO",
+      "name": "Rumänien",
+      "group": "Europe"
+    },
+    {
+      "code": "SM",
+      "name": "San Marino",
+      "group": "Europe"
+    },
+    {
+      "code": "SE",
+      "name": "Schweden",
+      "group": "Europe"
+    },
+    {
+      "code": "RS",
+      "name": "Serbien",
+      "group": "Europe"
+    },
+    {
+      "code": "SK",
+      "name": "Slowakei",
+      "group": "Europe"
+    },
+    {
+      "code": "SI",
+      "name": "Slowenien",
+      "group": "Europe"
+    },
+    {
+      "code": "ES",
+      "name": "Spanien",
+      "group": "Europe"
+    },
+    {
+      "code": "CZ",
+      "name": "Tschechien",
+      "group": "Europe"
+    },
+    {
+      "code": "TR",
+      "name": "Türkei",
+      "group": "Europe"
+    },
+    {
+      "code": "UA",
+      "name": "Ukraine",
+      "group": "Europe"
+    },
+    {
+      "code": "HU",
+      "name": "Ungarn",
+      "group": "Europe"
+    },
+    {
+      "code": "VA",
+      "name": "Vatikanstadt",
+      "group": "Europe"
+    },
+    {
+      "code": "GB",
+      "name": "Vereinigtes Königreich",
+      "group": "Europe"
+    },
+    {
+      "code": "BY",
+      "name": "Weißrussland",
+      "group": "Europe"
+    },
+    {
+      "code": "CY",
+      "name": "Zypern",
+      "group": "Europe"
+    }
+  ]
+}

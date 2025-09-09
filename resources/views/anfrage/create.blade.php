@@ -186,12 +186,13 @@
                         <label for="land" class="block font-medium text-sm text-gray-700">Land <span class="text-red-600">*</span></label>
                         <select name="land" id="land" required autocomplete="country"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="Deutschland" {{ old('land', 'Deutschland') == 'Deutschland' ? 'selected' : '' }}>Deutschland</option>
-                            <option value="Österreich" {{ old('land') == 'Österreich' ? 'selected' : '' }}>Österreich</option>
-                            <option value="Schweiz" {{ old('land') == 'Schweiz' ? 'selected' : '' }}>Schweiz</option>
-                            <option value="Italien" {{ old('land') == 'Italien' ? 'selected' : '' }}>Italien</option>
-                            <option value="Frankreich" {{ old('land') == 'Frankreich' ? 'selected' : '' }}>Frankreich</option>
-                            <option value="Niederlande" {{ old('land') == 'Niederlande' ? 'selected' : '' }}>Niederlande</option>
+                            @foreach($countries as $value => $label)
+                                @if($value === '---')
+                                    <option disabled>──────────────</option>
+                                @else
+                                    <option value="{{ $value }}" {{ old('land', 'Deutschland') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                                @endif
+                            @endforeach
                         </select>
                     </div>
 
