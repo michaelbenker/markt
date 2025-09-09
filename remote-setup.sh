@@ -19,8 +19,8 @@ $PHP artisan migrate --force
 echo "📦 [2/6] Composer installieren..."
 $COMPOSER install --no-dev --optimize-autoloader
 
-echo "🔑 [3/6] Application key generieren..."
-$PHP artisan key:generate
+echo "🔑 [3/6] Application key übersprungen (bereits vorhanden)..."
+  # $PHP artisan key:generate  # AUSKOMMENTIERT FÜR PROD
 
 echo "🧩 [4/6] Konfiguration & Routen cachen..."
 $PHP artisan config:cache
