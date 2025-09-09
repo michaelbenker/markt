@@ -109,6 +109,11 @@ class AnfrageResource extends Resource
                         'abgesagt' => 'Abgesagt',
                     ])
                     ->default('offen'),
+                SelectFilter::make('markt_id')
+                    ->label('Markt')
+                    ->relationship('markt', 'name')
+                    ->preload()
+                    ->searchable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([
