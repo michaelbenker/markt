@@ -122,6 +122,8 @@ class AnfrageController extends Controller
             'bemerkung' => 'nullable|string',
             'soziale_medien' => 'nullable|array',
             'wuensche_zusatzleistungen' => 'nullable|array',
+            'wuensche_zusatzleistungen_menge' => 'nullable|array',
+            'wuensche_zusatzleistungen_menge.*' => 'nullable|integer|min:0|max:10',
             'werbematerial' => 'nullable|array',
             'werbematerial.plakate_a3' => 'nullable|integer|min:0|max:100',
             'werbematerial.plakate_a1' => 'nullable|integer|min:0|max:100',
@@ -178,7 +180,7 @@ class AnfrageController extends Controller
             'status' => 'offen',
             'bemerkung' => $validated['bemerkung'] ?? null,
             'soziale_medien' => $validated['soziale_medien'] ?? null,
-            'wuensche_zusatzleistungen' => $validated['wuensche_zusatzleistungen'] ?? null,
+            'wuensche_zusatzleistungen' => $this->processZusatzleistungen($validated),
             'werbematerial' => $this->transformWerbematerial($validated['werbematerial'] ?? []),
             'wunsch_standort_id' => $validated['wunsch_standort_id'] ?? null,
         ]);
@@ -337,6 +339,46 @@ class AnfrageController extends Controller
             ];
         }
 
+        return $result;
+    }
+
+    private function processZusatzleistungen($validated)
+    {
+        $result = [];
+        
+        // Mobiliar-Leistungen mit Mengen verarbeiten
+        if (!empty($validated['wuensche_zusatzleistungen_menge'])) {
+            foreach ($validated['wuensche_zusatzleistungen_menge'] as $leistungId => $menge) {
+                if ($menge > 0) {
+                    $result[] = [
+                        'leistung_id' => (int) $leistungId,
+                        'menge' => (int) $menge
+                    ];
+                }
+            }
+        }
+        
+        // Andere Leistungen (Checkboxen) mit Menge 1 verarbeiten
+        if (!empty($validated['wuensche_zusatzleistungen'])) {
+            foreach ($validated['wuensche_zusatzleistungen'] as $leistungId) {
+                // Prüfe ob diese Leistung nicht schon durch Mobiliar-Dropdown erfasst wurde
+                $alreadyAdded = false;
+                foreach ($result as $item) {
+                    if ($item['leistung_id'] == $leistungId) {
+                        $alreadyAdded = true;
+                        break;
+                    }
+                }
+                
+                if (!$alreadyAdded) {
+                    $result[] = [
+                        'leistung_id' => (int) $leistungId,
+                        'menge' => 1  // Für Nebenkosten und andere Kategorien immer Menge 1
+                    ];
+                }
+            }
+        }
+        
         return $result;
     }
 }

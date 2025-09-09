@@ -669,7 +669,16 @@ class ViewAnfrage extends ViewRecord
 
         $sortOrder = 1;
 
-        foreach ($anfrage->wuensche_zusatzleistungen as $leistungId) {
+        foreach ($anfrage->wuensche_zusatzleistungen as $leistungItem) {
+            // Neues Format: Array mit leistung_id und menge
+            $leistungId = $leistungItem['leistung_id'] ?? null;
+            $menge = $leistungItem['menge'] ?? 1;
+            
+            if (!$leistungId) {
+                Log::warning("Keine Leistungs-ID gefunden beim Import von Anfrage #{$anfrage->id}");
+                continue;
+            }
+            
             // Leistung aus Datenbank laden um aktuellen Preis zu bekommen
             $leistung = Leistung::find($leistungId);
 
@@ -683,11 +692,11 @@ class ViewAnfrage extends ViewRecord
                 'buchung_id' => $buchung->id,
                 'leistung_id' => $leistung->id,
                 'preis' => $leistung->preis, // Aktueller Preis der Leistung
-                'menge' => 1, // Standard-Menge
+                'menge' => $menge, // Menge aus Anfrage übernehmen
                 'sort' => $sortOrder++,
             ]);
 
-            Log::info("Leistung '{$leistung->name}' (ID: {$leistung->id}) importiert für Buchung #{$buchung->id} aus Anfrage #{$anfrage->id}");
+            Log::info("Leistung '{$leistung->name}' (ID: {$leistung->id}) mit Menge {$menge} importiert für Buchung #{$buchung->id} aus Anfrage #{$anfrage->id}");
         }
     }
 

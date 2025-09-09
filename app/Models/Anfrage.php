@@ -149,10 +149,29 @@ class Anfrage extends Model
      */
     public function gewuenschteLeistungen()
     {
-        if (!$this->wuensche_zusatzleistungen) {
+        if (!$this->wuensche_zusatzleistungen || !is_array($this->wuensche_zusatzleistungen)) {
             return collect();
         }
 
-        return \App\Models\Leistung::whereIn('id', $this->wuensche_zusatzleistungen)->get();
+        $zusatzleistungen = $this->wuensche_zusatzleistungen;
+        
+        // Array von Objekten mit leistung_id und menge
+        if (!empty($zusatzleistungen)) {
+            $leistungIds = array_column($zusatzleistungen, 'leistung_id');
+            $leistungen = \App\Models\Leistung::whereIn('id', $leistungIds)->get();
+            
+            // Füge die Menge zu jeder Leistung hinzu
+            return $leistungen->map(function ($leistung) use ($zusatzleistungen) {
+                foreach ($zusatzleistungen as $item) {
+                    if ($item['leistung_id'] == $leistung->id) {
+                        $leistung->menge = $item['menge'];
+                        break;
+                    }
+                }
+                return $leistung;
+            });
+        }
+        
+        return collect();
     }
 }

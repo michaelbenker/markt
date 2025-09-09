@@ -16,9 +16,9 @@
                         @foreach($this->termineObjects as $termin)
                         <div>
                             @if($termin['ende'])
-                                {{ $termin['start'] }} - {{ $termin['ende'] }}
+                            {{ $termin['start'] }} - {{ $termin['ende'] }}
                             @else
-                                {{ $termin['start'] }}
+                            {{ $termin['start'] }}
                             @endif
                         </div>
                         @endforeach
@@ -118,12 +118,16 @@
 
                     <dt class="font-semibold">Wünsche für Zusatzleistungen</dt>
                     <dd>
-                        @foreach($a->gewuenschteLeistungen() as $leistung)
-                        <span class="inline-block bg-gray-100 rounded px-2 py-1 text-sm mr-2 mb-1">
-                            {{ $leistung->name }}
-                            <span class="text-gray-600">({{ number_format($leistung->preis / 100, 2, ',', '.') }} € / {{ $leistung->einheit }})</span>
-                        </span>
-                        @endforeach
+                        <ul class="list-disc list-inside space-y-1">
+                            @foreach($a->gewuenschteLeistungen() as $leistung)
+                            <li class="text-sm">
+                                {{ $leistung->menge }} x
+                                {{ $leistung->name }}
+
+                                <span class="text-gray-600">– {{ number_format($leistung->preis / 100, 2, ',', '.') }} € / {{ $leistung->einheit }}</span>
+                            </li>
+                            @endforeach
+                        </ul>
                     </dd>
                     @endif
 
@@ -200,7 +204,7 @@
                                     <input type="checkbox"
                                         wire:model.defer="updateData.{{ $match['aussteller']->id }}"
                                         {{ count($this->getAusstellerDifferences($match['aussteller'])) > 0 ? 'checked' : '' }}
-                                    class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                                     <span class="text-gray-700">
                                         @if(count($this->getAusstellerDifferences($match['aussteller'])) > 0)
                                         Geänderte Daten übernehmen

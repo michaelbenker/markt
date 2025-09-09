@@ -162,8 +162,8 @@
                     </div>
 
                     <div>
-                        <label for="hausnummer" class="block font-medium text-sm text-gray-700">Hausnummer</label>
-                        <input type="text" name="hausnummer" id="hausnummer" autocomplete="address-line2"
+                        <label for="hausnummer" class="block font-medium text-sm text-gray-700">Hausnummer <span class="text-red-600">*</span></label>
+                        <input type="text" name="hausnummer" required id="hausnummer" autocomplete="address-line2"
                             value="{{ old('hausnummer') }}"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
@@ -187,24 +187,13 @@
                         <select name="land" id="land" required autocomplete="country"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             @foreach($countries as $value => $label)
-                                @if($value === '---')
-                                    <option disabled>──────────────</option>
-                                @else
-                                    <option value="{{ $value }}" {{ old('land', 'Deutschland') == $value ? 'selected' : '' }}>{{ $label }}</option>
-                                @endif
+                            @if($value === '---')
+                            <option disabled>──────────────</option>
+                            @else
+                            <option value="{{ $value }}" {{ old('land', 'Deutschland') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endif
                             @endforeach
                         </select>
-                    </div>
-
-                    <div>
-                        <label for="telefon" class="block font-medium text-sm text-gray-700">Telefon</label>
-                        <input type="tel" name="telefon" id="telefon" autocomplete="tel"
-                            value="{{ old('telefon') }}"
-                            pattern="^\+[1-9]\d{1,14}$"
-                            placeholder="+49 89 12345678"
-                            title="Bitte geben Sie eine internationale Telefonnummer mit Ländervorwahl ein (z.B. +49 für Deutschland)"
-                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <p class="mt-1 text-sm text-gray-500">Format: +Ländervorwahl Nummer (z.B. +49 89 12345678)</p>
                     </div>
 
                     <div>
@@ -222,7 +211,18 @@
                             placeholder="+49 176 12345678"
                             title="Bitte geben Sie eine internationale Telefonnummer mit Ländervorwahl ein (z.B. +49 für Deutschland)"
                             class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <p class="mt-1 text-sm text-gray-500">Format: +Ländervorwahl Nummer (z.B. +49 176 12345678)</p>
+                        <p class="mt-1 text-sm text-gray-500">+Ländervorwahl Nummer (z.B. +49 176 12345678)</p>
+                    </div>
+
+                    <div>
+                        <label for="telefon" class="block font-medium text-sm text-gray-700">Telefon</label>
+                        <input type="tel" name="telefon" id="telefon" autocomplete="tel"
+                            value="{{ old('telefon') }}"
+                            pattern="^\+[1-9]\d{1,14}$"
+                            placeholder="+49 89 12345678"
+                            title="Bitte geben Sie eine internationale Telefonnummer mit Ländervorwahl ein (z.B. +49 für Deutschland)"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <p class="mt-1 text-sm text-gray-500">+Ländervorwahl Nummer (z.B. +49 89 12345678)</p>
                     </div>
 
                     <div>
@@ -436,6 +436,26 @@
                     <h3 class="font-semibold text-sm text-gray-700 mb-2 capitalize">{{ ucfirst($kategorie) }}</h3>
                     <div class="space-y-2">
                         @foreach($leistungen as $leistung)
+                        @if(strtolower($kategorie) === 'mobiliar')
+                        <!-- Mobiliar mit Dropdown für Menge -->
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm">
+                                {{ $leistung->name }}
+                                @if($leistung->preis > 0)
+                                ({{ number_format($leistung->preis / 100, 2, ',', '.') }} €)
+                                @endif
+                            </span>
+                            <select name="wuensche_zusatzleistungen_menge[{{ $leistung->id }}]" 
+                                class="ml-4 text-sm rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                @for($i = 0; $i <= 10; $i++)
+                                <option value="{{ $i }}" {{ old('wuensche_zusatzleistungen_menge.'.$leistung->id, 0) == $i ? 'selected' : '' }}>
+                                    {{ $i }}
+                                </option>
+                                @endfor
+                            </select>
+                        </div>
+                        @else
+                        <!-- Andere Kategorien mit Checkbox -->
                         <label class="flex items-center">
                             <input type="checkbox" name="wuensche_zusatzleistungen[]" value="{{ $leistung->id }}"
                                 {{ in_array($leistung->id, old('wuensche_zusatzleistungen', [])) ? 'checked' : '' }}
@@ -447,11 +467,15 @@
                                 @endif
                             </span>
                         </label>
+                        @endif
                         @endforeach
                     </div>
                 </div>
                 @endif
                 @endforeach
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <p class="text-sm text-gray-600 italic">Alle angegebenen Preise netto zzgl. 19% MwSt.</p>
+                </div>
                 @else
                 <p class="text-gray-500 text-sm">Keine Zusatzleistungen verfügbar.</p>
                 @endif
