@@ -110,47 +110,39 @@ class UniversalEmailAction extends Action
         parent::setUp();
         
         $this->fillForm(function ($record) {
-            try {
-                // Template laden
-                $template = EmailTemplate::getByKey($this->templateKey);
-                
-                if (!$template) {
-                    \Illuminate\Support\Facades\Log::error("Template {$this->templateKey} nicht gefunden");
-                    return $this->getFallbackData($record);
-                }
-                
-                // Daten für Template vorbereiten
-                $data = $this->prepareTemplateData($record);
-                
-                // Template rendern
-                $mailService = new MailService();
-                $reflection = new \ReflectionClass($mailService);
-                $method = $reflection->getMethod('prepareTemplateData');
-                $method->setAccessible(true);
-                $processedData = $method->invoke($mailService, $this->templateKey, $data);
-                
-                $rendered = $template->render($processedData);
-                
-                \Illuminate\Support\Facades\Log::info("Template {$this->templateKey} gerendert (UniversalEmailAction)", [
-                    'template_key' => $this->templateKey,
-                    'subject' => $rendered['subject'] ?? 'KEIN BETREFF',
-                    'content_length' => strlen($rendered['content'] ?? ''),
-                    'content_preview' => substr($rendered['content'] ?? '', 0, 100),
-                    'has_content' => !empty($rendered['content']),
-                ]);
-                
-                // IMMER das gerenderte Template verwenden, NIE den Fallback wenn Template existiert
-                return [
-                    'email' => $this->getRecipientEmail($record),
-                    'subject' => $rendered['subject'] ?? $this->getFallbackSubject(),
-                    'body' => $rendered['content'] ?? '', // Kein Fallback! Template-Content verwenden
-                    'attach_pdf' => !empty($this->attachmentType),
-                ];
-                
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Fehler beim Template-Rendering ({$this->templateKey}): " . $e->getMessage());
-                return $this->getFallbackData($record);
+            // Template laden - muss existieren!
+            $template = EmailTemplate::getByKey($this->templateKey);
+            
+            if (!$template) {
+                throw new \Exception("Email-Template '{$this->templateKey}' nicht gefunden! Template muss in der Datenbank existieren.");
             }
+            
+            // Daten für Template vorbereiten
+            $data = $this->prepareTemplateData($record);
+            
+            // Template rendern
+            $mailService = new MailService();
+            $reflection = new \ReflectionClass($mailService);
+            $method = $reflection->getMethod('prepareTemplateData');
+            $method->setAccessible(true);
+            $processedData = $method->invoke($mailService, $this->templateKey, $data);
+            
+            $rendered = $template->render($processedData);
+            
+            \Illuminate\Support\Facades\Log::info("Template {$this->templateKey} gerendert (UniversalEmailAction)", [
+                'template_key' => $this->templateKey,
+                'subject' => $rendered['subject'],
+                'content_length' => strlen($rendered['content']),
+                'content_preview' => substr($rendered['content'], 0, 100),
+            ]);
+            
+            // Template-Content verwenden - wenn leer, ist das ein Problem mit dem Template
+            return [
+                'email' => $this->getRecipientEmail($record),
+                'subject' => $rendered['subject'],
+                'body' => $rendered['content'],
+                'attach_pdf' => !empty($this->attachmentType),
+            ];
         });
         
         $this->action(function (array $data, $record) {
@@ -324,39 +316,4 @@ class UniversalEmailAction extends Action
         return 'Kunde';
     }
     
-    protected function getFallbackSubject(): string
-    {
-        $subjects = [
-            'rechnung_versand' => 'Ihre Rechnung',
-            'aussteller_bestaetigung' => 'Bestätigung Ihrer Anmeldung',
-            'aussteller_absage' => 'Absage Ihrer Anmeldung',
-            'anfrage_warteliste' => 'Warteliste-Bestätigung',
-            'anfrage_absage' => 'Absage Ihrer Anfrage',
-        ];
-        
-        return $subjects[$this->templateKey] ?? 'Nachricht';
-    }
-    
-    protected function getFallbackBody(): string
-    {
-        $bodies = [
-            'rechnung_versand' => "Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie Ihre Rechnung.",
-            'aussteller_bestaetigung' => "Sehr geehrte Damen und Herren,\n\nhiermit bestätigen wir Ihre Buchung.",
-            'aussteller_absage' => "Sehr geehrte Damen und Herren,\n\nleider müssen wir Ihre Anmeldung absagen.",
-            'anfrage_warteliste' => "Sehr geehrte Damen und Herren,\n\nSie wurden auf die Warteliste gesetzt.",
-            'anfrage_absage' => "Sehr geehrte Damen und Herren,\n\nleider müssen wir Ihre Anfrage absagen.",
-        ];
-        
-        return $bodies[$this->templateKey] ?? "Sehr geehrte Damen und Herren,\n\n";
-    }
-    
-    protected function getFallbackData(Model $record): array
-    {
-        return [
-            'email' => $this->getRecipientEmail($record),
-            'subject' => $this->getFallbackSubject(),
-            'body' => $this->getFallbackBody(),
-            'attach_pdf' => !empty($this->attachmentType),
-        ];
-    }
 }
