@@ -22,6 +22,43 @@ class EmailRechnungAction extends Action
             ->modalWidth(MaxWidth::SevenExtraLarge)
             ->modalHeading('Rechnung per E-Mail senden')
             ->form(function ($record) {
+                return [
+                    Section::make('E-Mail Einstellungen')
+                        ->schema([
+                            TextInput::make('email')
+                                ->label('E-Mail-Adresse')
+                                ->email()
+                                ->required(),
+
+                            TextInput::make('subject')
+                                ->label('Betreff')
+                                ->required(),
+
+                            Checkbox::make('attach_pdf')
+                                ->label('Rechnung als PDF anhängen')
+                                ->default(true),
+                        ])
+                        ->columns(2),
+
+                    Section::make('E-Mail Inhalt')
+                        ->schema([
+                            MarkdownEditor::make('body')
+                                ->label('Nachricht')
+                                ->required()
+                                ->toolbarButtons([
+                                    'bold',
+                                    'italic',
+                                    'link',
+                                    'heading',
+                                    'bulletList',
+                                    'orderedList',
+                                    'blockquote',
+                                    'codeBlock',
+                                ]),
+                        ]),
+                ];
+            })
+            ->mountUsing(function ($form, $record) {
                 try {
                     // E-Mail Template laden und rendern
                     $mailService = new MailService();
@@ -29,13 +66,13 @@ class EmailRechnungAction extends Action
 
                     if (!$template) {
                         \Illuminate\Support\Facades\Log::error('Template rechnung_versand nicht gefunden');
-                        return [
-                            Section::make('Fehler')
-                                ->schema([
-                                    \Filament\Forms\Components\Placeholder::make('error')
-                                        ->content('E-Mail-Template nicht gefunden!')
-                                ])
-                        ];
+                        $form->fill([
+                            'email' => trim($record->empf_email ?? ''),
+                            'subject' => 'Rechnung',
+                            'body' => 'Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung.',
+                            'attach_pdf' => true,
+                        ]);
+                        return;
                     }
 
                     // Template mit Rechnungsdaten rendern
@@ -45,13 +82,13 @@ class EmailRechnungAction extends Action
 
                     if (!$aussteller) {
                         \Illuminate\Support\Facades\Log::error('Aussteller nicht gefunden für Rechnung: ' . $rechnung->id);
-                        return [
-                            Section::make('Fehler')
-                                ->schema([
-                                    \Filament\Forms\Components\Placeholder::make('error')
-                                        ->content('Aussteller-Daten nicht gefunden!')
-                                ])
-                        ];
+                        $form->fill([
+                            'email' => trim($record->empf_email ?? ''),
+                            'subject' => 'Rechnung',
+                            'body' => 'Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung.',
+                            'attach_pdf' => true,
+                        ]);
+                        return;
                     }
 
                     $data = [
@@ -67,73 +104,42 @@ class EmailRechnungAction extends Action
 
                     $rendered = $template->render($processedData);
 
-                    \Illuminate\Support\Facades\Log::info('Rechnung-Template gerendert', [
+                    \Illuminate\Support\Facades\Log::info('Rechnung-Template gerendert (mountUsing)', [
                         'subject' => $rendered['subject'] ?? 'KEIN BETREFF',
                         'content_length' => strlen($rendered['content'] ?? ''),
                         'content_preview' => substr($rendered['content'] ?? '', 0, 100)
                     ]);
+
+                    // Form mit den gerenderten Werten befüllen
+                    $form->fill([
+                        'email' => trim($record->empf_email ?? ''),
+                        'subject' => $rendered['subject'] ?? 'Rechnung',
+                        'body' => $rendered['content'] ?? 'Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung.',
+                        'attach_pdf' => true,
+                    ]);
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Fehler beim Rechnung-Template-Rendering: ' . $e->getMessage());
-                    return [
-                        Section::make('Fehler')
-                            ->schema([
-                                \Filament\Forms\Components\Placeholder::make('error')
-                                    ->content('Fehler beim Laden des Templates: ' . $e->getMessage())
-                            ])
-                    ];
+                    \Illuminate\Support\Facades\Log::error('Fehler beim Rechnung-Template-Rendering (mountUsing): ' . $e->getMessage());
+                    
+                    // Fallback-Werte setzen
+                    $form->fill([
+                        'email' => trim($record->empf_email ?? ''),
+                        'subject' => 'Rechnung',
+                        'body' => 'Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung.',
+                        'attach_pdf' => true,
+                    ]);
                 }
-
-                return [
-                    Section::make('E-Mail Einstellungen')
-                        ->schema([
-                            TextInput::make('email')
-                                ->label('E-Mail-Adresse')
-                                ->email()
-                                ->required()
-                                ->default(trim($rechnung->empf_email ?? '')),
-
-                            TextInput::make('subject')
-                                ->label('Betreff')
-                                ->required()
-                                ->default($rendered['subject'] ?? ''),
-
-                            Checkbox::make('attach_pdf')
-                                ->label('Rechnung als PDF anhängen')
-                                ->default(true),
-                        ])
-                        ->columns(2),
-
-                    Section::make('E-Mail Inhalt')
-                        ->schema([
-                            MarkdownEditor::make('body')
-                                ->label('Nachricht')
-                                ->required()
-                                ->default(function () use ($rendered) {
-                                    $content = $rendered['content'] ?? '';
-                                    \Illuminate\Support\Facades\Log::info('Rechnung MarkdownEditor Default-Wert gesetzt', [
-                                        'content_length' => strlen($content),
-                                        'content_preview' => substr($content, 0, 100),
-                                        'is_empty' => empty($content)
-                                    ]);
-                                    return $content;
-                                })
-                                ->toolbarButtons([
-                                    'bold',
-                                    'italic',
-                                    'link',
-                                    'heading',
-                                    'bulletList',
-                                    'orderedList',
-                                    'blockquote',
-                                    'codeBlock',
-                                ]),
-                        ]),
-                ];
             })
             ->action(function (array $data, $record) {
                 $mailService = new MailService();
 
                 try {
+                    // Source für Mail-Tracking setzen
+                    $mailService->setSource('Rechnung', $record->id, 'EmailRechnungAction@send');
+                    $mailService->setMetadata([
+                        'template_key' => 'rechnung_versand',
+                        'action' => 'manual_send',
+                    ]);
+
                     // PDF-Anhang vorbereiten falls gewünscht
                     $attachments = [];
                     if ($data['attach_pdf'] ?? false) {

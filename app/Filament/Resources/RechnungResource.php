@@ -489,6 +489,13 @@ class RechnungResource extends Resource
                         );
                     }),
 
+                Tables\Filters\SelectFilter::make('aussteller_id')
+                    ->label('Aussteller')
+                    ->relationship('aussteller', 'firma')
+                    ->getOptionLabelFromRecordUsing(fn($record) => self::formatAusstellerLabel($record))
+                    ->searchable()
+                    ->preload(),
+
                 Tables\Filters\Filter::make('ueberfaellig')
                     ->label('Überfällig')
                     ->query(fn(Builder $query): Builder => $query->where('faelligkeitsdatum', '<', now())

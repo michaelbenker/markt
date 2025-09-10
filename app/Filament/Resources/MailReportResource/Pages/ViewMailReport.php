@@ -150,14 +150,14 @@ class ViewMailReport extends ViewRecord
                         Infolists\Components\TextEntry::make('source_type')
                             ->label('Quell-Typ')
                             ->badge()
-                            ->color(fn (string $state = null): string => match($state) {
+                            ->color(fn (?string $state): string => match($state) {
                                 'Anfrage' => 'info',
                                 'Buchung' => 'success',
                                 'Rechnung' => 'warning',
                                 'Aussteller' => 'primary',
                                 default => 'gray',
                             })
-                            ->formatStateUsing(function (string $state = null, $record): string {
+                            ->formatStateUsing(function (?string $state, $record): string {
                                 if (!$state) return '-';
                                 return $state . ($record->source_id ? ' #' . $record->source_id : '');
                             }),

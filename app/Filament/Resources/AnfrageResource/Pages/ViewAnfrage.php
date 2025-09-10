@@ -466,6 +466,9 @@ class ViewAnfrage extends ViewRecord
 
         // E-Mail senden
         $mailService = new \App\Services\MailService();
+        
+        // Source explizit setzen für besseres Tracking
+        $mailService->setSource('Anfrage', $anfrage->id, 'ViewAnfrage@aufWartelisteSetzen');
 
         // Optional: Anmeldefrist könnte aus dem Markt kommen
         // Hier verwenden wir ein festes Datum als Beispiel
@@ -531,6 +534,10 @@ class ViewAnfrage extends ViewRecord
 
             // Absage-E-Mail über MailService senden
             $mailService = new \App\Services\MailService();
+            
+            // Source für Tracking setzen
+            $mailService->setSource('Anfrage', $a->id, 'ViewAnfrage@ausstellerAbsagen');
+            
             // Termin-Daten korrekt ermitteln
             $markt = $a->markt;
             $termin = $markt?->termine?->sortBy('start')->first();

@@ -234,8 +234,11 @@ class MailService
             'aussteller' => $aussteller,
         ], $zusatzDaten);
 
-        // Setze Source für Tracking
-        $this->setSource('Aussteller', $aussteller->id);
+        // Nur Source setzen wenn noch keine gesetzt wurde
+        // (z.B. wenn direkt von Aussteller-Seite aufgerufen)
+        if (!$this->sourceType && $aussteller->id) {
+            $this->setSource('Aussteller', $aussteller->id);
+        }
 
         return $this->send(
             'aussteller_absage',
@@ -389,6 +392,9 @@ class MailService
             'anfrage' => $anfrage,
             'anmeldefrist' => $anmeldefrist,
         ];
+
+        // Setze Source für Tracking
+        $this->setSource('Anfrage', $anfrage->id, 'sendAnfrageWarteliste');
 
         return $this->send(
             'anfrage_warteliste',
@@ -603,30 +609,30 @@ class MailService
     }
 
     /**
-     * Sende E-Mail via Postmark mit Response-Tracking
+     * Sende E-Mail via Postmark
      */
     private function sendViaPostmark(string $toEmail, ?string $toName, Mailable $mailable): array
     {
         try {
-            // Laravel Mail Facade nutzen, aber Response abfangen
-            $message = Mail::to($toEmail, $toName);
+            // Send email via Laravel Mail
+            Mail::to($toEmail, $toName)->send($mailable);
             
-            // Für Postmark können wir die Swift Message ID nach dem Senden abrufen
-            $message->send($mailable);
+            // Build response
+            $response = [
+                'driver' => 'postmark',
+                'To' => $toEmail,
+                'SubmittedAt' => now()->toIso8601String(),
+                'ErrorCode' => 0,
+                'Message' => 'OK',
+                'MessageStream' => 'outbound'
+            ];
             
-            // Postmark Response simulieren (in Produktion würde dies vom Postmark-Treiber kommen)
-            // TODO: Implementiere echte Postmark-Response-Erfassung über Event-Listener
+            // Generate a UUID for tracking
+            $response['MessageID'] = Str::uuid()->toString();
+            
             return [
                 'success' => true,
-                'provider_response' => [
-                    'driver' => 'postmark',
-                    'MessageID' => Str::uuid()->toString(),
-                    'MessageStream' => config('services.postmark.message_stream', 'outbound'),
-                    'To' => $toEmail,
-                    'SubmittedAt' => now()->toIso8601String(),
-                    'ErrorCode' => 0,
-                    'Message' => 'OK'
-                ]
+                'provider_response' => $response
             ];
         } catch (\Exception $e) {
             return [

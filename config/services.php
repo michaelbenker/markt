@@ -16,6 +16,7 @@ return [
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
+        'server_id' => env('POSTMARK_SERVER_ID', '16706927'),
     ],
 
     'ses' => [
