@@ -45,6 +45,10 @@ class EmailRechnungAction extends Action
                             MarkdownEditor::make('body')
                                 ->label('Nachricht')
                                 ->required()
+                                ->minHeight('20rem')
+                                ->extraAttributes([
+                                    'style' => 'min-height: 20rem;',
+                                ])
                                 ->toolbarButtons([
                                     'bold',
                                     'italic',
@@ -105,7 +109,9 @@ class EmailRechnungAction extends Action
                     \Illuminate\Support\Facades\Log::info('Rechnung-Template gerendert (fillForm)', [
                         'subject' => $rendered['subject'] ?? 'KEIN BETREFF',
                         'content_length' => strlen($rendered['content'] ?? ''),
-                        'content_preview' => substr($rendered['content'] ?? '', 0, 100)
+                        'content_preview' => substr($rendered['content'] ?? '', 0, 100),
+                        'environment' => app()->environment(),
+                        'full_content' => $rendered['content'] ?? 'KEIN CONTENT',
                     ]);
 
                     // Werte direkt zurückgeben

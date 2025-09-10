@@ -44,6 +44,10 @@ class EmailSendAction extends Action
                         MarkdownEditor::make('body')
                             ->label('Nachricht')
                             ->required()
+                            ->minHeight('20rem')
+                            ->extraAttributes([
+                                'style' => 'min-height: 20rem;',
+                            ])
                             ->toolbarButtons([
                                 'bold',
                                 'italic',
