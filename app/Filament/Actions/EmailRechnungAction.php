@@ -5,6 +5,7 @@ namespace App\Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\MarkdownEditor;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Checkbox;
 use Filament\Support\Enums\MaxWidth;
@@ -42,23 +43,11 @@ class EmailRechnungAction extends Action
 
                     Section::make('E-Mail Inhalt')
                         ->schema([
-                            MarkdownEditor::make('body')
+                            Textarea::make('body')
                                 ->label('Nachricht')
                                 ->required()
-                                ->minHeight('20rem')
-                                ->extraAttributes([
-                                    'style' => 'min-height: 20rem;',
-                                ])
-                                ->toolbarButtons([
-                                    'bold',
-                                    'italic',
-                                    'link',
-                                    'heading',
-                                    'bulletList',
-                                    'orderedList',
-                                    'blockquote',
-                                    'codeBlock',
-                                ]),
+                                ->rows(15)
+                                ->helperText('Markdown-Formatierung wird unterstützt'),
                         ]),
                 ];
             })
