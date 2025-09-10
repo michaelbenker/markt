@@ -417,7 +417,7 @@ class ViewMailReport extends ViewRecord
                     return match($sourceType) {
                         'Anfrage' => route('filament.admin.resources.anfrage.view', $sourceId),
                         'Buchung' => route('filament.admin.resources.buchung.edit', $sourceId),
-                        'Rechnung' => route('filament.admin.resources.rechnung.view', $sourceId),
+                        'Rechnung' => route('filament.admin.resources.rechnungen.edit', $sourceId),
                         'Aussteller' => route('filament.admin.resources.aussteller.edit', $sourceId),
                         default => null,
                     };
