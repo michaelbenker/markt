@@ -277,6 +277,12 @@ class AusstellerResource extends Resource
         return $table
             ->modifyQueryUsing(fn(Builder $query) => $query->with(['subkategorien.kategorie']))
             ->columns([
+                TextColumn::make('id')
+                    ->label('Kunden-Nr.')
+                    ->sortable()
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('Kundennummer kopiert'),
                 TextColumn::make('firma')->label('Firma')->searchable()->sortable(),
                 TextColumn::make('name')
                     ->label('Name')
