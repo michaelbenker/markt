@@ -119,3 +119,20 @@ php artisan make:migration update_anfragen_table_changes
 php artisan migrate
 
 ⚠️ Wichtig: Option 1 & 2 löschen alle Daten in der anfragen Tabelle! Option 3 behält die Daten.
+
+# Mails verschicken
+
+```
+curl "https://api.postmarkapp.com/email" \
+  -X POST \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "X-Postmark-Server-Token: cb8a7bb4-f3a5-4489-b69f-5848187a5497" \
+  -d '{
+        "From": "info@sistecs.de",
+        "To": "mb@sistecs.de",
+        "Subject": "Hello from Postmark",
+        "HtmlBody": "<strong>Hello</strong> dear Postmark user.",
+        "MessageStream": "outbound"
+      }'
+```

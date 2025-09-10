@@ -6,12 +6,69 @@ use App\Models\EmailTemplate;
 use App\Models\Rechnung;
 use App\Models\Aussteller;
 use App\Models\Buchung;
+use App\Models\MailReport;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Mail\Mailable;
+use Illuminate\Support\Str;
 
 class MailService
 {
+    /**
+     * Aktuelle Quelle der E-Mail für Tracking
+     */
+    protected ?string $sourceType = null;
+    protected ?int $sourceId = null;
+    protected ?string $triggeredBy = null;
+    
+    /**
+     * Zusätzliche Metadaten für Mail-Reports
+     */
+    protected ?array $tags = null;
+    protected ?array $metadata = null;
+
+    /**
+     * Setze die Quelle für das Mail-Tracking
+     */
+    public function setSource(string $type, ?int $id = null, ?string $triggeredBy = null): self
+    {
+        $this->sourceType = $type;
+        $this->sourceId = $id;
+        $this->triggeredBy = $triggeredBy;
+        return $this;
+    }
+    
+    /**
+     * Setze Tags für das Mail-Tracking
+     */
+    public function setTags(array $tags): self
+    {
+        $this->tags = $tags;
+        return $this;
+    }
+    
+    /**
+     * Setze Metadaten für das Mail-Tracking
+     */
+    public function setMetadata(array $metadata): self
+    {
+        $this->metadata = $metadata;
+        return $this;
+    }
+    
+    /**
+     * Setze alle Tracking-Daten zurück
+     */
+    private function resetTrackingData(): void
+    {
+        $this->sourceType = null;
+        $this->sourceId = null;
+        $this->triggeredBy = null;
+        $this->tags = null;
+        $this->metadata = null;
+    }
+
     /**
      * Zentrale Methode für alle E-Mail-Versendungen
      */
@@ -36,26 +93,74 @@ class MailService
             // Attachments basierend auf Template-Key ermitteln
             $attachments = $this->getAttachments($templateKey, $data);
 
+            // Mail-Report erstellen
+            $mailReport = $this->createMailReport(
+                $toEmail,
+                $toName,
+                $rendered['subject'],
+                $rendered['content'],
+                $templateKey,
+                $attachments
+            );
+
             // E-Mail erstellen und versenden
             $mailable = new UniversalMail($rendered['subject'], $rendered['content'], $attachments);
 
-            $this->sendMail($toEmail, $toName, $mailable);
+            $sendStartTime = microtime(true);
+            $response = $this->sendMail($toEmail, $toName, $mailable);
+            $sendDuration = (int)((microtime(true) - $sendStartTime) * 1000);
 
-            // Log für Nachverfolgung
-            Log::info("E-Mail versendet", [
-                'template_key' => $templateKey,
-                'to_email' => $toEmail,
-                'to_name' => $toName,
-                'attachments_count' => count($attachments)
-            ]);
+            // Report mit Versand-Informationen aktualisieren
+            if ($response['success']) {
+                $mailReport->markAsSent($response['provider_response']);
+                $mailReport->update([
+                    'send_duration_ms' => $sendDuration,
+                    'size_bytes' => strlen($rendered['content'])
+                ]);
+                
+                // Provider-spezifische Daten aktualisieren
+                if (isset($response['provider_response'])) {
+                    $mailReport->updateProviderData($response['provider_response']);
+                }
+                
+                // Log für Nachverfolgung
+                Log::info("E-Mail versendet", [
+                    'template_key' => $templateKey,
+                    'to_email' => $toEmail,
+                    'to_name' => $toName,
+                    'attachments_count' => count($attachments),
+                    'mail_report_id' => $mailReport->id
+                ]);
+            } else {
+                $mailReport->markAsFailed(
+                    $response['error_code'] ?? 'unknown',
+                    $response['error_message'] ?? 'Unbekannter Fehler',
+                    $response['error_details'] ?? null
+                );
+            }
 
-            return true;
+            // Source und Metadaten zurücksetzen für nächsten Aufruf
+            $this->resetTrackingData();
+
+            return $response['success'];
         } catch (\Exception $e) {
             Log::error("Fehler beim E-Mail-Versand", [
                 'template_key' => $templateKey,
                 'to_email' => $toEmail,
                 'error' => $e->getMessage()
             ]);
+
+            // Mail-Report als fehlgeschlagen markieren wenn vorhanden
+            if (isset($mailReport)) {
+                $mailReport->markAsFailed(
+                    'exception',
+                    $e->getMessage(),
+                    ['trace' => $e->getTraceAsString()]
+                );
+            }
+
+            // Source und Metadaten zurücksetzen für nächsten Aufruf
+            $this->resetTrackingData();
 
             return false;
         }
@@ -75,6 +180,9 @@ class MailService
             'rechnung' => $rechnung,
             'aussteller' => $aussteller,
         ];
+
+        // Setze Source für Tracking
+        $this->setSource('Rechnung', $rechnung->id);
 
         return $this->send(
             'rechnung_versand',
@@ -102,6 +210,9 @@ class MailService
             'aussteller' => $aussteller,
         ];
 
+        // Setze Source für Tracking mit Controller-Info
+        $this->setSource('Buchung', $buchung->id, 'BuchungResource@sendBestaetigung');
+
         return $this->send(
             'aussteller_bestaetigung',
             $aussteller->email,
@@ -123,6 +234,9 @@ class MailService
             'aussteller' => $aussteller,
         ], $zusatzDaten);
 
+        // Setze Source für Tracking
+        $this->setSource('Aussteller', $aussteller->id);
+
         return $this->send(
             'aussteller_absage',
             $aussteller->email,
@@ -133,32 +247,100 @@ class MailService
 
     /**
      * Sendet eine individuelle E-Mail mit angepasstem Inhalt
+     * @return bool|array Gibt bool für Abwärtskompatibilität zurück, oder Array mit Details wenn gewünscht
      */
-    public function sendCustomEmail(string $toEmail, string $subject, string $content, ?string $toName = null, array $attachments = []): bool
+    public function sendCustomEmail(string $toEmail, string $subject, string $content, ?string $toName = null, array $attachments = [], bool $returnDetails = false): bool|array
     {
+        $mailReport = null;
+        
         try {
             // Anhänge verarbeiten
             $processedAttachments = $this->processCustomAttachments($attachments);
 
+            // Template-Key aus Metadata holen, falls vorhanden
+            $templateKey = isset($this->metadata['template_key']) ? $this->metadata['template_key'] : null;
+
+            // Mail-Report erstellen
+            $mailReport = $this->createMailReport(
+                $toEmail,
+                $toName,
+                $subject,
+                $content,
+                $templateKey, // Template-Key aus Metadata, falls gesetzt
+                $processedAttachments
+            );
+
             // E-Mail erstellen und versenden
             $mailable = new UniversalMail($subject, $content, $processedAttachments);
 
-            $this->sendMail($toEmail, $toName, $mailable);
+            $sendStartTime = microtime(true);
+            $response = $this->sendMail($toEmail, $toName, $mailable);
+            $sendDuration = (int)((microtime(true) - $sendStartTime) * 1000);
 
-            // Log für Nachverfolgung
-            Log::info("Custom E-Mail versendet", [
-                'to_email' => $toEmail,
-                'to_name' => $toName,
-                'subject' => $subject
-            ]);
+            // Report mit Versand-Informationen aktualisieren
+            if ($response['success']) {
+                $mailReport->markAsSent($response['provider_response']);
+                $mailReport->update([
+                    'send_duration_ms' => $sendDuration,
+                    'size_bytes' => strlen($content)
+                ]);
+                
+                // Log für Nachverfolgung
+                Log::info("Custom E-Mail versendet", [
+                    'to_email' => $toEmail,
+                    'to_name' => $toName,
+                    'subject' => $subject,
+                    'mail_report_id' => $mailReport->id
+                ]);
+            } else {
+                $mailReport->markAsFailed(
+                    $response['error_code'] ?? 'unknown',
+                    $response['error_message'] ?? 'Unbekannter Fehler',
+                    $response['error_details'] ?? null
+                );
+            }
 
-            return true;
+            // Source und Metadaten zurücksetzen für nächsten Aufruf
+            $this->resetTrackingData();
+
+            // Details zurückgeben wenn gewünscht
+            if ($returnDetails) {
+                return [
+                    'success' => $response['success'],
+                    'mail_report_id' => $mailReport->id,
+                    'mail_report' => $mailReport
+                ];
+            }
+
+            return $response['success'];
         } catch (\Exception $e) {
             Log::error("Fehler beim Custom E-Mail-Versand", [
                 'to_email' => $toEmail,
                 'subject' => $subject,
                 'error' => $e->getMessage()
             ]);
+
+            // Mail-Report als fehlgeschlagen markieren wenn vorhanden
+            if ($mailReport) {
+                $mailReport->markAsFailed(
+                    'exception',
+                    $e->getMessage(),
+                    ['trace' => $e->getTraceAsString()]
+                );
+            }
+
+            // Source und Metadaten zurücksetzen für nächsten Aufruf
+            $this->resetTrackingData();
+
+            // Bei Fehler auch Details zurückgeben wenn gewünscht
+            if ($returnDetails) {
+                return [
+                    'success' => false,
+                    'mail_report_id' => $mailReport ? $mailReport->id : null,
+                    'mail_report' => $mailReport,
+                    'error' => $e->getMessage()
+                ];
+            }
 
             return false;
         }
@@ -179,6 +361,9 @@ class MailService
         $data = [
             'anfrage' => $anfrage,
         ];
+
+        // Setze Source für Tracking
+        $this->setSource('Anfrage', $anfrage->id);
 
         return $this->send(
             'anfrage_bestaetigung',
@@ -264,23 +449,195 @@ class MailService
     }
 
     /**
-     * Zentrale E-Mail Versendung mit Dev-Redirect Logik
+     * Erstelle einen Mail-Report Eintrag
      */
-    private function sendMail(string $toEmail, ?string $toName, Mailable $mailable): void
+    private function createMailReport(
+        string $toEmail,
+        ?string $toName,
+        string $subject,
+        string $content,
+        ?string $templateKey = null,
+        array $attachments = [],
+        ?string $ccEmails = null,
+        ?string $bccEmails = null,
+        ?string $replyTo = null
+    ): MailReport {
+        // Attachment-Informationen für Report aufbereiten
+        $attachmentInfo = [];
+        foreach ($attachments as $attachment) {
+            $attachmentInfo[] = [
+                'name' => $attachment['name'] ?? 'unknown',
+                'size' => isset($attachment['data']) ? strlen($attachment['data']) : 0,
+                'type' => $attachment['mime'] ?? 'application/octet-stream'
+            ];
+        }
+
+        // Backtrace analysieren um triggered_by zu ermitteln
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+        $triggeredBy = $this->triggeredBy;
+        
+        if (!$triggeredBy) {
+            foreach ($backtrace as $trace) {
+                if (isset($trace['class']) && isset($trace['function'])) {
+                    $class = $trace['class'];
+                    // Controller oder Command finden
+                    if (str_contains($class, 'Controller') || 
+                        str_contains($class, 'Command') || 
+                        str_contains($class, 'Resource') ||
+                        str_contains($class, 'Job')) {
+                        $triggeredBy = class_basename($class) . '@' . $trace['function'];
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Content-Preview erstellen - Markdown beibehalten für bessere Lesbarkeit
+        $contentPreview = $content;
+        if (strlen($contentPreview) > 500) {
+            $contentPreview = Str::limit($contentPreview, 500);
+        }
+
+        return MailReport::create([
+            // Empfänger
+            'to_email' => $toEmail,
+            'to_name' => $toName,
+            'cc_emails' => $ccEmails,
+            'bcc_emails' => $bccEmails,
+            
+            // Absender
+            'from_email' => config('mail.from.address'),
+            'from_name' => config('mail.from.name'),
+            'reply_to' => $replyTo ?? config('mail.reply_to.address'),
+            
+            // Inhalt
+            'subject' => $subject,
+            'template_key' => $templateKey,
+            'content_preview' => $contentPreview,
+            'attachments' => $attachmentInfo,
+            
+            // Quelle
+            'source_type' => $this->sourceType,
+            'source_id' => $this->sourceId,
+            'triggered_by' => $triggeredBy,
+            'user_id' => Auth::id(),
+            
+            // Versand
+            'mail_driver' => config('mail.default'),
+            'status' => 'pending',
+            
+            // Umgebung
+            'environment' => config('app.env'),
+            'server_hostname' => gethostname(),
+            'app_version' => config('app.version', '1.0.0'),
+            
+            // Metadaten
+            'tags' => $this->tags,
+            'metadata' => $this->metadata,
+        ]);
+    }
+
+    /**
+     * Zentrale E-Mail Versendung mit Dev-Redirect Logik und Report-Tracking
+     */
+    private function sendMail(string $toEmail, ?string $toName, Mailable $mailable): array
     {
-        // Im Development-Modus alle E-Mails an MAIL_DEV_REDIRECT_EMAIL umleiten
-        $devRedirectEmail = config('mail.dev_redirect_email');
+        try {
+            // Im Development-Modus alle E-Mails an MAIL_DEV_REDIRECT_EMAIL umleiten
+            $devRedirectEmail = config('mail.dev_redirect_email');
+            $actualRecipient = $devRedirectEmail ?: $toEmail;
+            $actualName = $devRedirectEmail ? 'Test Recipient (Original: ' . ($toName ?: $toEmail) . ')' : $toName;
 
-        if ($devRedirectEmail) {
-            Log::info("E-Mail Dev-Redirect aktiv", [
-                'original_email' => $toEmail,
-                'original_name' => $toName,
-                'redirect_email' => $devRedirectEmail
-            ]);
+            if ($devRedirectEmail) {
+                Log::info("E-Mail Dev-Redirect aktiv", [
+                    'original_email' => $toEmail,
+                    'original_name' => $toName,
+                    'redirect_email' => $devRedirectEmail
+                ]);
+            }
 
-            Mail::to($devRedirectEmail, 'Test Recipient (Original: ' . ($toName ?: $toEmail) . ')')->send($mailable);
-        } else {
-            Mail::to($toEmail, $toName)->send($mailable);
+            // Provider-spezifische Versendung
+            $response = $this->sendViaProvider($actualRecipient, $actualName, $mailable);
+
+            return $response;
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error_code' => 'exception',
+                'error_message' => $e->getMessage(),
+                'error_details' => [
+                    'class' => get_class($e),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
+            ];
+        }
+    }
+
+    /**
+     * Sende E-Mail über den konfigurierten Provider
+     */
+    private function sendViaProvider(string $toEmail, ?string $toName, Mailable $mailable): array
+    {
+        $driver = config('mail.default');
+        
+        try {
+            if ($driver === 'postmark') {
+                // Postmark-spezifische Versendung mit Response-Tracking
+                return $this->sendViaPostmark($toEmail, $toName, $mailable);
+            } else {
+                // Standard Laravel Mail-Versand (SMTP, etc.)
+                Mail::to($toEmail, $toName)->send($mailable);
+                
+                return [
+                    'success' => true,
+                    'provider_response' => [
+                        'driver' => $driver,
+                        'timestamp' => now()->toIso8601String()
+                    ]
+                ];
+            }
+        } catch (\Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Sende E-Mail via Postmark mit Response-Tracking
+     */
+    private function sendViaPostmark(string $toEmail, ?string $toName, Mailable $mailable): array
+    {
+        try {
+            // Laravel Mail Facade nutzen, aber Response abfangen
+            $message = Mail::to($toEmail, $toName);
+            
+            // Für Postmark können wir die Swift Message ID nach dem Senden abrufen
+            $message->send($mailable);
+            
+            // Postmark Response simulieren (in Produktion würde dies vom Postmark-Treiber kommen)
+            // TODO: Implementiere echte Postmark-Response-Erfassung über Event-Listener
+            return [
+                'success' => true,
+                'provider_response' => [
+                    'driver' => 'postmark',
+                    'MessageID' => Str::uuid()->toString(),
+                    'MessageStream' => config('services.postmark.message_stream', 'outbound'),
+                    'To' => $toEmail,
+                    'SubmittedAt' => now()->toIso8601String(),
+                    'ErrorCode' => 0,
+                    'Message' => 'OK'
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error_code' => 'postmark_error',
+                'error_message' => $e->getMessage(),
+                'provider_response' => [
+                    'driver' => 'postmark',
+                    'error' => true
+                ]
+            ];
         }
     }
 

@@ -6,22 +6,16 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets;
+use Filament\Navigation\NavigationGroup;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\Navigation\MenuItem;
-use Illuminate\Support\Facades\Auth;
-use App\Filament\Pages\Notifications;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Notifications\DatabaseNotification;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -61,6 +55,12 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->profile();
+            ->profile()
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label('Einstellungen'),
+                NavigationGroup::make()
+                    ->label('E-Mail'),
+            ]);
     }
 }

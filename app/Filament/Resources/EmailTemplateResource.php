@@ -16,11 +16,11 @@ class EmailTemplateResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-envelope';
 
-    protected static ?string $navigationLabel = 'E-Mail-Templates';
+    protected static ?string $navigationLabel = 'Templates';
 
-    protected static ?string $navigationGroup = 'Einstellungen';
-    
-    protected static ?int $navigationSort = 90;
+    protected static ?string $navigationGroup = 'E-Mail';
+
+    protected static ?int $navigationSort = 0;
 
     public static function form(Form $form): Form
     {

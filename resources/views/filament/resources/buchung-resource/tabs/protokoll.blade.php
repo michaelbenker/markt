@@ -20,7 +20,31 @@
                 <td class="px-2 py-1">{{ $p->from_status }}</td>
                 <td class="px-2 py-1">{{ $p->to_status }}</td>
                 <td class="px-2 py-1">{{ $p->user?->name ?? '-' }}</td>
-                <td class="px-2 py-1">{{ $p->details }}</td>
+                <td class="px-2 py-1">
+                    {{ $p->details }}
+                    @if($p->aktion === 'bestaetigung_gesendet' || $p->aktion === 'absage_gesendet')
+                        <?php
+                            // Suche nach dem zugehörigen Mail-Log
+                            $mailReport = \App\Models\MailReport::where('source_type', 'Buchung')
+                                ->where('source_id', $getRecord()->id)
+                                ->where('created_at', '>=', $p->created_at->subMinutes(2))
+                                ->where('created_at', '<=', $p->created_at->addMinutes(2))
+                                ->orderBy('created_at', 'desc')
+                                ->first();
+                        ?>
+                        @if($mailReport)
+                            <br>
+                            <a href="{{ route('filament.admin.resources.mail-reports.view', $mailReport->id) }}" 
+                               target="_blank"
+                               class="text-sm text-blue-600 hover:text-blue-800 underline">
+                                <svg class="inline-block w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                                E-Mail Log anzeigen
+                            </a>
+                        @endif
+                    @endif
+                </td>
                 <td class="px-2 py-1">
                     @if(!empty($p->daten))
                     <div x-data="{ open: false }" @keydown.window.escape="open = false">

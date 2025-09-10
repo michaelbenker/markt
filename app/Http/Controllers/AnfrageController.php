@@ -10,7 +10,6 @@ use App\Models\Subkategorie;
 use App\Models\Standort;
 use App\Services\CountryService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use App\Notifications\NeueAnfrageNotification;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;

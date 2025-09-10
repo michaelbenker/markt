@@ -7,9 +7,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Form;
 use Filament\Support\Enums\MaxWidth;
-use Illuminate\Support\HtmlString;
 use App\Models\EmailTemplate;
 use App\Services\MailService;
 
@@ -24,65 +22,106 @@ class EmailSendAction extends Action
             ->modalWidth(MaxWidth::SevenExtraLarge)
             ->modalHeading('E-Mail senden')
             ->form(function ($record) {
-                try {
-                    // E-Mail Template laden und rendern
-                    $mailService = new MailService();
-                    $template = EmailTemplate::getByKey('aussteller_bestaetigung');
-                    
-                    if (!$template) {
-                        \Illuminate\Support\Facades\Log::error('Template aussteller_bestaetigung nicht gefunden');
-                        return [
-                            Section::make('Fehler')
-                                ->schema([
-                                    \Filament\Forms\Components\Placeholder::make('error')
-                                        ->content('E-Mail-Template nicht gefunden!')
-                                ])
-                        ];
-                    }
+                // Cache für gerenderten Content
+                static $renderedCache = [];
+                $cacheKey = 'buchung_' . $record->id;
+                
+                // Prüfe ob wir den Content bereits gerendert haben
+                if (isset($renderedCache[$cacheKey])) {
+                    $rendered = $renderedCache[$cacheKey]['rendered'];
+                    $aussteller = $renderedCache[$cacheKey]['aussteller'];
+                } else {
+                    try {
+                        // Sicherstellen, dass alle Relationen geladen sind
+                        if (!$record->relationLoaded('markt') || !$record->relationLoaded('aussteller')) {
+                            $record->load(['markt', 'standort', 'aussteller']);
+                        }
+                        
+                        $aussteller = $record->aussteller;
+                        
+                        if (!$aussteller) {
+                            \Illuminate\Support\Facades\Log::error('Aussteller nicht gefunden für Buchung: ' . $record->id);
+                            return [
+                                Section::make('Fehler')
+                                    ->schema([
+                                        \Filament\Forms\Components\Placeholder::make('error')
+                                            ->content('Aussteller-Daten nicht gefunden!')
+                                    ])
+                            ];
+                        }
+                        
+                        // E-Mail Template laden
+                        $template = EmailTemplate::where('key', 'aussteller_bestaetigung')
+                            ->where('is_active', true)
+                            ->first();
+                        
+                        if (!$template) {
+                            \Illuminate\Support\Facades\Log::error('Template aussteller_bestaetigung nicht gefunden');
+                            return [
+                                Section::make('Fehler')
+                                    ->schema([
+                                        \Filament\Forms\Components\Placeholder::make('error')
+                                            ->content('E-Mail-Template nicht gefunden!')
+                                    ])
+                            ];
+                        }
 
-                    // Template mit Buchungsdaten rendern
-                    $buchung = $record;
-                    $buchung->load(['markt', 'standort', 'aussteller']);
-                    $aussteller = $buchung->aussteller;
-                    
-                    if (!$aussteller) {
-                        \Illuminate\Support\Facades\Log::error('Aussteller nicht gefunden für Buchung: ' . $buchung->id);
+                        // Template mit Buchungsdaten rendern
+                        $mailService = new MailService();
+                        $data = [
+                            'buchung' => $record,
+                            'aussteller' => $aussteller,
+                        ];
+                        
+                        // Template-Daten vorbereiten - verwende Reflection nur wenn nötig
+                        $reflection = new \ReflectionClass($mailService);
+                        $method = $reflection->getMethod('prepareTemplateData');
+                        $method->setAccessible(true);
+                        $processedData = $method->invoke($mailService, 'aussteller_bestaetigung', $data);
+                        
+                        // Template rendern
+                        $rendered = $template->render($processedData);
+                        
+                        // In Cache speichern
+                        $renderedCache[$cacheKey] = [
+                            'rendered' => $rendered,
+                            'aussteller' => $aussteller,
+                            'timestamp' => now()
+                        ];
+                        
+                        \Illuminate\Support\Facades\Log::info('Template erfolgreich gerendert', [
+                            'buchung_id' => $record->id,
+                            'subject' => $rendered['subject'] ?? 'KEIN BETREFF',
+                            'content_length' => strlen($rendered['content'] ?? ''),
+                        ]);
+                        
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Fehler beim Template-Rendering', [
+                            'buchung_id' => $record->id,
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ]);
+                        
                         return [
                             Section::make('Fehler')
                                 ->schema([
                                     \Filament\Forms\Components\Placeholder::make('error')
-                                        ->content('Aussteller-Daten nicht gefunden!')
+                                        ->content('Fehler beim Laden des Templates: ' . $e->getMessage())
                                 ])
                         ];
                     }
-                    
-                    $data = [
-                        'buchung' => $buchung,
-                        'aussteller' => $aussteller,
-                    ];
-                    
-                    // Template-Daten vorbereiten
-                    $reflection = new \ReflectionClass($mailService);
-                    $method = $reflection->getMethod('prepareTemplateData');
-                    $method->setAccessible(true);
-                    $processedData = $method->invoke($mailService, 'aussteller_bestaetigung', $data);
-                    
-                    $rendered = $template->render($processedData);
-                    
-                    \Illuminate\Support\Facades\Log::info('Template gerendert', [
-                        'subject' => $rendered['subject'] ?? 'KEIN BETREFF',
-                        'content_length' => strlen($rendered['content'] ?? ''),
-                        'content_preview' => substr($rendered['content'] ?? '', 0, 100)
+                }
+                
+                // Sicherstellen, dass Content vorhanden ist
+                $emailContent = $rendered['content'] ?? '';
+                $emailSubject = $rendered['subject'] ?? 'Bestätigung Ihrer Anmeldung';
+                $emailAddress = trim($aussteller->email ?? '');
+                
+                if (empty($emailContent)) {
+                    \Illuminate\Support\Facades\Log::warning('E-Mail Content ist leer', [
+                        'buchung_id' => $record->id,
+                        'rendered' => $rendered
                     ]);
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Fehler beim Template-Rendering: ' . $e->getMessage());
-                    return [
-                        Section::make('Fehler')
-                            ->schema([
-                                \Filament\Forms\Components\Placeholder::make('error')
-                                    ->content('Fehler beim Laden des Templates: ' . $e->getMessage())
-                            ])
-                    ];
                 }
                 
                 return [
@@ -92,12 +131,12 @@ class EmailSendAction extends Action
                                 ->label('E-Mail-Adresse')
                                 ->email()
                                 ->required()
-                                ->default(trim($aussteller->email ?? '')),
+                                ->default($emailAddress),
                             
                             TextInput::make('subject')
                                 ->label('Betreff')
                                 ->required()
-                                ->default($rendered['subject']),
+                                ->default($emailSubject),
                             
                             Checkbox::make('attach_pdf')
                                 ->label('Buchungsbestätigung als PDF anhängen')
@@ -110,15 +149,8 @@ class EmailSendAction extends Action
                             MarkdownEditor::make('body')
                                 ->label('Nachricht')
                                 ->required()
-                                ->default(function () use ($rendered) {
-                                    $content = $rendered['content'] ?? '';
-                                    \Illuminate\Support\Facades\Log::info('EmailSend MarkdownEditor Default-Wert gesetzt', [
-                                        'content_length' => strlen($content),
-                                        'content_preview' => substr($content, 0, 100),
-                                        'is_empty' => empty($content)
-                                    ]);
-                                    return $content;
-                                })
+                                ->default($emailContent)
+                                ->helperText($emailContent ? null : 'Hinweis: Der E-Mail-Inhalt konnte nicht geladen werden. Bitte schließen Sie das Modal und versuchen Sie es erneut.')
                                 ->toolbarButtons([
                                     'bold',
                                     'italic',
@@ -145,6 +177,14 @@ class EmailSendAction extends Action
                             'buchung' => $record
                         ];
                     }
+                    
+                    // Source und Metadata für Mail-Tracking setzen
+                    $mailService->setSource('Buchung', $record->id, 'EmailSendAction@sendBestaetigung');
+                    $mailService->setMetadata([
+                        'template_key' => 'aussteller_bestaetigung',
+                        'action' => 'manual_confirmation',
+                        'markt_id' => $record->markt_id,
+                    ]);
                     
                     // Custom E-Mail versenden
                     $success = $mailService->sendCustomEmail(
