@@ -132,14 +132,18 @@ class UniversalEmailAction extends Action
                 $rendered = $template->render($processedData);
                 
                 \Illuminate\Support\Facades\Log::info("Template {$this->templateKey} gerendert (UniversalEmailAction)", [
+                    'template_key' => $this->templateKey,
                     'subject' => $rendered['subject'] ?? 'KEIN BETREFF',
                     'content_length' => strlen($rendered['content'] ?? ''),
+                    'content_preview' => substr($rendered['content'] ?? '', 0, 100),
+                    'has_content' => !empty($rendered['content']),
                 ]);
                 
+                // IMMER das gerenderte Template verwenden, NIE den Fallback wenn Template existiert
                 return [
                     'email' => $this->getRecipientEmail($record),
                     'subject' => $rendered['subject'] ?? $this->getFallbackSubject(),
-                    'body' => $rendered['content'] ?? $this->getFallbackBody(),
+                    'body' => $rendered['content'] ?? '', // Kein Fallback! Template-Content verwenden
                     'attach_pdf' => !empty($this->attachmentType),
                 ];
                 
@@ -243,18 +247,19 @@ class UniversalEmailAction extends Action
                 'aussteller' => $record->aussteller,
             ];
         } elseif ($record instanceof \App\Models\Buchung) {
-            $record->load(['markt', 'standort', 'aussteller', 'termin']);
+            $record->load(['markt', 'standort', 'aussteller']);
             $data = [
                 'buchung' => $record,
                 'aussteller' => $record->aussteller,
                 'markt' => $record->markt,
-                'termin' => $record->termin,
             ];
             
             // Für Absage-Template spezielle Daten
             if ($this->templateKey === 'aussteller_absage') {
-                $data['markt_name'] = $record->termin?->markt?->name ?? 'Unbekannter Markt';
-                $data['termin'] = $record->termin?->start?->format('d.m.Y') ?? 'Unbekanntes Datum';
+                $data['markt_name'] = $record->markt?->name ?? 'Unbekannter Markt';
+                // Hole den ersten Termin des Marktes
+                $termin = $record->markt?->termine?->first();
+                $data['termin'] = $termin?->start?->format('d.m.Y') ?? 'Unbekanntes Datum';
                 $data['eingereicht_am'] = $record->created_at->format('d.m.Y');
             }
         } elseif ($record instanceof \App\Models\Anfrage) {
