@@ -58,7 +58,7 @@ class EmailRechnungAction extends Action
                         ]),
                 ];
             })
-            ->mountUsing(function ($form, $record) {
+            ->fillForm(function ($record) {
                 try {
                     // E-Mail Template laden und rendern
                     $mailService = new MailService();
@@ -66,13 +66,12 @@ class EmailRechnungAction extends Action
 
                     if (!$template) {
                         \Illuminate\Support\Facades\Log::error('Template rechnung_versand nicht gefunden');
-                        $form->fill([
+                        return [
                             'email' => trim($record->empf_email ?? ''),
                             'subject' => 'Rechnung',
                             'body' => 'Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung.',
                             'attach_pdf' => true,
-                        ]);
-                        return;
+                        ];
                     }
 
                     // Template mit Rechnungsdaten rendern
@@ -82,13 +81,12 @@ class EmailRechnungAction extends Action
 
                     if (!$aussteller) {
                         \Illuminate\Support\Facades\Log::error('Aussteller nicht gefunden für Rechnung: ' . $rechnung->id);
-                        $form->fill([
+                        return [
                             'email' => trim($record->empf_email ?? ''),
                             'subject' => 'Rechnung',
                             'body' => 'Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung.',
                             'attach_pdf' => true,
-                        ]);
-                        return;
+                        ];
                     }
 
                     $data = [
@@ -104,29 +102,29 @@ class EmailRechnungAction extends Action
 
                     $rendered = $template->render($processedData);
 
-                    \Illuminate\Support\Facades\Log::info('Rechnung-Template gerendert (mountUsing)', [
+                    \Illuminate\Support\Facades\Log::info('Rechnung-Template gerendert (fillForm)', [
                         'subject' => $rendered['subject'] ?? 'KEIN BETREFF',
                         'content_length' => strlen($rendered['content'] ?? ''),
                         'content_preview' => substr($rendered['content'] ?? '', 0, 100)
                     ]);
 
-                    // Form mit den gerenderten Werten befüllen
-                    $form->fill([
+                    // Werte direkt zurückgeben
+                    return [
                         'email' => trim($record->empf_email ?? ''),
                         'subject' => $rendered['subject'] ?? 'Rechnung',
                         'body' => $rendered['content'] ?? 'Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung.',
                         'attach_pdf' => true,
-                    ]);
+                    ];
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Fehler beim Rechnung-Template-Rendering (mountUsing): ' . $e->getMessage());
+                    \Illuminate\Support\Facades\Log::error('Fehler beim Rechnung-Template-Rendering (fillForm): ' . $e->getMessage());
                     
-                    // Fallback-Werte setzen
-                    $form->fill([
+                    // Fallback-Werte zurückgeben
+                    return [
                         'email' => trim($record->empf_email ?? ''),
                         'subject' => 'Rechnung',
                         'body' => 'Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung.',
                         'attach_pdf' => true,
-                    ]);
+                    ];
                 }
             })
             ->action(function (array $data, $record) {

@@ -21,148 +21,119 @@ class EmailSendAction extends Action
             ->color('success')
             ->modalWidth(MaxWidth::SevenExtraLarge)
             ->modalHeading('E-Mail senden')
-            ->form(function ($record) {
-                // Cache für gerenderten Content
-                static $renderedCache = [];
-                $cacheKey = 'buchung_' . $record->id;
+            ->form([
+                Section::make('E-Mail Einstellungen')
+                    ->schema([
+                        TextInput::make('email')
+                            ->label('E-Mail-Adresse')
+                            ->email()
+                            ->required(),
+                        
+                        TextInput::make('subject')
+                            ->label('Betreff')
+                            ->required(),
+                        
+                        Checkbox::make('attach_pdf')
+                            ->label('Buchungsbestätigung als PDF anhängen')
+                            ->default(true),
+                    ])
+                    ->columns(2),
                 
-                // Prüfe ob wir den Content bereits gerendert haben
-                if (isset($renderedCache[$cacheKey])) {
-                    $rendered = $renderedCache[$cacheKey]['rendered'];
-                    $aussteller = $renderedCache[$cacheKey]['aussteller'];
-                } else {
-                    try {
-                        // Sicherstellen, dass alle Relationen geladen sind
-                        if (!$record->relationLoaded('markt') || !$record->relationLoaded('aussteller')) {
-                            $record->load(['markt', 'standort', 'aussteller']);
-                        }
-                        
-                        $aussteller = $record->aussteller;
-                        
-                        if (!$aussteller) {
-                            \Illuminate\Support\Facades\Log::error('Aussteller nicht gefunden für Buchung: ' . $record->id);
-                            return [
-                                Section::make('Fehler')
-                                    ->schema([
-                                        \Filament\Forms\Components\Placeholder::make('error')
-                                            ->content('Aussteller-Daten nicht gefunden!')
-                                    ])
-                            ];
-                        }
-                        
-                        // E-Mail Template laden
-                        $template = EmailTemplate::where('key', 'aussteller_bestaetigung')
-                            ->where('is_active', true)
-                            ->first();
-                        
-                        if (!$template) {
-                            \Illuminate\Support\Facades\Log::error('Template aussteller_bestaetigung nicht gefunden');
-                            return [
-                                Section::make('Fehler')
-                                    ->schema([
-                                        \Filament\Forms\Components\Placeholder::make('error')
-                                            ->content('E-Mail-Template nicht gefunden!')
-                                    ])
-                            ];
-                        }
-
-                        // Template mit Buchungsdaten rendern
-                        $mailService = new MailService();
-                        $data = [
-                            'buchung' => $record,
-                            'aussteller' => $aussteller,
-                        ];
-                        
-                        // Template-Daten vorbereiten - verwende Reflection nur wenn nötig
-                        $reflection = new \ReflectionClass($mailService);
-                        $method = $reflection->getMethod('prepareTemplateData');
-                        $method->setAccessible(true);
-                        $processedData = $method->invoke($mailService, 'aussteller_bestaetigung', $data);
-                        
-                        // Template rendern
-                        $rendered = $template->render($processedData);
-                        
-                        // In Cache speichern
-                        $renderedCache[$cacheKey] = [
-                            'rendered' => $rendered,
-                            'aussteller' => $aussteller,
-                            'timestamp' => now()
-                        ];
-                        
-                        \Illuminate\Support\Facades\Log::info('Template erfolgreich gerendert', [
-                            'buchung_id' => $record->id,
-                            'subject' => $rendered['subject'] ?? 'KEIN BETREFF',
-                            'content_length' => strlen($rendered['content'] ?? ''),
-                        ]);
-                        
-                    } catch (\Exception $e) {
-                        \Illuminate\Support\Facades\Log::error('Fehler beim Template-Rendering', [
-                            'buchung_id' => $record->id,
-                            'error' => $e->getMessage(),
-                            'trace' => $e->getTraceAsString()
-                        ]);
-                        
+                Section::make('E-Mail Inhalt')
+                    ->schema([
+                        MarkdownEditor::make('body')
+                            ->label('Nachricht')
+                            ->required()
+                            ->toolbarButtons([
+                                'bold',
+                                'italic',
+                                'link',
+                                'heading',
+                                'bulletList',
+                                'orderedList',
+                                'blockquote',
+                                'codeBlock',
+                            ]),
+                    ]),
+            ])
+            ->fillForm(function ($record) {
+                try {
+                    // Sicherstellen, dass alle Relationen geladen sind
+                    if (!$record->relationLoaded('markt') || !$record->relationLoaded('aussteller')) {
+                        $record->load(['markt', 'standort', 'aussteller']);
+                    }
+                    
+                    $aussteller = $record->aussteller;
+                    
+                    if (!$aussteller) {
+                        \Illuminate\Support\Facades\Log::error('Aussteller nicht gefunden für Buchung: ' . $record->id);
                         return [
-                            Section::make('Fehler')
-                                ->schema([
-                                    \Filament\Forms\Components\Placeholder::make('error')
-                                        ->content('Fehler beim Laden des Templates: ' . $e->getMessage())
-                                ])
+                            'email' => '',
+                            'subject' => 'Bestätigung Ihrer Anmeldung',
+                            'body' => 'Sehr geehrte Damen und Herren,\n\nhiermit bestätigen wir Ihre Buchung.',
+                            'attach_pdf' => true,
                         ];
                     }
-                }
-                
-                // Sicherstellen, dass Content vorhanden ist
-                $emailContent = $rendered['content'] ?? '';
-                $emailSubject = $rendered['subject'] ?? 'Bestätigung Ihrer Anmeldung';
-                $emailAddress = trim($aussteller->email ?? '');
-                
-                if (empty($emailContent)) {
-                    \Illuminate\Support\Facades\Log::warning('E-Mail Content ist leer', [
-                        'buchung_id' => $record->id,
-                        'rendered' => $rendered
-                    ]);
-                }
-                
-                return [
-                    Section::make('E-Mail Einstellungen')
-                        ->schema([
-                            TextInput::make('email')
-                                ->label('E-Mail-Adresse')
-                                ->email()
-                                ->required()
-                                ->default($emailAddress),
-                            
-                            TextInput::make('subject')
-                                ->label('Betreff')
-                                ->required()
-                                ->default($emailSubject),
-                            
-                            Checkbox::make('attach_pdf')
-                                ->label('Buchungsbestätigung als PDF anhängen')
-                                ->default(true),
-                        ])
-                        ->columns(2),
                     
-                    Section::make('E-Mail Inhalt')
-                        ->schema([
-                            MarkdownEditor::make('body')
-                                ->label('Nachricht')
-                                ->required()
-                                ->default($emailContent)
-                                ->helperText($emailContent ? null : 'Hinweis: Der E-Mail-Inhalt konnte nicht geladen werden. Bitte schließen Sie das Modal und versuchen Sie es erneut.')
-                                ->toolbarButtons([
-                                    'bold',
-                                    'italic',
-                                    'link',
-                                    'heading',
-                                    'bulletList',
-                                    'orderedList',
-                                    'blockquote',
-                                    'codeBlock',
-                                ]),
-                        ]),
-                ];
+                    // E-Mail Template laden
+                    $template = EmailTemplate::where('key', 'aussteller_bestaetigung')
+                        ->where('is_active', true)
+                        ->first();
+                    
+                    if (!$template) {
+                        \Illuminate\Support\Facades\Log::error('Template aussteller_bestaetigung nicht gefunden');
+                        return [
+                            'email' => trim($aussteller->email ?? ''),
+                            'subject' => 'Bestätigung Ihrer Anmeldung',
+                            'body' => 'Sehr geehrte Damen und Herren,\n\nhiermit bestätigen wir Ihre Buchung.',
+                            'attach_pdf' => true,
+                        ];
+                    }
+
+                    // Template mit Buchungsdaten rendern
+                    $mailService = new MailService();
+                    $data = [
+                        'buchung' => $record,
+                        'aussteller' => $aussteller,
+                    ];
+                    
+                    // Template-Daten vorbereiten - verwende Reflection nur wenn nötig
+                    $reflection = new \ReflectionClass($mailService);
+                    $method = $reflection->getMethod('prepareTemplateData');
+                    $method->setAccessible(true);
+                    $processedData = $method->invoke($mailService, 'aussteller_bestaetigung', $data);
+                    
+                    // Template rendern
+                    $rendered = $template->render($processedData);
+                    
+                    \Illuminate\Support\Facades\Log::info('Template erfolgreich gerendert (fillForm)', [
+                        'buchung_id' => $record->id,
+                        'subject' => $rendered['subject'] ?? 'KEIN BETREFF',
+                        'content_length' => strlen($rendered['content'] ?? ''),
+                    ]);
+                    
+                    // Werte direkt zurückgeben
+                    return [
+                        'email' => trim($aussteller->email ?? ''),
+                        'subject' => $rendered['subject'] ?? 'Bestätigung Ihrer Anmeldung',
+                        'body' => $rendered['content'] ?? 'Sehr geehrte Damen und Herren,\n\nhiermit bestätigen wir Ihre Buchung.',
+                        'attach_pdf' => true,
+                    ];
+                    
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Fehler beim Template-Rendering (fillForm)', [
+                        'buchung_id' => $record->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    
+                    // Fallback-Werte zurückgeben
+                    return [
+                        'email' => trim($record->aussteller?->email ?? ''),
+                        'subject' => 'Bestätigung Ihrer Anmeldung',
+                        'body' => 'Sehr geehrte Damen und Herren,\n\nhiermit bestätigen wir Ihre Buchung.',
+                        'attach_pdf' => true,
+                    ];
+                }
             })
             ->action(function (array $data, $record) {
                 $mailService = new MailService();

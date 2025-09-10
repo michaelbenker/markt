@@ -22,36 +22,63 @@ class EmailAbsageAction extends Action
             ->color('danger')
             ->modalWidth(MaxWidth::SevenExtraLarge)
             ->modalHeading('Buchung absagen')
-            ->form(function ($record) {
+            ->form([
+                Section::make('E-Mail Einstellungen')
+                    ->schema([
+                        TextInput::make('email')
+                            ->label('E-Mail-Adresse')
+                            ->email()
+                            ->required(),
+                        
+                        TextInput::make('subject')
+                            ->label('Betreff')
+                            ->required(),
+                    ])
+                    ->columns(2),
+                
+                Section::make('Absage-Nachricht')
+                    ->schema([
+                        MarkdownEditor::make('body')
+                            ->label('Nachricht')
+                            ->required()
+                            ->toolbarButtons([
+                                'bold',
+                                'italic',
+                                'link',
+                                'heading',
+                                'bulletList',
+                                'orderedList',
+                                'blockquote',
+                                'codeBlock',
+                            ]),
+                    ]),
+            ])
+            ->fillForm(function ($record) {
                 try {
                     // E-Mail Template laden und rendern
                     $mailService = new MailService();
                     $template = EmailTemplate::getByKey('aussteller_absage');
                     
-                    if (!$template) {
-                        \Illuminate\Support\Facades\Log::error('Template aussteller_absage nicht gefunden');
-                        return [
-                            Section::make('Fehler')
-                                ->schema([
-                                    \Filament\Forms\Components\Placeholder::make('error')
-                                        ->content('E-Mail-Template nicht gefunden!')
-                                ])
-                        ];
-                    }
-
                     // Template mit Buchungsdaten rendern
                     $buchung = $record;
                     $buchung->load(['termin.markt', 'aussteller']);
                     $aussteller = $buchung->aussteller;
                     
+                    if (!$template) {
+                        \Illuminate\Support\Facades\Log::error('Template aussteller_absage nicht gefunden');
+                        return [
+                            'email' => trim($aussteller?->email ?? ''),
+                            'subject' => 'Absage Ihrer Anmeldung',
+                            'body' => 'Sehr geehrte Damen und Herren,\n\nleider müssen wir Ihre Anmeldung absagen.',
+                        ];
+                    }
+                    
                     if (!$aussteller) {
                         \Illuminate\Support\Facades\Log::error('Aussteller nicht gefunden für Buchung: ' . $buchung->id);
                         return [
-                            Section::make('Fehler')
-                                ->schema([
-                                    \Filament\Forms\Components\Placeholder::make('error')
-                                        ->content('Aussteller-Daten nicht gefunden!')
-                                ])
+                            'email' => '',
+                            'subject' => 'Absage Ihrer Anmeldung',
+                            'body' => 'Sehr geehrte Damen und Herren,\n\nleider müssen wir Ihre Anmeldung absagen.',
                         ];
                     }
                     
@@ -70,64 +97,29 @@ class EmailAbsageAction extends Action
                     
                     $rendered = $template->render($processedData);
                     
-                    \Illuminate\Support\Facades\Log::info('Absage-Template gerendert', [
+                    \Illuminate\Support\Facades\Log::info('Absage-Template gerendert (fillForm)', [
                         'subject' => $rendered['subject'] ?? 'KEIN BETREFF',
                         'content_length' => strlen($rendered['content'] ?? ''),
                         'content_preview' => substr($rendered['content'] ?? '', 0, 100)
                     ]);
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Fehler beim Absage-Template-Rendering: ' . $e->getMessage());
+                    
+                    // Werte direkt zurückgeben
                     return [
-                        Section::make('Fehler')
-                            ->schema([
-                                \Filament\Forms\Components\Placeholder::make('error')
-                                    ->content('Fehler beim Laden des Templates: ' . $e->getMessage())
-                            ])
+                        'email' => trim($aussteller->email ?? ''),
+                        'subject' => $rendered['subject'] ?? 'Absage Ihrer Anmeldung',
+                        'body' => $rendered['content'] ?? 'Sehr geehrte Damen und Herren,\n\nleider müssen wir Ihre Anmeldung absagen.',
+                    ];
+                    
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Fehler beim Absage-Template-Rendering (fillForm): ' . $e->getMessage());
+                    
+                    // Fallback-Werte zurückgeben
+                    return [
+                        'email' => trim($record->aussteller?->email ?? ''),
+                        'subject' => 'Absage Ihrer Anmeldung',
+                        'body' => 'Sehr geehrte Damen und Herren,\n\nleider müssen wir Ihre Anmeldung absagen.',
                     ];
                 }
-                
-                return [
-                    Section::make('E-Mail Einstellungen')
-                        ->schema([
-                            TextInput::make('email')
-                                ->label('E-Mail-Adresse')
-                                ->email()
-                                ->required()
-                                ->default(trim($aussteller->email ?? '')),
-                            
-                            TextInput::make('subject')
-                                ->label('Betreff')
-                                ->required()
-                                ->default($rendered['subject']),
-                        ])
-                        ->columns(2),
-                    
-                    Section::make('Absage-Nachricht')
-                        ->schema([
-                            MarkdownEditor::make('body')
-                                ->label('Nachricht')
-                                ->required()
-                                ->default(function () use ($rendered) {
-                                    $content = $rendered['content'] ?? '';
-                                    \Illuminate\Support\Facades\Log::info('MarkdownEditor Default-Wert gesetzt', [
-                                        'content_length' => strlen($content),
-                                        'content_preview' => substr($content, 0, 100),
-                                        'is_empty' => empty($content)
-                                    ]);
-                                    return $content;
-                                })
-                                ->toolbarButtons([
-                                    'bold',
-                                    'italic',
-                                    'link',
-                                    'heading',
-                                    'bulletList',
-                                    'orderedList',
-                                    'blockquote',
-                                    'codeBlock',
-                                ]),
-                        ]),
-                ];
             })
             ->action(function (array $data, $record) {
                 $mailService = new MailService();
