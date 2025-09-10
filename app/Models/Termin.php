@@ -13,11 +13,13 @@ class Termin extends Model
         'start',
         'ende',
         'bemerkung',
+        'anmeldeschluss',
     ];
 
     protected $casts = [
         'start' => 'datetime',
         'ende' => 'datetime',
+        'anmeldeschluss' => 'date',
     ];
 
     public function markt()

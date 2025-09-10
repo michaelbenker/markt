@@ -283,7 +283,12 @@ class UniversalEmailAction extends Action
             
             // Für Warteliste-Template
             if ($this->templateKey === 'anfrage_warteliste') {
-                $data['anmeldefrist'] = now()->addDays(14)->format('d.m.Y');
+                // Hole den Anmeldeschluss vom nächsten zukünftigen Termin
+                $termin = $markt->termine
+                    ->filter(fn($t) => $t->start >= now())
+                    ->sortBy('start')
+                    ->first();
+                $data['anmeldefrist'] = $termin->anmeldeschluss->format('d.m.Y');
             }
         }
         

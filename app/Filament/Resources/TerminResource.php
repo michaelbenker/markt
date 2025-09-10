@@ -7,6 +7,7 @@ use App\Filament\Resources\TerminResource\RelationManagers;
 use App\Models\Termin;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -44,12 +45,27 @@ class TerminResource extends Resource
                     ->label('Startdatum')
                     ->required()
                     ->native(false)
-                    ->displayFormat('d.m.Y'),
+                    ->displayFormat('d.m.Y')
+                    ->live()
+                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                        if ($state) {
+                            // Setze Anmeldeschluss auf 30 Tage vor Start
+                            $anmeldeschluss = \Carbon\Carbon::parse($state)->subDays(30);
+                            $set('anmeldeschluss', $anmeldeschluss->format('Y-m-d'));
+                        }
+                    }),
                 Forms\Components\DatePicker::make('ende')
                     ->label('Enddatum')
                     ->native(false)
                     ->displayFormat('d.m.Y')
                     ->after('start'),
+                Forms\Components\DatePicker::make('anmeldeschluss')
+                    ->label('Anmeldeschluss')
+                    ->required()
+                    ->native(false)
+                    ->displayFormat('d.m.Y')
+                    ->before('start')
+                    ->helperText('Letzter Tag für Anmeldungen'),
 
             ]);
     }

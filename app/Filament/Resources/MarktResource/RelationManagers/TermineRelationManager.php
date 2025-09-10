@@ -28,6 +28,9 @@ class TermineRelationManager extends RelationManager
                             ->afterStateUpdated(function ($state, Forms\Set $set) {
                                 if ($state) {
                                     $set('ende', $state);
+                                    // Setze Anmeldeschluss auf 30 Tage vor Start
+                                    $anmeldeschluss = \Carbon\Carbon::parse($state)->subDays(30);
+                                    $set('anmeldeschluss', $anmeldeschluss->format('Y-m-d'));
                                 }
                             }),
                         Forms\Components\DatePicker::make('ende')
@@ -36,6 +39,12 @@ class TermineRelationManager extends RelationManager
                             ->displayFormat('d.m.Y')
                             ->minDate(fn(Forms\Get $get) => $get('start')),
                     ]),
+                Forms\Components\DatePicker::make('anmeldeschluss')
+                    ->required()
+                    ->label('Anmeldeschluss')
+                    ->displayFormat('d.m.Y')
+                    ->maxDate(fn(Forms\Get $get) => $get('start'))
+                    ->helperText('Letzter Tag für Anmeldungen'),
                 Forms\Components\Textarea::make('bemerkung')
                     ->label('Bemerkung')
                     ->nullable(),
@@ -53,6 +62,10 @@ class TermineRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('ende')
                     ->date()
                     ->label('Ende')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('anmeldeschluss')
+                    ->date()
+                    ->label('Anmeldeschluss')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('bemerkung')
                     ->label('Bemerkung')

@@ -470,10 +470,12 @@ class ViewAnfrage extends ViewRecord
         // Source explizit setzen für besseres Tracking
         $mailService->setSource('Anfrage', $anfrage->id, 'ViewAnfrage@aufWartelisteSetzen');
 
-        // Optional: Anmeldefrist könnte aus dem Markt kommen
-        // Hier verwenden wir ein festes Datum als Beispiel
-        // Sie können das anpassen, um das Datum aus dem Markt zu holen
-        $anmeldefrist = now()->addDays(14)->format('d.m.Y');
+        // Hole den Anmeldeschluss vom nächsten zukünftigen Termin
+        $termin = $anfrage->markt->termine
+            ->filter(fn($t) => $t->start >= now())
+            ->sortBy('start')
+            ->first();
+        $anmeldefrist = $termin->anmeldeschluss->format('d.m.Y');
 
         $result = $mailService->sendAnfrageWarteliste($anfrage, $anmeldefrist);
 
