@@ -406,6 +406,10 @@ class BuchungResource extends Resource
 
     protected static function formatAusstellerName($aussteller): string
     {
+        if (!$aussteller) {
+            return '[Gelöschter Aussteller]';
+        }
+        
         $parts = [];
 
         if ($aussteller->firma) {

@@ -97,7 +97,7 @@ class Buchung extends Model
 
     public function aussteller()
     {
-        return $this->belongsTo(Aussteller::class);
+        return $this->belongsTo(Aussteller::class)->withTrashed();
     }
 
     public function leistungen()

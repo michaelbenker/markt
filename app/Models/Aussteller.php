@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Parallax\FilamentComments\Models\Traits\HasFilamentComments;
 
 class Aussteller extends Model
 {
     use HasFactory;
     use HasFilamentComments;
+    use SoftDeletes;
 
     protected $table = 'aussteller';
     protected $fillable = [
