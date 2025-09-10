@@ -5,6 +5,7 @@ namespace App\Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Checkbox;
 use Filament\Support\Enums\MaxWidth;
@@ -21,6 +22,9 @@ class UniversalEmailAction extends Action
     
     public static function make(?string $name = null): static
     {
+        // Prüfe ob wir auf Production sind (kein Debug-Modus)
+        $isProduction = !config('app.debug');
+        
         return parent::make($name ?? 'send_email')
             ->modalWidth(MaxWidth::SevenExtraLarge)
             ->form([
@@ -44,12 +48,27 @@ class UniversalEmailAction extends Action
                 
                 Section::make('E-Mail Inhalt')
                     ->schema([
-                        Textarea::make('body')
-                            ->label('Nachricht')
-                            ->required()
-                            ->rows(20)
-                            ->columnSpanFull()
-                            ->helperText('Tipp: Sie können Markdown-Formatierung verwenden (z.B. **fett**, *kursiv*, # Überschrift)'),
+                        // Verwende Textarea auf Production, MarkdownEditor lokal
+                        $isProduction 
+                            ? Textarea::make('body')
+                                ->label('Nachricht')
+                                ->required()
+                                ->rows(20)
+                                ->columnSpanFull()
+                                ->helperText('Tipp: Sie können Markdown-Formatierung verwenden (z.B. **fett**, *kursiv*, # Überschrift)')
+                            : MarkdownEditor::make('body')
+                                ->label('Nachricht')
+                                ->required()
+                                ->toolbarButtons([
+                                    'bold',
+                                    'italic',
+                                    'link',
+                                    'heading',
+                                    'bulletList',
+                                    'orderedList',
+                                    'blockquote',
+                                    'codeBlock',
+                                ]),
                     ]),
             ])
             ->modalSubmitActionLabel('E-Mail senden')
