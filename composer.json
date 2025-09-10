@@ -12,6 +12,7 @@
         "php": "^8.2",
         "awcodes/filament-tiptap-editor": "^3.5",
         "barryvdh/laravel-dompdf": "^3.1",
+        "bugsnag/bugsnag-laravel": "^2.29",
         "filament/filament": "^3.3",
         "filament/notifications": "^3.3",
         "laravel/framework": "^12.0",

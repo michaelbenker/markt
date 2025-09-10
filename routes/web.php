@@ -7,6 +7,11 @@ use App\Http\Controllers\AnfrageController;
 use App\Http\Controllers\RechnungController;
 use App\Http\Controllers\MedienController;
 
+// BugSnag Test-Routen (nur im Development)
+if (file_exists(__DIR__ . '/test-bugsnag.php')) {
+    require __DIR__ . '/test-bugsnag.php';
+}
+
 Route::get('/buchung/{uuid}', [BuchungPublicController::class, 'show']);
 
 Route::get('/anfrage', [AnfrageController::class, 'create'])->name('anfrage.create');
