@@ -23,6 +23,11 @@ echo "🛠 Baue Assets lokal..."
 npm ci
 npm run build
 
+# ==== Version generieren ====
+echo "📌 Generiere Version..."
+git describe --tags --always > VERSION
+echo "Version: $(cat VERSION)"
+
 # ==== Archiv erstellen ====
 echo "📦 Erstelle $TARFILE..."
 GTAR_BIN=$(command -v gtar || command -v tar)
