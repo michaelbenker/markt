@@ -115,6 +115,4 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
-    'dev_redirect_email' => env('MAIL_DEV_REDIRECT_EMAIL', 'dev@sistecs.de'),
-
 ];

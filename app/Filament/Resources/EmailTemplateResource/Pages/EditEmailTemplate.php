@@ -21,19 +21,10 @@ class EditEmailTemplate extends EditRecord
                 ->modalHeading('Test E-Mail senden')
                 ->modalDescription(
                     fn() =>
-                    "Möchten Sie eine Test-E-Mail für das Template '{$this->record->name}' an " . config('mail.dev_redirect_email', 'test@example.com') . " senden?"
+                    "Möchten Sie eine Test-E-Mail für das Template '{$this->record->name}' an Ihre E-Mail-Adresse (" . auth()->user()->email . ") senden?"
                 )
                 ->action(function () {
-                    $testEmail = config('mail.dev_redirect_email');
-
-                    if (empty($testEmail)) {
-                        \Filament\Notifications\Notification::make()
-                            ->title('Fehler')
-                            ->body('MAIL_DEV_REDIRECT_EMAIL ist nicht konfiguriert.')
-                            ->danger()
-                            ->send();
-                        return;
-                    }
+                    $testEmail = auth()->user()->email;
 
                     try {
                         // Für rechnung_versand die echte RechnungMail-Klasse verwenden

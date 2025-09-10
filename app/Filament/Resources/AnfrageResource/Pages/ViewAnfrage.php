@@ -558,9 +558,7 @@ class ViewAnfrage extends ViewRecord
             $a->status = 'abgesagt';
             $a->save();
 
-            $message = config('mail.dev_redirect_email')
-                ? "Die Absage wurde im Testmodus an " . config('mail.dev_redirect_email') . " gesendet (Original: {$originalEmail}) und die Anfrage #{$anfrageId} wurde als abgesagt markiert."
-                : "Die Absage wurde an {$originalEmail} gesendet und die Anfrage #{$anfrageId} wurde als abgesagt markiert.";
+            $message = "Die Absage wurde an {$originalEmail} gesendet und die Anfrage #{$anfrageId} wurde als abgesagt markiert.";
 
             Notification::make()
                 ->title('Absage erfolgreich versendet')

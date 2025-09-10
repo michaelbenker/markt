@@ -30,11 +30,6 @@ class BuchungAbsage extends Mailable
     {
         $subject = 'Absage für Ihre Buchung - ' . ($this->buchung->markt->name ?? 'Markt');
 
-        // Im Testmodus Subject erweitern
-        if (config('mail.dev_redirect_email')) {
-            $subject = '[TEST für ' . $this->buchung->aussteller->email . '] ' . $subject;
-        }
-
         return new Envelope(
             subject: $subject,
         );

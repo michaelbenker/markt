@@ -550,7 +550,7 @@ class MailService
     {
         try {
             // Im Development-Modus alle E-Mails an MAIL_DEV_REDIRECT_EMAIL umleiten
-            $devRedirectEmail = config('mail.dev_redirect_email');
+            $devRedirectEmail = env('MAIL_DEV_REDIRECT_EMAIL');
             $actualRecipient = $devRedirectEmail ?: $toEmail;
             $actualName = $devRedirectEmail ? 'Test Recipient (Original: ' . ($toName ?: $toEmail) . ')' : $toName;
 

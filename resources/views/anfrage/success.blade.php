@@ -10,8 +10,7 @@
             <h1 class="text-3xl font-bold mb-4">Vielen Dank für Ihre Buchungsanfrage!</h1>
 
             <p class="text-gray-600 mb-6">
-                Wir haben Ihre Buchungsanfrage erhalten und werden uns in Kürze bei Ihnen melden.
-                Sie erhalten in den nächsten Minuten eine Bestätigungs-E-Mail mit allen Details.
+                Wir haben Ihre Bewerbung erhalten. Sie bekommen in den nächsten Minuten eine Bestätigungs-E-Mail mit allen Details.
             </p>
 
             <div class="space-y-4">
