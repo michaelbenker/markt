@@ -250,12 +250,44 @@ class UniversalEmailAction extends Action
                 'markt' => $record->markt,
                 'termin' => $record->termin,
             ];
+            
+            // Für Absage-Template spezielle Daten
+            if ($this->templateKey === 'aussteller_absage') {
+                $data['markt_name'] = $record->termin?->markt?->name ?? 'Unbekannter Markt';
+                $data['termin'] = $record->termin?->start?->format('d.m.Y') ?? 'Unbekanntes Datum';
+                $data['eingereicht_am'] = $record->created_at->format('d.m.Y');
+            }
         } elseif ($record instanceof \App\Models\Anfrage) {
             $record->load(['markt']);
+            $markt = $record->markt;
+            $termin = $markt?->termine?->sortBy('start')->first();
+            
+            // Basis-Daten für Anfrage
             $data = [
                 'anfrage' => $record,
-                'markt' => $record->markt,
+                'markt' => $markt,
+                'markt_name' => $markt?->name ?? 'Unbekannter Markt',
+                'termin' => $termin?->start?->format('d.m.Y') ?? 'Unbekanntes Datum',
+                'eingereicht_am' => $record->created_at->format('d.m.Y'),
             ];
+            
+            // Erstelle temporäres Aussteller-Objekt aus Anfrage-Daten
+            $aussteller = new \App\Models\Aussteller();
+            $aussteller->email = $record->email;
+            $aussteller->vorname = $record->vorname;
+            $aussteller->name = $record->nachname;
+            $aussteller->firma = $record->firma;
+            $aussteller->strasse = $record->strasse;
+            $aussteller->plz = $record->plz;
+            $aussteller->ort = $record->ort;
+            $aussteller->telefon = $record->telefon;
+            
+            $data['aussteller'] = $aussteller;
+            
+            // Für Warteliste-Template
+            if ($this->templateKey === 'anfrage_warteliste') {
+                $data['anmeldefrist'] = now()->addDays(14)->format('d.m.Y');
+            }
         }
         
         return $data;
@@ -294,6 +326,7 @@ class UniversalEmailAction extends Action
             'aussteller_bestaetigung' => 'Bestätigung Ihrer Anmeldung',
             'aussteller_absage' => 'Absage Ihrer Anmeldung',
             'anfrage_warteliste' => 'Warteliste-Bestätigung',
+            'anfrage_absage' => 'Absage Ihrer Anfrage',
         ];
         
         return $subjects[$this->templateKey] ?? 'Nachricht';
@@ -306,6 +339,7 @@ class UniversalEmailAction extends Action
             'aussteller_bestaetigung' => "Sehr geehrte Damen und Herren,\n\nhiermit bestätigen wir Ihre Buchung.",
             'aussteller_absage' => "Sehr geehrte Damen und Herren,\n\nleider müssen wir Ihre Anmeldung absagen.",
             'anfrage_warteliste' => "Sehr geehrte Damen und Herren,\n\nSie wurden auf die Warteliste gesetzt.",
+            'anfrage_absage' => "Sehr geehrte Damen und Herren,\n\nleider müssen wir Ihre Anfrage absagen.",
         ];
         
         return $bodies[$this->templateKey] ?? "Sehr geehrte Damen und Herren,\n\n";

@@ -9,8 +9,7 @@ use Filament\Actions\Action;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\BuchungProtokoll;
 use Illuminate\Support\Facades\Auth;
-use App\Filament\Actions\EmailSendAction;
-use App\Filament\Actions\EmailAbsageAction;
+use App\Filament\Actions\UniversalEmailAction;
 use Parallax\FilamentComments\Actions\CommentsAction;
 
 class EditBuchung extends EditRecord
@@ -64,10 +63,24 @@ class EditBuchung extends EditRecord
                     }, 'buchung-' . $record->id . '.pdf');
                 }),
 
-            EmailSendAction::make('send_email')
-                ->label('Bestätigung senden'),
+            UniversalEmailAction::make('send_email')
+                ->label('Bestätigung senden')
+                ->icon('heroicon-o-envelope')
+                ->color('success')
+                ->modalHeading('Buchungsbestätigung senden')
+                ->template('aussteller_bestaetigung')
+                ->attachmentType('buchung_pdf')
+                ->successStatus('bestätigt')
+                ->protocolAction('bestaetigung_gesendet'),
 
-            EmailAbsageAction::make('send_absage_email'),
+            UniversalEmailAction::make('send_absage_email')
+                ->label('Absagen')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->modalHeading('Buchung absagen')
+                ->template('aussteller_absage')
+                ->successStatus('abgelehnt')
+                ->protocolAction('buchung_abgelehnt'),
             
             CommentsAction::make()
                 ->label('Kommentare'),
