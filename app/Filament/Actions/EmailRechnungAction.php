@@ -46,8 +46,9 @@ class EmailRechnungAction extends Action
                             Textarea::make('body')
                                 ->label('Nachricht')
                                 ->required()
-                                ->rows(15)
-                                ->helperText('Markdown-Formatierung wird unterstützt'),
+                                ->rows(20)
+                                ->columnSpanFull()
+                                ->helperText('Tipp: Sie können Markdown-Formatierung verwenden (z.B. **fett**, *kursiv*, # Überschrift)'),
                         ]),
                 ];
             })

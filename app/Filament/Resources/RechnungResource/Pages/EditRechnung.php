@@ -8,7 +8,7 @@ use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
-use App\Filament\Actions\EmailRechnungAction;
+use App\Filament\Actions\UniversalEmailAction;
 
 class EditRechnung extends EditRecord
 {
@@ -32,7 +32,13 @@ class EditRechnung extends EditRecord
 
         // E-Mail senden (nur bei bestimmten Status)
         if (in_array($this->record->status, ['draft', 'sent', 'partial', 'overdue'])) {
-            $actions[] = EmailRechnungAction::make('send_rechnung_email');
+            $actions[] = UniversalEmailAction::make('send_rechnung_email')
+                ->label('Rechnung per E-Mail senden')
+                ->icon('heroicon-o-envelope')
+                ->color('success')
+                ->modalHeading('Rechnung per E-Mail senden')
+                ->template('rechnung_versand')
+                ->attachmentType('rechnung_pdf');
         }
 
         // Als bezahlt markieren
