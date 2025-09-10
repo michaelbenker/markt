@@ -127,7 +127,7 @@ curl "https://api.postmarkapp.com/email" \
   -X POST \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
-  -H "X-Postmark-Server-Token: cb8a7bb4-f3a5-4489-b69f-5848187a5497" \
+  -H "X-Postmark-Server-Token: YOUR-POSTMARK-TOKEN" \
   -d '{
         "From": "info@sistecs.de",
         "To": "mb@sistecs.de",
