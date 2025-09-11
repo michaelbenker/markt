@@ -1,18 +1,40 @@
 #!/bin/bash
 
+# ==== Deployment-Auswahl ====
+echo "🚀 Wohin soll deployed werden?"
+echo "1) Production (markt.fuerstenfeld.de)"
+echo "2) Development (marktdev.fuerstenfeld.de)"
+echo "3) Beide (Production + Development)"
+echo -n "Auswahl (1/2/3): "
+read DEPLOY_TARGET
+
+case $DEPLOY_TARGET in
+    1)
+        DEPLOY_TARGETS=("prod")
+        echo "➡️ Deploying to Production..."
+        ;;
+    2)
+        DEPLOY_TARGETS=("dev")
+        echo "➡️ Deploying to Development..."
+        ;;
+    3)
+        DEPLOY_TARGETS=("prod" "dev")
+        echo "➡️ Deploying to Production and Development..."
+        ;;
+    *)
+        echo "❌ Ungültige Auswahl. Abbruch."
+        exit 1
+        ;;
+esac
+
 # ==== Konfiguration ====
 set -o allexport
-if [ -f .env_local ]; then
-  source .env_local
-else
-  source .env
-fi
+source .env
 set +o allexport
 
 APP_NAME="markt-app"
 ARCHIVE_PATH="/tmp"
 TARFILE="update.tar.gz"
-REMOTE_PATH="/usr/home/$SSH_USER/public_html/markt.fuerstenfeld.de"
 
 # ==== Pfade ====
 PROJECT_DIR=$(pwd)
@@ -45,28 +67,46 @@ COPYFILE_DISABLE=1 "$GTAR_BIN" \
   --exclude="public/.htaccess" \
   -czf "$ARCHIVE_FULL" -C "$PROJECT_DIR" .
 
-# ==== Hochladen ====
-echo "📤 Übertrage nach $SSH_SERVER..."
-scp -P "$SSH_PORT" "$ARCHIVE_PATH/$TARFILE" "$SSH_USER@$SSH_SERVER:/tmp/"
+# ==== Deployment für jedes Target ====
+for TARGET in "${DEPLOY_TARGETS[@]}"; do
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    if [ "$TARGET" == "prod" ]; then
+        REMOTE_PATH="/usr/home/$SSH_USER/public_html/markt.fuerstenfeld.de"
+        echo "📦 Deploying to PRODUCTION..."
+    else
+        REMOTE_PATH="/usr/home/$SSH_USER/public_html/marktdev.fuerstenfeld.de"
+        echo "📦 Deploying to DEVELOPMENT..."
+    fi
+    
+    # ==== Hochladen ====
+    echo "📤 Übertrage nach $SSH_SERVER ($TARGET)..."
+    scp -P "$SSH_PORT" "$ARCHIVE_PATH/$TARFILE" "$SSH_USER@$SSH_SERVER:/tmp/"
+    
+    # ==== Remote entpacken ====
+    ssh -p "$SSH_PORT" "$SSH_USER@$SSH_SERVER" "
+        cd /tmp &&
+        mkdir -p $REMOTE_PATH/.backup &&
+        cp $REMOTE_PATH/.env $REMOTE_PATH/.backup/.env 2>/dev/null || true
+        cp $REMOTE_PATH/.htaccess $REMOTE_PATH/.backup/.htaccess 2>/dev/null || true
+        cp $REMOTE_PATH/public/.htaccess $REMOTE_PATH/.backup/public_htaccess 2>/dev/null || true
 
-# ==== Remote entpacken ====
-ssh -p "$SSH_PORT" "$SSH_USER@$SSH_SERVER" "
-    cd /tmp &&
-    mkdir -p $REMOTE_PATH/.backup &&
-    cp $REMOTE_PATH/.env $REMOTE_PATH/.backup/.env 2>/dev/null || true
-    cp $REMOTE_PATH/.htaccess $REMOTE_PATH/.backup/.htaccess 2>/dev/null || true
-    cp $REMOTE_PATH/public/.htaccess $REMOTE_PATH/.backup/public_htaccess 2>/dev/null || true
+        tar -xzf update.tar.gz -C $REMOTE_PATH --strip-components=1 &&
+        rm update.tar.gz
 
-    tar -xzf update.tar.gz -C $REMOTE_PATH --strip-components=1 &&
-    rm update.tar.gz
+        mv $REMOTE_PATH/.backup/.env $REMOTE_PATH/.env 2>/dev/null || true
+        mv $REMOTE_PATH/.backup/.htaccess $REMOTE_PATH/.htaccess 2>/dev/null || true
+        mv $REMOTE_PATH/.backup/public_htaccess $REMOTE_PATH/public/.htaccess 2>/dev/null || true
+        rm -rf $REMOTE_PATH/.backup
 
-    mv $REMOTE_PATH/.backup/.env $REMOTE_PATH/.env 2>/dev/null || true
-    mv $REMOTE_PATH/.backup/.htaccess $REMOTE_PATH/.htaccess 2>/dev/null || true
-    mv $REMOTE_PATH/.backup/public_htaccess $REMOTE_PATH/public/.htaccess 2>/dev/null || true
-    rm -rf $REMOTE_PATH/.backup
+        chmod +x $REMOTE_PATH/remote-setup.sh &&
+        $REMOTE_PATH/remote-setup.sh
+    "
+    
+    echo "✅ $TARGET deployment abgeschlossen!"
+done
 
-    chmod +x $REMOTE_PATH/remote-setup.sh &&
-    $REMOTE_PATH/remote-setup.sh
-"
-
-echo "✅ Fertig! Projekt wurde erfolgreich aktualisiert."
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ Alle Deployments erfolgreich abgeschlossen!"
