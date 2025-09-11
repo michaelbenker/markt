@@ -26,7 +26,11 @@ echo "🧩 [4/6] Konfiguration & Routen cachen..."
 $PHP artisan config:cache
 $PHP artisan route:cache
 
-echo "📂 [5/6] Storage-Verknüpfung..."
+echo "📂 [5/7] Storage-Verknüpfung..."
 $PHP artisan storage:link
 
-echo "✅ [6/6] Setup abgeschlossen!"
+echo "📦 [6/7] Publiziere Assets..."
+$PHP artisan livewire:publish --assets
+$PHP artisan filament:assets
+
+echo "✅ [7/7] Setup abgeschlossen!"
