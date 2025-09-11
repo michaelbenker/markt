@@ -14,5 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Laravel 12 - Web-Middleware ist standardmäßig aktiv
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->reportable(function (Throwable $e) {
+            if (app()->bound('bugsnag')) {
+                app('bugsnag')->notifyException($e);
+            }
+        });
     })->create();
