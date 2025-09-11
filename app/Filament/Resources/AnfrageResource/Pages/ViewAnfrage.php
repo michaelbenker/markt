@@ -13,6 +13,7 @@ use App\Models\BuchungProtokoll;
 use App\Models\BuchungLeistung;
 use App\Models\Leistung;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ViewAnfrage extends ViewRecord
@@ -199,70 +200,100 @@ class ViewAnfrage extends ViewRecord
     /**
      * Haupt-Action: Buchung für Aussteller anlegen, ggf. Daten übernehmen
      */
-    public function createBuchung($ausstellerId)
+    public function createBuchung($ausstellerId, $withinTransaction = false)
     {
-        $a = $this->getCurrentAnfrage();
-        $aussteller = Aussteller::findOrFail($ausstellerId);
-
-        // Prüfe, ob die Checkbox "Geänderte Daten übernehmen" gesetzt ist
-        if ($this->updateData[$ausstellerId] ?? false) {
-            $this->updateAusstellerFromAnfrage($aussteller, $a);
+        // Wenn wir bereits in einer Transaktion sind, keine neue starten
+        if (!$withinTransaction) {
+            DB::beginTransaction();
         }
+        try {
+            $a = $this->getCurrentAnfrage();
+            $aussteller = Aussteller::findOrFail($ausstellerId);
 
-        $markt = $a->markt;
-        // Wunschstandort verwenden, falls angegeben, sonst ersten verfügbaren Standort
-        $standort = $a->wunschStandort ?? $markt?->standorte?->first();
+            // Prüfe, ob die Checkbox "Geänderte Daten übernehmen" gesetzt ist
+            if ($this->updateData[$ausstellerId] ?? false) {
+                $this->updateAusstellerFromAnfrage($aussteller, $a);
+            }
 
-        // Standplatz bestimmen - verwende ersten Termin für die Berechnung
-        $ersterTermin = $a->termine->first();
-        $maxStandplatz = Buchung::whereJsonContains('termine', $ersterTermin?->id)
-            ->where('standort_id', $standort?->id)
-            ->max('standplatz');
-        $nextStandplatz = $maxStandplatz ? ((int)$maxStandplatz + 1) : 1;
+            $markt = $a->markt;
+            // Wunschstandort verwenden, falls angegeben, sonst ersten verfügbaren Standort
+            $standort = $a->wunschStandort ?? $markt?->standorte?->first();
 
-        // Termin-IDs aus der Anfrage übernehmen
-        $terminIds = $a->termine->pluck('id')->toArray();
+            // Standplatz bestimmen - verwende ersten Termin für die Berechnung
+            $ersterTermin = $a->termine->first();
+            $maxStandplatz = Buchung::whereJsonContains('termine', $ersterTermin?->id)
+                ->where('standort_id', $standort?->id)
+                ->max('standplatz');
+            $nextStandplatz = $maxStandplatz ? ((int)$maxStandplatz + 1) : 1;
 
-        $buchung = Buchung::create([
-            'status' => 'bearbeitung',
-            'markt_id' => $markt?->id,
-            'termine' => $terminIds, // Alle Termine aus der Anfrage
-            'standort_id' => $standort?->id,
-            'standplatz' => $nextStandplatz,
-            'aussteller_id' => $ausstellerId,
-            'stand' => $a->stand,
-            'warenangebot' => $a->warenangebot,
-            'herkunft' => $a->herkunft,
-            'werbematerial' => $a->werbematerial,
-            'bemerkung' => $a->bemerkung,  // Bemerkung aus Anfrage in Buchung übernehmen
-        ]);
+            // Termin-IDs aus der Anfrage übernehmen
+            $terminIds = $a->termine->pluck('id')->toArray();
 
-        // Gewünschte Zusatzleistungen aus Anfrage importieren
-        $this->importLeistungenFromAnfrage($a, $buchung);
-        // 'created'-Protokoll löschen, falls direkt importiert
-        BuchungProtokoll::where('buchung_id', $buchung->id)
-            ->where('aktion', 'created')
-            ->latest()
-            ->first()?->delete();
-        // Protokoll-Eintrag für Import
-        BuchungProtokoll::create([
-            'buchung_id' => $buchung->id,
-            'user_id' => Auth::id(),
-            'aktion' => 'import_anfrage',
-            'from_status' => 'anfrage',
-            'to_status' => 'bearbeitung',
-            'details' => 'Buchung wurde aus Anfrage #' . $a->id . ' importiert.',
-            'daten' => $a instanceof Anfrage ? $a->toArray() : [],
-        ]);
-        // Anfrage Status auf gebucht setzen
-        $a->status = 'gebucht';
-        $a->save();
-        Notification::make()
-            ->title('Buchung erfolgreich erstellt')
-            ->success()
-            ->send();
+            $buchung = Buchung::create([
+                'status' => 'bearbeitung',
+                'markt_id' => $markt?->id,
+                'termine' => $terminIds, // Alle Termine aus der Anfrage
+                'standort_id' => $standort?->id,
+                'standplatz' => $nextStandplatz,
+                'aussteller_id' => $ausstellerId,
+                'stand' => $a->stand,
+                'warenangebot' => $a->warenangebot,
+                'herkunft' => $a->herkunft,
+                'werbematerial' => $a->werbematerial,
+                'bemerkung' => $a->bemerkung,  // Bemerkung aus Anfrage in Buchung übernehmen
+            ]);
 
-        return $this->redirect(\App\Filament\Resources\BuchungResource::getUrl('edit', ['record' => $buchung->id]));
+            // Gewünschte Zusatzleistungen aus Anfrage importieren
+            $this->importLeistungenFromAnfrage($a, $buchung);
+            // 'created'-Protokoll löschen, falls direkt importiert
+            BuchungProtokoll::where('buchung_id', $buchung->id)
+                ->where('aktion', 'created')
+                ->latest()
+                ->first()?->delete();
+            // Protokoll-Eintrag für Import
+            BuchungProtokoll::create([
+                'buchung_id' => $buchung->id,
+                'user_id' => Auth::id(),
+                'aktion' => 'import_anfrage',
+                'from_status' => 'anfrage',
+                'to_status' => 'bearbeitung',
+                'details' => 'Buchung wurde aus Anfrage #' . $a->id . ' importiert.',
+                'daten' => $a instanceof Anfrage ? $a->toArray() : [],
+            ]);
+            // Anfrage Status auf gebucht setzen
+            $a->status = 'gebucht';
+            $a->save();
+            
+            if (!$withinTransaction) {
+                DB::commit();
+            }
+            
+            Notification::make()
+                ->title('Buchung erfolgreich erstellt')
+                ->success()
+                ->send();
+
+            return $this->redirect(\App\Filament\Resources\BuchungResource::getUrl('edit', ['record' => $buchung->id]));
+        } catch (\Exception $e) {
+            if (!$withinTransaction) {
+                DB::rollback();
+            }
+            
+            Log::error('Fehler beim Erstellen der Buchung', [
+                'aussteller_id' => $ausstellerId,
+                'anfrage_id' => $this->anfrageId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            Notification::make()
+                ->title('Fehler beim Erstellen der Buchung')
+                ->body('Die Buchung konnte nicht erstellt werden: ' . $e->getMessage())
+                ->danger()
+                ->send();
+            
+            return null;
+        }
     }
 
     /**
@@ -307,63 +338,104 @@ class ViewAnfrage extends ViewRecord
      */
     public function ausstellerNeuUndBuchung()
     {
-        $a = $this->getCurrentAnfrage();
+        // Transaktion für die gesamte Operation
+        DB::beginTransaction();
+        try {
+            $a = $this->getCurrentAnfrage();
 
-        // Wenn es gefundene Aussteller gibt, nutze den besten Match
-        if (count($this->matchingAussteller) > 0) {
-            $bestMatch = $this->matchingAussteller[0]; // Erster ist der beste Match
-            $ausstellerId = $bestMatch['aussteller']->id;
-            return $this->createBuchung($ausstellerId);
+            // Wenn es gefundene Aussteller gibt, nutze den besten Match
+            if (count($this->matchingAussteller) > 0) {
+                $bestMatch = $this->matchingAussteller[0]; // Erster ist der beste Match
+                $ausstellerId = $bestMatch['aussteller']->id;
+                $result = $this->createBuchung($ausstellerId, true); // true = innerhalb Transaktion
+                // Wenn createBuchung fehlschlägt, wird null zurückgegeben
+                if ($result === null) {
+                    DB::rollback();
+                    return null;
+                }
+                DB::commit();
+                return $result;
+            }
+
+            // Prüfen ob bereits ein Aussteller mit dieser E-Mail existiert (Fallback)
+            $existingAussteller = Aussteller::where('email', $a->email)->first();
+
+            if ($existingAussteller) {
+                $result = $this->createBuchung($existingAussteller->id, true); // true = innerhalb Transaktion
+                if ($result === null) {
+                    DB::rollback();
+                    return null;
+                }
+                DB::commit();
+                return $result;
+            }
+
+            // Nur Sonstiges-Text aus Warenangebot in die Aussteller-Bemerkung
+            $ausstellerBemerkung = null;
+            if (is_array($a->warenangebot) && isset($a->warenangebot['sonstiges'])) {
+                $ausstellerBemerkung = "Sonstiges Warenangebot: " . $a->warenangebot['sonstiges'];
+            }
+
+            $aus = Aussteller::create([
+                'firma' => $a->firma,
+                'anrede' => $a->anrede,
+                'vorname' => $a->vorname,
+                'name' => $a->nachname,
+                'strasse' => $a->strasse,
+                'hausnummer' => $a->hausnummer,
+                'plz' => $a->plz,
+                'ort' => $a->ort,
+                'land' => $a->land,
+                'telefon' => $a->telefon,
+                'email' => $a->email,
+                'bemerkung' => $ausstellerBemerkung,  // Nur Sonstiges, nicht die Anfrage-Bemerkung
+                'steuer_id' => $a->steuer_id,
+                'handelsregisternummer' => $a->handelsregisternummer,
+                'stand' => $a->stand,
+                'warenangebot' => $a->warenangebot,
+                'vorfuehrung_am_stand' => $a->vorfuehrung_am_stand,
+                'herkunft' => $a->herkunft,
+                'soziale_medien' => $a->soziale_medien,
+                'rating' => $this->selectedRating ?? 0,  // Rating übernehmen
+            ]);
+
+            // Medien von Anfrage zu Aussteller verschieben
+            $this->moveMedienFromAnfrageToAussteller($a, $aus);
+
+            // Subkategorien aus Anfrage importieren
+            $this->importSubkategorienFromAnfrage($a, $aus);
+
+            // Tags hinzufügen, wenn welche ausgewählt wurden
+            if (!empty($this->selectedTags)) {
+                $aus->tags()->attach($this->selectedTags);
+            }
+
+            $result = $this->createBuchung($aus->id, true); // true = innerhalb Transaktion
+            if ($result === null) {
+                DB::rollback();
+                return null;
+            }
+            
+            DB::commit();
+            return $result;
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            Log::error('Fehler bei ausstellerNeuUndBuchung', [
+                'anfrage_id' => $this->anfrageId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            Notification::make()
+                ->title('Fehler beim Erstellen von Aussteller und Buchung')
+                ->body('Es ist ein Fehler aufgetreten: ' . $e->getMessage())
+                ->danger()
+                ->send();
+            
+            return null;
         }
-
-        // Prüfen ob bereits ein Aussteller mit dieser E-Mail existiert (Fallback)
-        $existingAussteller = Aussteller::where('email', $a->email)->first();
-
-        if ($existingAussteller) {
-            return $this->createBuchung($existingAussteller->id);
-        }
-
-        // Nur Sonstiges-Text aus Warenangebot in die Aussteller-Bemerkung
-        $ausstellerBemerkung = null;
-        if (is_array($a->warenangebot) && isset($a->warenangebot['sonstiges'])) {
-            $ausstellerBemerkung = "Sonstiges Warenangebot: " . $a->warenangebot['sonstiges'];
-        }
-
-        $aus = Aussteller::create([
-            'firma' => $a->firma,
-            'anrede' => $a->anrede,
-            'vorname' => $a->vorname,
-            'name' => $a->nachname,
-            'strasse' => $a->strasse,
-            'hausnummer' => $a->hausnummer,
-            'plz' => $a->plz,
-            'ort' => $a->ort,
-            'land' => $a->land,
-            'telefon' => $a->telefon,
-            'email' => $a->email,
-            'bemerkung' => $ausstellerBemerkung,  // Nur Sonstiges, nicht die Anfrage-Bemerkung
-            'steuer_id' => $a->steuer_id,
-            'handelsregisternummer' => $a->handelsregisternummer,
-            'stand' => $a->stand,
-            'warenangebot' => $a->warenangebot,
-            'vorfuehrung_am_stand' => $a->vorfuehrung_am_stand,
-            'herkunft' => $a->herkunft,
-            'soziale_medien' => $a->soziale_medien,
-            'rating' => $this->selectedRating ?? 0,  // Rating übernehmen
-        ]);
-
-        // Medien von Anfrage zu Aussteller verschieben
-        $this->moveMedienFromAnfrageToAussteller($a, $aus);
-
-        // Subkategorien aus Anfrage importieren
-        $this->importSubkategorienFromAnfrage($a, $aus);
-
-        // Tags hinzufügen, wenn welche ausgewählt wurden
-        if (!empty($this->selectedTags)) {
-            $aus->tags()->attach($this->selectedTags);
-        }
-
-        return $this->createBuchung($aus->id);
     }
 
     /**
