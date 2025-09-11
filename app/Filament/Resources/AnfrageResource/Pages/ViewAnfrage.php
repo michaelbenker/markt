@@ -245,11 +245,17 @@ class ViewAnfrage extends ViewRecord
 
             // Gewünschte Zusatzleistungen aus Anfrage importieren
             $this->importLeistungenFromAnfrage($a, $buchung);
+            
+            Log::info('Nach Leistungen-Import für Buchung', ['buchung_id' => $buchung->id]);
+            
             // 'created'-Protokoll löschen, falls direkt importiert
             BuchungProtokoll::where('buchung_id', $buchung->id)
                 ->where('aktion', 'created')
                 ->latest()
                 ->first()?->delete();
+                
+            Log::info('Nach Protokoll-Löschung für Buchung', ['buchung_id' => $buchung->id]);
+            
             // Protokoll-Eintrag für Import
             BuchungProtokoll::create([
                 'buchung_id' => $buchung->id,
@@ -260,20 +266,29 @@ class ViewAnfrage extends ViewRecord
                 'details' => 'Buchung wurde aus Anfrage #' . $a->id . ' importiert.',
                 'daten' => $a instanceof Anfrage ? $a->toArray() : [],
             ]);
+            
+            Log::info('Nach Protokoll-Erstellung für Buchung', ['buchung_id' => $buchung->id]);
+            
             // Anfrage Status auf gebucht setzen
             $a->status = 'gebucht';
             $a->save();
             
+            Log::info('Nach Anfrage-Status-Update für Buchung', ['buchung_id' => $buchung->id]);
+            
             if (!$withinTransaction) {
                 DB::commit();
+                
+                Notification::make()
+                    ->title('Buchung erfolgreich erstellt')
+                    ->success()
+                    ->send();
+
+                return $this->redirect(\App\Filament\Resources\BuchungResource::getUrl('edit', ['record' => $buchung->id]));
             }
             
-            Notification::make()
-                ->title('Buchung erfolgreich erstellt')
-                ->success()
-                ->send();
-
-            return $this->redirect(\App\Filament\Resources\BuchungResource::getUrl('edit', ['record' => $buchung->id]));
+            // Wenn wir innerhalb einer Transaktion sind, geben wir die Buchung zurück
+            // Die Notification und Redirect erfolgen später in der aufrufenden Funktion
+            return $buchung;
         } catch (\Exception $e) {
             if (!$withinTransaction) {
                 DB::rollback();
@@ -347,27 +362,39 @@ class ViewAnfrage extends ViewRecord
             if (count($this->matchingAussteller) > 0) {
                 $bestMatch = $this->matchingAussteller[0]; // Erster ist der beste Match
                 $ausstellerId = $bestMatch['aussteller']->id;
-                $result = $this->createBuchung($ausstellerId, true); // true = innerhalb Transaktion
+                $buchung = $this->createBuchung($ausstellerId, true); // true = innerhalb Transaktion
                 // Wenn createBuchung fehlschlägt, wird null zurückgegeben
-                if ($result === null) {
+                if ($buchung === null) {
                     DB::rollback();
                     return null;
                 }
                 DB::commit();
-                return $result;
+                
+                Notification::make()
+                    ->title('Buchung erfolgreich erstellt')
+                    ->success()
+                    ->send();
+                    
+                return $this->redirect(\App\Filament\Resources\BuchungResource::getUrl('edit', ['record' => $buchung->id]));
             }
 
             // Prüfen ob bereits ein Aussteller mit dieser E-Mail existiert (Fallback)
             $existingAussteller = Aussteller::where('email', $a->email)->first();
 
             if ($existingAussteller) {
-                $result = $this->createBuchung($existingAussteller->id, true); // true = innerhalb Transaktion
-                if ($result === null) {
+                $buchung = $this->createBuchung($existingAussteller->id, true); // true = innerhalb Transaktion
+                if ($buchung === null) {
                     DB::rollback();
                     return null;
                 }
                 DB::commit();
-                return $result;
+                
+                Notification::make()
+                    ->title('Buchung erfolgreich erstellt')
+                    ->success()
+                    ->send();
+                    
+                return $this->redirect(\App\Filament\Resources\BuchungResource::getUrl('edit', ['record' => $buchung->id]));
             }
 
             // Nur Sonstiges-Text aus Warenangebot in die Aussteller-Bemerkung
@@ -410,14 +437,20 @@ class ViewAnfrage extends ViewRecord
                 $aus->tags()->attach($this->selectedTags);
             }
 
-            $result = $this->createBuchung($aus->id, true); // true = innerhalb Transaktion
-            if ($result === null) {
+            $buchung = $this->createBuchung($aus->id, true); // true = innerhalb Transaktion
+            if ($buchung === null) {
                 DB::rollback();
                 return null;
             }
             
             DB::commit();
-            return $result;
+            
+            Notification::make()
+                ->title('Buchung erfolgreich erstellt')
+                ->success()
+                ->send();
+                
+            return $this->redirect(\App\Filament\Resources\BuchungResource::getUrl('edit', ['record' => $buchung->id]));
             
         } catch (\Exception $e) {
             DB::rollback();
@@ -705,8 +738,8 @@ class ViewAnfrage extends ViewRecord
             $bemerkung = $bemerkung ? $bemerkung . "\n\n" . $sonstigesText : $sonstigesText;
         }
 
-        // Aussteller-Daten aktualisieren
-        $aussteller->update([
+        // Update-Daten vorbereiten (nur Felder die in der aussteller Tabelle existieren)
+        $updateData = [
             'firma' => $anfrage->firma,
             'anrede' => $anfrage->anrede,
             'vorname' => $anfrage->vorname,
@@ -718,16 +751,29 @@ class ViewAnfrage extends ViewRecord
             'land' => $anfrage->land,
             'telefon' => $anfrage->telefon,
             'mobil' => $anfrage->mobil,
-            'email' => $anfrage->email,
             'bemerkung' => $bemerkung,  // Nur Sonstiges wird hinzugefügt, nicht die Anfrage-Bemerkung
             'steuer_id' => $anfrage->steuer_id,
             'handelsregisternummer' => $anfrage->handelsregisternummer,
             'stand' => $anfrage->stand,
-            'warenangebot' => $anfrage->warenangebot,
             'vorfuehrung_am_stand' => $anfrage->vorfuehrung_am_stand,
             'herkunft' => $anfrage->herkunft,
             'soziale_medien' => $anfrage->soziale_medien,
+            // 'warenangebot' => ENTFERNT - existiert nicht in aussteller Tabelle
+        ];
+        
+        // E-Mail NIE aktualisieren bei bestehenden Ausstellern, um Duplikate zu vermeiden
+        // Die E-Mail bleibt immer wie sie ist
+        Log::info('E-Mail wird NICHT aktualisiert bei bestehendem Aussteller', [
+            'anfrage_email' => $anfrage->email,
+            'aussteller_email' => $aussteller->email,
+            'aussteller_id' => $aussteller->id
         ]);
+        
+        // Sicherstellen, dass E-Mail NICHT im Update ist
+        unset($updateData['email']);
+        
+        // Aussteller-Daten aktualisieren (ohne E-Mail)
+        $aussteller->update($updateData);
 
         // Medien von Anfrage zu Aussteller verschieben
         $this->moveMedienFromAnfrageToAussteller($anfrage, $aussteller);
